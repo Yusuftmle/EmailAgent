@@ -16,6 +16,7 @@ using EmailAgent.Infrastructure.Notifications;
 using EmailAgent.Infrastructure.Repositories;
 using EmailAgent.Agent;
 using EmailAgent.Agent.Chat;
+using EmailAgent.API.Plugins;
 using EmailAgent.Agent.Connectors;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,20 +38,56 @@ builder.Services.AddScoped<IGmailService, GmailService>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
 
-// 4. Semantic Kernel & Claude AI Orchestration
-var claudeApiKey = builder.Configuration["Claude:ApiKey"] ?? string.Empty;
-var claudeModel = builder.Configuration["Claude:Model"] ?? "claude-sonnet-4-5";
+// 4. Semantic Kernel & AI Orchestration
+var aiProvider = builder.Configuration["AI:Provider"] ?? "Gemini";
+var apiKey = builder.Configuration["AI:ApiKey"] ?? string.Empty;
+var aiModel = builder.Configuration["AI:Model"] ?? "gemini-2.5-flash";
 
-builder.Services.AddClaudeChatCompletion(claudeModel, claudeApiKey);
+if (aiProvider != "Gemini")
+{
+    // Fallback to custom connector (does not support tool calling)
+    builder.Services.AddClaudeChatCompletion(aiModel, apiKey);
+}
+
+// Register plugins as Singletons/Transients
+builder.Services.AddTransient<EmailPlugin>();
+builder.Services.AddTransient<NotificationPlugin>();
 
 // Register standard Kernel service in DI
 builder.Services.AddTransient<Kernel>(sp =>
 {
-    var chatCompletion = sp.GetRequiredService<IChatCompletionService>();
     var kernelBuilder = Kernel.CreateBuilder();
-    // Register our Claude completion in the kernel builder
-    kernelBuilder.Services.AddKeyedSingleton<IChatCompletionService>(null, chatCompletion);
-    return kernelBuilder.Build();
+    
+    if (aiProvider == "Gemini")
+    {
+        // Use official Gemini Connector to support Tool Calling
+        kernelBuilder.AddGoogleAIGeminiChatCompletion(modelId: aiModel, apiKey: apiKey);
+    }
+    else if (aiProvider == "Groq")
+    {
+        // Use OpenAI Connector pointed at Groq's API for fast inference
+        kernelBuilder.AddOpenAIChatCompletion(
+            modelId: aiModel,
+            apiKey: apiKey,
+            httpClient: new HttpClient { BaseAddress = new Uri("https://api.groq.com/openai/v1/") });
+    }
+    else
+    {
+        var chatCompletion = sp.GetRequiredService<IChatCompletionService>();
+        // Register our custom completion in the kernel builder
+        kernelBuilder.Services.AddKeyedSingleton<IChatCompletionService>(null, chatCompletion);
+    }
+    
+    var kernel = kernelBuilder.Build();
+    
+    // Import Plugins
+    var emailPlugin = sp.GetRequiredService<EmailPlugin>();
+    var notificationPlugin = sp.GetRequiredService<NotificationPlugin>();
+    
+    kernel.ImportPluginFromObject(emailPlugin, "Email");
+    kernel.ImportPluginFromObject(notificationPlugin, "Notification");
+    
+    return kernel;
 });
 
 // Register AI Agents & Chat services
@@ -67,7 +104,7 @@ builder.Services.AddHangfire(config =>
               options.UseNpgsqlConnection(connectionString);
           }));
 
-builder.Services.AddHangfireServer();
+// builder.Services.AddHangfireServer(); // Temporarily Disabled for Testing
 
 // Add job class to DI so Hangfire can instantiate it
 builder.Services.AddScoped<DailyEmailJob>();
@@ -102,6 +139,8 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppToken"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppFrom"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppTo"" text NOT NULL DEFAULT '';
+            TRUNCATE TABLE ""ChatHistory"";
+            UPDATE ""UserPreferences"" SET ""AiProvider"" = 'Gemini', ""ApiKey"" = '';
         ");
     }
     catch (Exception ex)
@@ -136,20 +175,20 @@ app.MapGet("/", async context =>
 var hangfirePath = builder.Configuration["Hangfire:DashboardPath"] ?? "/jobs";
 app.UseHangfireDashboard(hangfirePath);
 
-// 9. Register Recurring Background Cron Job
+// 9. Register Recurring Background Cron Job (Temporarily Disabled for Testing)
 // Runs daily at 08:00 (Cron: "0 8 * * *")
-using (var scope = app.Services.CreateScope())
-{
-    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-    recurringJobManager.AddOrUpdate<DailyEmailJob>(
-        "daily-email-analysis-job",
-        job => job.RunDailyAnalysisAsync(),
-        "*/2 * * * *", // Runs every 2 minutes
-        new RecurringJobOptions
-        {
-            TimeZone = TimeZoneInfo.Local
-        }
-    );
-}
+// using (var scope = app.Services.CreateScope())
+// {
+//     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+//     recurringJobManager.AddOrUpdate<DailyEmailJob>(
+//         "daily-email-analysis-job",
+//         job => job.RunDailyAnalysisAsync(),
+//         "*/2 * * * *", // Runs every 2 minutes
+//         new RecurringJobOptions
+//         {
+//             TimeZone = TimeZoneInfo.Local
+//         }
+//     );
+// }
 
 app.Run();

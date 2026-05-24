@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using EmailAgent.Infrastructure.Gmail;
 
-namespace EmailAgent.Agent.Chat.Plugins;
+namespace EmailAgent.API.Plugins;
 
 public class EmailPlugin
 {

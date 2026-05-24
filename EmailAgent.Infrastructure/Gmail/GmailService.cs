@@ -135,7 +135,12 @@ public class GmailService : IGmailService
             var service = await GetGmailServiceAsync(cancellationToken);
             _logger.LogInformation("Sending email to: {To}, Subject: {Subject}", to, subject);
 
-            var plainTextBytes = Encoding.UTF8.GetBytes($"To: {to}\r\nSubject: {subject}\r\n\r\n{body}");
+            var subjectEncoded = $"=?utf-8?B?{Convert.ToBase64String(Encoding.UTF8.GetBytes(subject))}?=";
+            var emailText = $"To: {to}\r\n" +
+                            $"Subject: {subjectEncoded}\r\n" +
+                            "Content-Type: text/plain; charset=utf-8\r\n\r\n" +
+                            $"{body}";
+            var plainTextBytes = Encoding.UTF8.GetBytes(emailText);
             var rawMessage = Convert.ToBase64String(plainTextBytes)
                 .Replace('+', '-')
                 .Replace('/', '_')

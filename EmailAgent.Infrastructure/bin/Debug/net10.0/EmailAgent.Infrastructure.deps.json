@@ -110,6 +110,18 @@
           }
         }
       },
+      "Google.GenAI/0.11.0": {
+        "dependencies": {
+          "Google.Apis.Auth": "1.74.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.5.0"
+        },
+        "runtime": {
+          "lib/net8.0/Google.GenAI.dll": {
+            "assemblyVersion": "0.11.0.0",
+            "fileVersion": "0.11.0.0"
+          }
+        }
+      },
       "Hangfire.AspNetCore/1.8.23": {
         "dependencies": {
           "Hangfire.NetCore": "1.8.23"
@@ -517,6 +529,20 @@
           }
         }
       },
+      "Microsoft.SemanticKernel.Connectors.Google/1.76.0-alpha": {
+        "dependencies": {
+          "Google.Apis.Auth": "1.74.0",
+          "Google.GenAI": "0.11.0",
+          "Microsoft.SemanticKernel.Abstractions": "1.76.0",
+          "Microsoft.SemanticKernel.Core": "1.76.0"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.SemanticKernel.Connectors.Google.dll": {
+            "assemblyVersion": "1.76.0.0",
+            "fileVersion": "1.76.0.0"
+          }
+        }
+      },
       "Microsoft.SemanticKernel.Connectors.OpenAI/1.76.0": {
         "dependencies": {
           "Microsoft.Extensions.AI.OpenAI": "10.5.0",
@@ -679,7 +705,9 @@
         "dependencies": {
           "EmailAgent.Core": "1.0.0",
           "Microsoft.SemanticKernel": "1.76.0",
-          "Microsoft.SemanticKernel.Agents.Core": "1.76.0"
+          "Microsoft.SemanticKernel.Agents.Core": "1.76.0",
+          "Microsoft.SemanticKernel.Connectors.Google": "1.76.0-alpha",
+          "Microsoft.SemanticKernel.Connectors.OpenAI": "1.76.0"
         },
         "runtime": {
           "EmailAgent.Agent.dll": {
@@ -759,6 +787,13 @@
       "sha512": "sha512-eb4vaamkER6aJ9NwuEocjP8yBc6D3rycwJQopXO1eCQjaEvjDvFCanQRVwfkJBUvmpLY9SLR9r8OXB50EtSDHA==",
       "path": "google.apis.gmail.v1/1.74.0.4148",
       "hashPath": "google.apis.gmail.v1.1.74.0.4148.nupkg.sha512"
+    },
+    "Google.GenAI/0.11.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-W9fFYcRha8BoJCSZl5subs2k8xMxLtD0+4JCHQkDZKk5hvv+vS6rJ3qSH/Wkl9LPNBsX0EsLUdf3sBPG6n+6RA==",
+      "path": "google.genai/0.11.0",
+      "hashPath": "google.genai.0.11.0.nupkg.sha512"
     },
     "Hangfire.AspNetCore/1.8.23": {
       "type": "package",
@@ -983,6 +1018,13 @@
       "sha512": "sha512-JAgUHpMmErsWjqPI8odOhFDBF6BsSP/oy/IcMQkDqQJw9Geyti+A8CbkA7FtY66Ks4VOEVFM6/qnAb6RvoorzQ==",
       "path": "microsoft.semantickernel.connectors.azureopenai/1.76.0",
       "hashPath": "microsoft.semantickernel.connectors.azureopenai.1.76.0.nupkg.sha512"
+    },
+    "Microsoft.SemanticKernel.Connectors.Google/1.76.0-alpha": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lKfHFJnbRwh4mbhOS7w6bjTVm2g1c9Orh1YcvTtEhhoRKezyBRAk2YRezVM+3ZsgHcSi9EVvrhS8qCpdcwpY+w==",
+      "path": "microsoft.semantickernel.connectors.google/1.76.0-alpha",
+      "hashPath": "microsoft.semantickernel.connectors.google.1.76.0-alpha.nupkg.sha512"
     },
     "Microsoft.SemanticKernel.Connectors.OpenAI/1.76.0": {
       "type": "package",

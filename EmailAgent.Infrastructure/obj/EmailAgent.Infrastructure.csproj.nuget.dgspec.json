@@ -55,6 +55,14 @@
             "Microsoft.SemanticKernel.Agents.Core": {
               "target": "Package",
               "version": "[1.76.0, )"
+            },
+            "Microsoft.SemanticKernel.Connectors.Google": {
+              "target": "Package",
+              "version": "[1.76.0-alpha, )"
+            },
+            "Microsoft.SemanticKernel.Connectors.OpenAI": {
+              "target": "Package",
+              "version": "[1.76.0, )"
             }
           },
           "imports": [

@@ -135,9 +135,9 @@ public class ChatService : IChatService
             });
 
             // 5. Ask LLM completion with Tools enabled
-            var executionSettings = new OpenAIPromptExecutionSettings
+            var executionSettings = new PromptExecutionSettings
             {
-                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
             };
 
             var responseContent = await _chatCompletionService.GetChatMessageContentAsync(skHistory, executionSettings, _kernel);

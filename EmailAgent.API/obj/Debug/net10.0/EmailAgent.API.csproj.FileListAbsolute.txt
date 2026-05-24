@@ -101,3 +101,5 @@ C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API\obj\Deb
 C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API\obj\Debug\net10.0\EmailAgent.API.genruntimeconfig.cache
 C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API\obj\Debug\net10.0\ref\EmailAgent.API.dll
 C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API\bin\Debug\net10.0\appsettings.Local.json
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API\bin\Debug\net10.0\Google.GenAI.dll
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API\bin\Debug\net10.0\Microsoft.SemanticKernel.Connectors.Google.dll

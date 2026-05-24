@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Twilio.TwiML;
 using EmailAgent.Agent.Chat;
 using EmailAgent.Infrastructure.Notifications;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EmailAgent.API.Controllers;
 
@@ -12,17 +13,14 @@ namespace EmailAgent.API.Controllers;
 [Route("api/whatsapp")]
 public class WhatsAppController : ControllerBase
 {
-    private readonly IChatService _chatService;
-    private readonly IWhatsAppNotificationService _whatsAppService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<WhatsAppController> _logger;
 
     public WhatsAppController(
-        IChatService chatService,
-        IWhatsAppNotificationService whatsAppService,
+        IServiceScopeFactory scopeFactory,
         ILogger<WhatsAppController> logger)
     {
-        _chatService = chatService;
-        _whatsAppService = whatsAppService;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -44,18 +42,22 @@ public class WhatsAppController : ControllerBase
         // Twilio requires a fast response (typically < 15 seconds)
         _ = Task.Run(async () =>
         {
+            using var scope = _scopeFactory.CreateScope();
+            var chatService = scope.ServiceProvider.GetRequiredService<IChatService>();
+            var whatsAppService = scope.ServiceProvider.GetRequiredService<IWhatsAppNotificationService>();
+            
             try
             {
                 // We use the phone number as the SessionId for chat history
-                var response = await _chatService.SendMessageAsync(fromNumber, body);
+                var response = await chatService.SendMessageAsync(fromNumber, body);
                 
                 // Send the AI's response back to the user via WhatsApp
-                await _whatsAppService.SendMessageAsync(fromNumber, response);
+                await whatsAppService.SendMessageAsync(fromNumber, response);
             }
             catch (System.Exception ex)
             {
                 _logger.LogError(ex, "Error processing WhatsApp message from {From}", fromNumber);
-                await _whatsAppService.SendMessageAsync(fromNumber, "Sorry, I encountered an error while processing your request.");
+                await whatsAppService.SendMessageAsync(fromNumber, "Sorry, I encountered an error while processing your request.");
             }
         });
 

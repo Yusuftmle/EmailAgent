@@ -130,6 +130,24 @@
           }
         }
       },
+      "Google.GenAI/0.11.0": {
+        "type": "package",
+        "dependencies": {
+          "Google.Apis.Auth": "1.69.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.1.1",
+          "MimeTypes": "2.5.2"
+        },
+        "compile": {
+          "lib/net8.0/Google.GenAI.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Google.GenAI.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Hangfire.AspNetCore/1.8.23": {
         "type": "package",
         "dependencies": {
@@ -837,6 +855,25 @@
           }
         }
       },
+      "Microsoft.SemanticKernel.Connectors.Google/1.76.0-alpha": {
+        "type": "package",
+        "dependencies": {
+          "Google.Apis.Auth": "1.73.0",
+          "Google.GenAI": "0.11.0",
+          "Microsoft.SemanticKernel.Abstractions": "1.76.0",
+          "Microsoft.SemanticKernel.Core": "1.76.0"
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.SemanticKernel.Connectors.Google.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.SemanticKernel.Connectors.Google.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.SemanticKernel.Connectors.OpenAI/1.76.0": {
         "type": "package",
         "dependencies": {
@@ -870,6 +907,16 @@
         "runtime": {
           "lib/net10.0/Microsoft.SemanticKernel.Core.dll": {
             "related": ".xml"
+          }
+        }
+      },
+      "MimeTypes/2.5.2": {
+        "type": "package",
+        "contentFiles": {
+          "contentFiles/any/any/_._": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": false
           }
         }
       },
@@ -1091,7 +1138,9 @@
         "dependencies": {
           "EmailAgent.Core": "1.0.0",
           "Microsoft.SemanticKernel": "1.76.0",
-          "Microsoft.SemanticKernel.Agents.Core": "1.76.0"
+          "Microsoft.SemanticKernel.Agents.Core": "1.76.0",
+          "Microsoft.SemanticKernel.Connectors.Google": "1.76.0-alpha",
+          "Microsoft.SemanticKernel.Connectors.OpenAI": "1.76.0"
         },
         "compile": {
           "bin/placeholder/EmailAgent.Agent.dll": {}
@@ -1286,6 +1335,22 @@
         "lib/netstandard2.0/Google.Apis.Gmail.v1.dll",
         "lib/netstandard2.0/Google.Apis.Gmail.v1.pdb",
         "lib/netstandard2.0/Google.Apis.Gmail.v1.xml"
+      ]
+    },
+    "Google.GenAI/0.11.0": {
+      "sha512": "W9fFYcRha8BoJCSZl5subs2k8xMxLtD0+4JCHQkDZKk5hvv+vS6rJ3qSH/Wkl9LPNBsX0EsLUdf3sBPG6n+6RA==",
+      "type": "package",
+      "path": "google.genai/0.11.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "google.genai.0.11.0.nupkg.sha512",
+        "google.genai.nuspec",
+        "lib/net8.0/Google.GenAI.dll",
+        "lib/net8.0/Google.GenAI.xml",
+        "lib/netstandard2.0/Google.GenAI.dll",
+        "lib/netstandard2.0/Google.GenAI.xml"
       ]
     },
     "Hangfire.AspNetCore/1.8.23": {
@@ -2342,6 +2407,25 @@
         "microsoft.semantickernel.connectors.azureopenai.nuspec"
       ]
     },
+    "Microsoft.SemanticKernel.Connectors.Google/1.76.0-alpha": {
+      "sha512": "lKfHFJnbRwh4mbhOS7w6bjTVm2g1c9Orh1YcvTtEhhoRKezyBRAk2YRezVM+3ZsgHcSi9EVvrhS8qCpdcwpY+w==",
+      "type": "package",
+      "path": "microsoft.semantickernel.connectors.google/1.76.0-alpha",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "NUGET.md",
+        "icon.png",
+        "lib/net10.0/Microsoft.SemanticKernel.Connectors.Google.dll",
+        "lib/net10.0/Microsoft.SemanticKernel.Connectors.Google.xml",
+        "lib/net8.0/Microsoft.SemanticKernel.Connectors.Google.dll",
+        "lib/net8.0/Microsoft.SemanticKernel.Connectors.Google.xml",
+        "lib/netstandard2.0/Microsoft.SemanticKernel.Connectors.Google.dll",
+        "lib/netstandard2.0/Microsoft.SemanticKernel.Connectors.Google.xml",
+        "microsoft.semantickernel.connectors.google.1.76.0-alpha.nupkg.sha512",
+        "microsoft.semantickernel.connectors.google.nuspec"
+      ]
+    },
     "Microsoft.SemanticKernel.Connectors.OpenAI/1.76.0": {
       "sha512": "sVIiaYdjwg/J97y+8ZlwxMHHThOPZxqYNGOVuIF23P1yLxZYFLpKqHTVcPyyQrwo1soYT5uQqi0DddoLML/9vg==",
       "type": "package",
@@ -2378,6 +2462,24 @@
         "lib/netstandard2.0/Microsoft.SemanticKernel.Core.xml",
         "microsoft.semantickernel.core.1.76.0.nupkg.sha512",
         "microsoft.semantickernel.core.nuspec"
+      ]
+    },
+    "MimeTypes/2.5.2": {
+      "sha512": "vm4xrNt+i6OVRQ8vhfCcmDIUg3qvjyCTkSTNVTDFohsG6CXEpMaVFkidECL6yRYpHDnz4TqXhDoEQAcnHCu/tw==",
+      "type": "package",
+      "path": "mimetypes/2.5.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "contentFiles/cs/net472/MimeTypes.cs.pp",
+        "contentFiles/cs/net5.0/MimeTypes.Nullable.cs.pp",
+        "contentFiles/cs/netcoreapp3.0/MimeTypes.Nullable.cs.pp",
+        "contentFiles/cs/netstandard2.0/MimeTypes.cs.pp",
+        "contentFiles/cs/netstandard2.1/MimeTypes.Nullable.cs.pp",
+        "docs/README.md",
+        "images/nuget-icon.png",
+        "mimetypes.2.5.2.nupkg.sha512",
+        "mimetypes.nuspec"
       ]
     },
     "Newtonsoft.Json/13.0.4": {

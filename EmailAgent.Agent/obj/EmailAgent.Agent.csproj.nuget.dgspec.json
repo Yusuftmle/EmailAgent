@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj": {}
+    "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj": {}
   },
   "projects": {
-    "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj": {
+    "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj",
+        "projectUniqueName": "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj",
         "projectName": "EmailAgent.Agent",
-        "projectPath": "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj",
+        "projectPath": "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\EmailAgent.Agent.csproj",
         "packagesPath": "C:\\Users\\hucks\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\obj\\",
+        "outputPath": "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Agent\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\hucks\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -26,8 +26,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj": {
-                "projectPath": "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj"
+              "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj": {
+                "projectPath": "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj"
               }
             }
           }
@@ -55,6 +55,10 @@
             "Microsoft.SemanticKernel.Agents.Core": {
               "target": "Package",
               "version": "[1.76.0, )"
+            },
+            "Microsoft.SemanticKernel.Connectors.Google": {
+              "target": "Package",
+              "version": "[1.76.0-alpha, )"
             },
             "Microsoft.SemanticKernel.Connectors.OpenAI": {
               "target": "Package",
@@ -355,14 +359,14 @@
         }
       }
     },
-    "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj": {
+    "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj",
+        "projectUniqueName": "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj",
         "projectName": "EmailAgent.Core",
-        "projectPath": "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj",
+        "projectPath": "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\EmailAgent.Core.csproj",
         "packagesPath": "C:\\Users\\hucks\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\obj\\",
+        "outputPath": "C:\\Users\\hucks\\.gemini\\antigravity-ide\\scratch\\EmailAgent\\EmailAgent.Core\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\hucks\\AppData\\Roaming\\NuGet\\NuGet.Config"
