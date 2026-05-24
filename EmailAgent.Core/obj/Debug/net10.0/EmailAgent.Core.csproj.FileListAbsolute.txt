@@ -1,0 +1,11 @@
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\bin\Debug\net10.0\EmailAgent.Core.deps.json
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\bin\Debug\net10.0\EmailAgent.Core.dll
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\bin\Debug\net10.0\EmailAgent.Core.pdb
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\EmailAgent.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\EmailAgent.Core.AssemblyInfoInputs.cache
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\EmailAgent.Core.AssemblyInfo.cs
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\EmailAgent.Core.csproj.CoreCompileInputs.cache
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\EmailAgent.Core.dll
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\refint\EmailAgent.Core.dll
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\EmailAgent.Core.pdb
+C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Core\obj\Debug\net10.0\ref\EmailAgent.Core.dll
