@@ -10,22 +10,39 @@ public class NotificationPlugin
     private readonly IWhatsAppNotificationService _whatsAppService;
     private readonly ITelegramNotificationService _telegramService;
 
+    private readonly EmailAgent.Core.Entities.UserPreferences _user;
+
     public NotificationPlugin(
         IWhatsAppNotificationService whatsAppService,
-        ITelegramNotificationService telegramService)
+        ITelegramNotificationService telegramService,
+        EmailAgent.Core.Entities.UserPreferences user)
     {
         _whatsAppService = whatsAppService;
         _telegramService = telegramService;
+        _user = user;
     }
 
-    [KernelFunction("send_whatsapp_message")]
-    [Description("Sends a WhatsApp message to a specific phone number. Use this when the user asks to send a WhatsApp notification or message.")]
+    [KernelFunction("SendWhatsAppMessage")]
+    [Description("Sends a direct WhatsApp message to the user. Use this when the user asks you to text them or send them a WhatsApp message.")]
     public async Task<string> SendWhatsAppMessageAsync(
-        [Description("The recipient's phone number, e.g., +905551234567")] string toPhoneNumber,
-        [Description("The content of the WhatsApp message")] string messageBody)
+        [Description("The exact message text to send to the user via WhatsApp")] string message)
     {
-        await _whatsAppService.SendMessageAsync(toPhoneNumber, messageBody);
-        return $"Successfully sent WhatsApp message to {toPhoneNumber}.";
+        try
+        {
+            var user = _user;
+            // Try to extract the user's configured WhatsApp recipient number
+            var toPhoneNumber = !string.IsNullOrEmpty(user?.WhatsAppTo) ? user.WhatsAppTo : "";
+            
+            if (string.IsNullOrEmpty(toPhoneNumber))
+                return "Failed to send: User has no configured WhatsApp phone number.";
+
+            await _whatsAppService.SendMessageAsync(user, toPhoneNumber, message);
+            return "Successfully sent WhatsApp message to user.";
+        }
+        catch
+        {
+            return "Failed to send WhatsApp message.";
+        }
     }
 
     // Since ITelegramNotificationService doesn't have a specific SendMessageAsync method we added yet,

@@ -49,25 +49,31 @@ public class DailyEmailJob
         
         try
         {
-            // 1. Fetch user preferences
-            var preferences = await _prefRepo.GetAsync();
+            // 1. Fetch all user preferences
+            var users = await _prefRepo.GetAllAsync();
 
-            // 2. Fetch unread emails from Gmail
-            var unreadEmails = await _gmailService.FetchUnreadEmailsLast24HoursAsync(CancellationToken.None);
-            var emailMessages = unreadEmails.ToList();
-
-            if (!emailMessages.Any())
+            foreach (var preferences in users)
             {
-                _logger.LogInformation("No new emails retrieved from Gmail. Skipping analysis pipeline.");
-                return;
-            }
+                try
+                {
+                    _logger.LogInformation("Processing emails for User {UserId}...", preferences.Id);
+                    
+                    // 2. Fetch unread emails from Gmail
+                    var unreadEmails = await _gmailService.FetchUnreadEmailsLast24HoursAsync(preferences, CancellationToken.None);
+                    var emailMessages = unreadEmails.ToList();
 
-            int newImportantCount = 0;
-            int newProcessedCount = 0;
+                    if (!emailMessages.Any())
+                    {
+                        _logger.LogInformation("No new emails retrieved from Gmail for User {UserId}.", preferences.Id);
+                        continue;
+                    }
 
-            _logger.LogInformation("Retrieved {Count} emails for processing.", emailMessages.Count);
+                int newImportantCount = 0;
+                int newProcessedCount = 0;
 
-            foreach (var email in emailMessages)
+                _logger.LogInformation("Retrieved {Count} emails for processing for User {UserId}.", emailMessages.Count, preferences.Id);
+
+                foreach (var email in emailMessages)
             {
                 try
                 {
@@ -97,11 +103,11 @@ public class DailyEmailJob
                     await Task.Delay(1500);
 
                     _logger.LogInformation("Analyzing email ID: {Id} - Summarizing...", email.Id);
-                    var summary = await _analysisAgent.SummarizeEmailAsync(email);
+                    var summary = await _analysisAgent.SummarizeEmailAsync(email, preferences);
                     await Task.Delay(1500);
 
                     _logger.LogInformation("Analyzing email ID: {Id} - Drafting reply...", email.Id);
-                    var draftReply = await _analysisAgent.DraftReplyAsync(email);
+                    var draftReply = await _analysisAgent.DraftReplyAsync(email, preferences);
                     await Task.Delay(1500);
 
                     if (isUpdate && existing != null)
@@ -139,28 +145,35 @@ public class DailyEmailJob
                 }
             }
 
-            if (newProcessedCount > 0)
-            {
-                await _emailRepo.SaveChangesAsync();
-                _logger.LogInformation("Successfully analyzed and saved {Count} new emails in PostgreSQL database.", newProcessedCount);
-            }
+                if (newProcessedCount > 0)
+                {
+                    await _emailRepo.SaveChangesAsync();
+                    _logger.LogInformation("Successfully analyzed and saved {Count} new emails in PostgreSQL database for User {UserId}.", newProcessedCount, preferences.Id);
+                }
 
-            // 3. Send out summary notifications if new emails were processed
-            var dashboardUrl = _config["App:DashboardUrl"] ?? "https://yourdomain.com/dashboard";
-            
-            if (newImportantCount > 0)
-            {
-                _logger.LogInformation("Triggering system notifications. Important emails found: {Count}", newImportantCount);
+                // 3. Send out summary notifications if new emails were processed
+                var dashboardUrl = _config["App:DashboardUrl"] ?? "http://localhost:5173";
                 
-                var telegramTask = _telegramService.SendDailySummaryAsync(newImportantCount, dashboardUrl, CancellationToken.None);
-                var whatsappTask = _whatsAppService.SendDailySummaryAsync(newImportantCount, dashboardUrl);
+                if (newImportantCount > 0)
+                {
+                    _logger.LogInformation("Triggering system notifications. Important emails found: {Count}", newImportantCount);
+                    
+                    var telegramTask = _telegramService.SendDailySummaryAsync(preferences, newImportantCount, dashboardUrl, CancellationToken.None);
+                    var whatsappTask = _whatsAppService.SendDailySummaryAsync(preferences, newImportantCount, dashboardUrl);
 
-                await Task.WhenAll(telegramTask, whatsappTask);
-            }
-            else
-            {
-                _logger.LogInformation("No important emails found. Skipping notifications.");
-            }
+                    await Task.WhenAll(telegramTask, whatsappTask);
+                }
+                else
+                {
+                    _logger.LogInformation("No important emails found for User {UserId}. Skipping notifications.", preferences.Id);
+                }
+                }
+                catch (Exception userEx)
+                {
+                    _logger.LogError(userEx, "Failed to process daily summary for User {UserId}. Skipping to next user.", preferences.Id);
+                    continue;
+                }
+            } // end foreach user
 
             _logger.LogInformation("Daily Email analysis job finished successfully.");
         }

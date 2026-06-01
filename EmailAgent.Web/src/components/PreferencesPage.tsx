@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService, UserPreferences } from '../services/api';
-import { ArrowLeft, Save, Plus, X, Building, Key, Sparkles, Mail, Cpu, Eye, EyeOff, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X, Building, Key, Sparkles, Mail, Cpu, Eye, EyeOff, MessageCircle, Send } from 'lucide-react';
 
 interface PreferencesPageProps {
   onBackToDashboard: () => void;
@@ -17,12 +17,13 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
     whatsAppSid: '',
     whatsAppToken: '',
     whatsAppFrom: '',
-    whatsAppTo: ''
+    whatsAppTo: '',
+    telegramBotToken: '',
+    telegramChatId: ''
   });
   const [companyInput, setCompanyInput] = useState('');
   const [keywordInput, setKeywordInput] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
-  const [showWhatsAppToken, setShowWhatsAppToken] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -158,40 +159,19 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* User Gmail Address */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Gmail Account</label>
             <div className="relative">
               <input
                 type="email"
                 value={prefs.userEmail || ''}
-                onChange={(e) => setPrefs(prev => ({ ...prev, userEmail: e.target.value }))}
-                placeholder="e.g. user@gmail.com"
-                className="w-full px-4 py-2.5 pl-10 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-indigo-500/40 outline-none text-slate-200 placeholder-slate-600 transition-all"
+                readOnly
+                placeholder="Not connected"
+                className="w-full px-4 py-2.5 pl-10 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-indigo-500/40 outline-none text-slate-200 placeholder-slate-600 transition-all opacity-80 cursor-not-allowed"
               />
               <Mail size={14} className="absolute left-3.5 top-3.5 text-slate-500" />
             </div>
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={async () => {
-                setIsConnecting(true);
-                try {
-                  await apiService.triggerJobNow();
-                  setStatusMsg({ type: 'success', text: 'Gmail connected & inbox successfully synced!' });
-                } catch (error) {
-                  setStatusMsg({ type: 'error', text: 'Failed to connect Gmail account.' });
-                } finally {
-                  setIsConnecting(false);
-                }
-              }}
-              disabled={isConnecting}
-              className="w-full mt-1 px-4 py-2 rounded-xl bg-cyan-600/80 hover:bg-cyan-500 disabled:opacity-50 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/5"
-            >
-              <Sparkles size={13} className={isConnecting ? "animate-spin" : ""} />
-              <span>{isConnecting ? 'Connecting to Gmail...' : 'Connect & Sync Gmail'}</span>
-            </motion.button>
+            <p className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1"><Sparkles size={10} /> Connected via OAuth</p>
           </div>
 
           {/* AI Provider Selector */}
@@ -386,6 +366,73 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
               placeholder="whatsapp:+90532XXXXXXX"
               className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-green-500/40 outline-none text-slate-200 transition-all"
             />
+          </div>
+        </div>
+      </div>
+      {/* 4. NEW FULL-WIDTH CARD: Telegram Assistant Setup */}
+      <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col relative overflow-hidden mt-6">
+        <div className="absolute inset-0 bg-gradient-to-tr from-sky-500/0 via-sky-500/2 to-blue-500/0 pointer-events-none" />
+        <div className="flex items-center gap-2.5 mb-2 border-b border-white/5 pb-3">
+          <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/15">
+            <Send size={16} />
+          </div>
+          <h2 className="text-base font-bold text-slate-200 uppercase tracking-wider">Telegram AI Assistant</h2>
+        </div>
+        <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+          Interact with your AI Assistant directly from Telegram. Use the pairing code below to link your account.
+        </p>
+
+        <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5 space-y-4">
+          <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+            <div className="w-8 h-8 rounded-lg bg-[#0088cc]/20 flex items-center justify-center text-[#0088cc]">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.11.03-1.84 1.18-5.2 3.45-.49.34-.93.5-1.33.49-.44-.01-1.28-.25-1.91-.45-.77-.25-1.38-.38-1.33-.8.03-.22.34-.44.93-.66 3.64-1.58 6.06-2.63 7.27-3.13 3.45-1.43 4.17-1.68 4.64-1.69.1 0 .33.02.46.12.11.08.14.19.15.28-.01.07-.01.16-.02.25z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-slate-200">Telegram Bot Integration</h4>
+              <p className="text-xs text-slate-400">Connect to the central @OmniAgentBot</p>
+            </div>
+            <div className={`text-[10px] font-bold px-2 py-1 rounded-full border ${prefs.telegramChatId ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+              {prefs.telegramChatId ? 'PAIRED' : 'NOT PAIRED'}
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-1">
+            <label className="text-xs font-semibold text-slate-300">Your Unique Pairing Code</label>
+            <div className="flex gap-2">
+              <div className="flex-1 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-sm font-mono text-cyan-400 select-all overflow-hidden text-ellipsis whitespace-nowrap">
+                {prefs.pairingCode || 'Loading...'}
+              </div>
+              <button 
+                onClick={() => {
+                  if (prefs.pairingCode) {
+                    navigator.clipboard.writeText(prefs.pairingCode);
+                    alert("Pairing code copied to clipboard!");
+                  }
+                }}
+                className="px-3 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 transition-colors border border-indigo-500/20"
+              >
+                Copy
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3 mt-4">
+              <a 
+                href={`https://t.me/AegisAssistanttBot?start=${prefs.pairingCode}`} 
+                target="_blank" 
+                rel="noreferrer"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#0088cc] to-[#0077b5] hover:scale-105 active:scale-95 text-white text-xs font-bold rounded-xl shadow-lg shadow-[#0088cc]/30 transition-all cursor-pointer"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.11.03-1.84 1.18-5.2 3.45-.49.34-.93.5-1.33.49-.44-.01-1.28-.25-1.91-.45-.77-.25-1.38-.38-1.33-.8.03-.22.34-.44.93-.66 3.64-1.58 6.06-2.63 7.27-3.13 3.45-1.43 4.17-1.68 4.64-1.69.1 0 .33.02.46.12.11.08.14.19.15.28-.01.07-.01.16-.02.25z" />
+                </svg>
+                Telefonda Tek Tıkla Bağla (Deep Link)
+              </a>
+              <p className="text-[10px] text-slate-500 leading-relaxed flex-1">
+                Tıkladığınız an Telegram açılır ve kodunuz otomatik olarak sisteme gönderilir. (Copy-paste yapmanıza gerek yok!)
+              </p>
+            </div>
           </div>
         </div>
       </div>

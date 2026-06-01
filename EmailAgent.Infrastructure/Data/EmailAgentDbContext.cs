@@ -25,6 +25,7 @@ public class EmailAgentDbContext : DbContext
         {
             entity.ToTable("EmailAnalysis");
             entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId); // Multi-tenant index
             entity.Property(e => e.GmailId).IsRequired().HasMaxLength(100);
             entity.HasIndex(e => e.GmailId).IsUnique();
             entity.Property(e => e.From).IsRequired().HasMaxLength(255);
@@ -42,6 +43,8 @@ public class EmailAgentDbContext : DbContext
         {
             entity.ToTable("UserPreferences");
             entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserEmail).IsUnique(); // Ensure emails are unique
+            entity.HasIndex(e => e.TelegramChatId); // For quick bot lookups
             entity.Property(e => e.FocusCompanies)
                 .HasConversion(stringListConverter)
                 .HasColumnType("jsonb");
@@ -55,6 +58,7 @@ public class EmailAgentDbContext : DbContext
         {
             entity.ToTable("ChatHistory");
             entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId); // Multi-tenant index
             entity.Property(e => e.SessionId).IsRequired().HasMaxLength(100);
             entity.HasIndex(e => e.SessionId);
             entity.Property(e => e.Role).IsRequired().HasMaxLength(50);

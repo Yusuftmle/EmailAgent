@@ -8,10 +8,12 @@ namespace EmailAgent.API.Plugins;
 public class EmailPlugin
 {
     private readonly IGmailService _gmailService;
+    private readonly EmailAgent.Core.Entities.UserPreferences _user;
 
-    public EmailPlugin(IGmailService gmailService)
+    public EmailPlugin(IGmailService gmailService, EmailAgent.Core.Entities.UserPreferences user)
     {
         _gmailService = gmailService;
+        _user = user;
     }
 
     [KernelFunction("send_email")]
@@ -21,7 +23,14 @@ public class EmailPlugin
         [Description("The subject of the email")] string subject,
         [Description("The body/content of the email. Can include meeting details, plain text, etc.")] string body)
     {
-        await _gmailService.SendEmailAsync(to, subject, body);
-        return $"Successfully sent email to {to} with subject '{subject}'.";
+        try
+        {
+            await _gmailService.SendEmailAsync(to, subject, body, _user);
+            return $"Successfully sent email to {to} with subject '{subject}'.";
+        }
+        catch (System.Exception ex)
+        {
+            return $"FAILED to send email: {ex.Message}. Tell the user that the Gmail API is currently not configured or encountered an error.";
+        }
     }
 }

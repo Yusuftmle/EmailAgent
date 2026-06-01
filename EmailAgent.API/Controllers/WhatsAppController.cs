@@ -38,6 +38,11 @@ public class WhatsAppController : ControllerBase
             return BadRequest("Invalid payload.");
         }
 
+        // Extract Twilio validation parameters before the HttpContext is disposed
+        var signature = Request.Headers["X-Twilio-Signature"].ToString();
+        var url = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
+        var formDictionary = form.ToDictionary(k => k.Key, v => v.Value.ToString());
+
         // Run chat processing in background so we don't block the Twilio webhook response
         // Twilio requires a fast response (typically < 15 seconds)
         _ = Task.Run(async () =>
@@ -45,19 +50,40 @@ public class WhatsAppController : ControllerBase
             using var scope = _scopeFactory.CreateScope();
             var chatService = scope.ServiceProvider.GetRequiredService<IChatService>();
             var whatsAppService = scope.ServiceProvider.GetRequiredService<IWhatsAppNotificationService>();
+            var prefRepo = scope.ServiceProvider.GetRequiredService<EmailAgent.Core.Repositories.IUserPreferencesRepository>();
             
             try
             {
-                // We use the phone number as the SessionId for chat history
-                var response = await chatService.SendMessageAsync(fromNumber, body);
+                var user = await prefRepo.GetByWhatsAppNumberAsync(fromNumber);
+                if (user == null) {
+                    _logger.LogWarning("No user found for WhatsApp number: {From}", fromNumber);
+                    return;
+                }
+
+                // Verify Twilio Signature for Security
+                if (!string.IsNullOrEmpty(user.WhatsAppToken))
+                {
+                    var validator = new Twilio.Security.RequestValidator(user.WhatsAppToken);
+                    if (!validator.Validate(url, formDictionary, signature))
+                    {
+                        _logger.LogWarning("Invalid Twilio signature from {From}. Possible webhook spoofing attempt.", fromNumber);
+                        return;
+                    }
+                }
+
+                // We use the UserId as the SessionId for chat history
+                var response = await chatService.SendMessageAsync(user.Id.ToString(), body);
                 
                 // Send the AI's response back to the user via WhatsApp
-                await whatsAppService.SendMessageAsync(fromNumber, response);
+                await whatsAppService.SendMessageAsync(user, fromNumber, response);
             }
             catch (System.Exception ex)
             {
                 _logger.LogError(ex, "Error processing WhatsApp message from {From}", fromNumber);
-                await whatsAppService.SendMessageAsync(fromNumber, "Sorry, I encountered an error while processing your request.");
+                
+                var user = await prefRepo.GetByWhatsAppNumberAsync(fromNumber);
+                if (user != null)
+                    await whatsAppService.SendMessageAsync(user, fromNumber, "Sorry, I encountered an error while processing your request.");
             }
         });
 

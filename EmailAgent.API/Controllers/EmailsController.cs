@@ -8,24 +8,31 @@ using EmailAgent.Core.Repositories;
 using EmailAgent.Agent;
 using EmailAgent.Infrastructure.Gmail;
 
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 namespace EmailAgent.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class EmailsController : ControllerBase
 {
     private readonly IEmailAnalysisRepository _emailRepo;
+    private readonly IUserPreferencesRepository _prefRepo;
     private readonly IEmailAnalysisAgent _analysisAgent;
     private readonly ILogger<EmailsController> _logger;
 
     public EmailsController(
         IEmailAnalysisRepository emailRepo,
+        IUserPreferencesRepository prefRepo,
         IEmailAnalysisAgent analysisAgent,
-        ILogger<EmailsController> _logger)
+        ILogger<EmailsController> logger)
     {
         _emailRepo = emailRepo;
+        _prefRepo = prefRepo;
         _analysisAgent = analysisAgent;
-        this._logger = _logger;
+        _logger = logger;
     }
 
     [HttpGet("daily-summary")]
@@ -97,9 +104,17 @@ public class EmailsController : ControllerBase
                 Body = $"[Context Summary]: {emailAnalysis.Summary}"
             };
 
-            _logger.LogInformation("Running agent draft regeneration for Gmail ID: {GmailId}", emailAnalysis.GmailId);
-            var newDraft = await _analysisAgent.DraftReplyAsync(tempMessage);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+                return Unauthorized();
 
+            var userPrefs = await _prefRepo.GetByIdAsync(userId);
+            if (userPrefs == null)
+                return BadRequest("User preferences not found.");
+
+            _logger.LogInformation("Regenerating AI Draft for email ID: {Id} for User {UserId}", id, userId);
+            
+            var newDraft = await _analysisAgent.DraftReplyAsync(tempMessage, userPrefs);
             emailAnalysis.DraftReply = newDraft;
             await _emailRepo.UpdateAsync(emailAnalysis);
             await _emailRepo.SaveChangesAsync();

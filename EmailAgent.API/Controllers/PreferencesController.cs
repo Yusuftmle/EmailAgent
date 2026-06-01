@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using EmailAgent.Core.Entities;
 using EmailAgent.Core.Repositories;
+using System.Security.Claims;
 
 namespace EmailAgent.API.Controllers;
 
@@ -20,14 +21,19 @@ public class PreferencesController : ControllerBase
         _logger = logger;
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize]
     [HttpGet]
     public async Task<ActionResult<UserPreferences>> GetPreferences()
     {
         try
         {
-            _logger.LogInformation("GET api/preferences requested");
+            var userIdString = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+                return Unauthorized();
+
+            _logger.LogInformation("GET api/preferences requested by {UserId}", userId);
             
-            var prefs = await _prefRepo.GetAsync();
+            var prefs = await _prefRepo.GetByIdAsync(userId);
             if (prefs == null)
             {
                 // Return empty default preferences if not yet created in the database
@@ -42,6 +48,7 @@ public class PreferencesController : ControllerBase
         }
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize]
     [HttpPost]
     public async Task<ActionResult<UserPreferences>> SavePreferences([FromBody] UserPreferences preferences)
     {
@@ -52,7 +59,12 @@ public class PreferencesController : ControllerBase
 
         try
         {
-            _logger.LogInformation("POST api/preferences requested (Save)");
+            var userIdString = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+                return Unauthorized();
+
+            preferences.Id = userId;
+            _logger.LogInformation("POST api/preferences requested (Save) for {UserId}", userId);
             
             await _prefRepo.SaveAsync(preferences);
             return Ok(preferences);

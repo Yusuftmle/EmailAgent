@@ -1,17 +1,30 @@
+using System;
 using System.Collections.Generic;
 
 namespace EmailAgent.Core.Entities;
 
 public class UserPreferences
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
     public string UserEmail { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    
+    // AI Engine Configuration
     public string AiProvider { get; set; } = "Claude"; // "Claude", "Gemini", "OpenAI"
     public string ApiKey { get; set; } = string.Empty;
     public List<string> FocusCompanies { get; set; } = new();
     public List<string> Keywords { get; set; } = new();
 
-    // WhatsApp Notification Configuration (Twilio API credentials)
+    // Centralized Authentication
+    public string PairingCode { get; set; } = Guid.NewGuid().ToString();
+
+    // Google OAuth (Gmail API)
+    public string GoogleAccessToken { get; set; } = string.Empty;
+    public string GoogleRefreshToken { get; set; } = string.Empty;
+    public DateTimeOffset? GoogleTokenExpiry { get; set; }
+
+    // Integrations
+    public string TelegramChatId { get; set; } = string.Empty;
     public string WhatsAppSid { get; set; } = string.Empty;
     public string WhatsAppToken { get; set; } = string.Empty;
     public string WhatsAppFrom { get; set; } = string.Empty;

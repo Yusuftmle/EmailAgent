@@ -11,33 +11,28 @@ namespace EmailAgent.Infrastructure.Notifications;
 
 public interface IWhatsAppNotificationService
 {
-    Task SendDailySummaryAsync(int importantCount, string dashboardUrl);
-    Task SendMessageAsync(string toPhoneNumber, string messageBody);
+    Task SendDailySummaryAsync(EmailAgent.Core.Entities.UserPreferences user, int importantCount, string dashboardUrl);
+    Task SendMessageAsync(EmailAgent.Core.Entities.UserPreferences user, string toPhoneNumber, string messageBody);
 }
 
 public class WhatsAppNotificationService : IWhatsAppNotificationService
 {
     private readonly IConfiguration _config;
-    private readonly IUserPreferencesRepository _prefRepo;
     private readonly ILogger<WhatsAppNotificationService> _logger;
 
     public WhatsAppNotificationService(
         IConfiguration config, 
-        IUserPreferencesRepository prefRepo,
         ILogger<WhatsAppNotificationService> logger)
     {
         _config = config;
-        _prefRepo = prefRepo;
         _logger = logger;
     }
 
-    private async Task<(string accountSid, string authToken, string fromWhatsApp)> GetTwilioCredentialsAsync()
+    private (string accountSid, string authToken, string fromWhatsApp) GetTwilioCredentials(EmailAgent.Core.Entities.UserPreferences user)
     {
-        var prefs = await _prefRepo.GetAsync();
-
-        var accountSid = !string.IsNullOrEmpty(prefs?.WhatsAppSid) ? prefs.WhatsAppSid : _config["Twilio:AccountSid"];
-        var authToken = !string.IsNullOrEmpty(prefs?.WhatsAppToken) ? prefs.WhatsAppToken : _config["Twilio:AuthToken"];
-        var fromWhatsApp = !string.IsNullOrEmpty(prefs?.WhatsAppFrom) ? prefs.WhatsAppFrom : _config["Twilio:WhatsAppFrom"];
+        var accountSid = !string.IsNullOrEmpty(user?.WhatsAppSid) ? user.WhatsAppSid : _config["Twilio:AccountSid"];
+        var authToken = !string.IsNullOrEmpty(user?.WhatsAppToken) ? user.WhatsAppToken : _config["Twilio:AuthToken"];
+        var fromWhatsApp = !string.IsNullOrEmpty(user?.WhatsAppFrom) ? user.WhatsAppFrom : _config["Twilio:WhatsAppFrom"];
 
         // Ensure "whatsapp:" prefix for From number, crucial for Sandbox
         if (!string.IsNullOrEmpty(fromWhatsApp) && !fromWhatsApp.StartsWith("whatsapp:"))
@@ -64,11 +59,11 @@ public class WhatsAppNotificationService : IWhatsAppNotificationService
         return "whatsapp:" + cleanNumber;
     }
 
-    public async Task SendMessageAsync(string toPhoneNumber, string messageBody)
+    public async Task SendMessageAsync(EmailAgent.Core.Entities.UserPreferences user, string toPhoneNumber, string messageBody)
     {
         try
         {
-            var (accountSid, authToken, fromWhatsApp) = await GetTwilioCredentialsAsync();
+            var (accountSid, authToken, fromWhatsApp) = GetTwilioCredentials(user);
             var toWhatsApp = FormatToWhatsAppNumber(toPhoneNumber);
 
             if (string.IsNullOrEmpty(accountSid) || string.IsNullOrEmpty(authToken) || 
@@ -96,15 +91,14 @@ public class WhatsAppNotificationService : IWhatsAppNotificationService
         }
     }
 
-    public async Task SendDailySummaryAsync(int importantCount, string dashboardUrl)
+    public async Task SendDailySummaryAsync(EmailAgent.Core.Entities.UserPreferences user, int importantCount, string dashboardUrl)
     {
-        var prefs = await _prefRepo.GetAsync();
-        var toWhatsApp = !string.IsNullOrEmpty(prefs?.WhatsAppTo) ? prefs.WhatsAppTo : _config["Twilio:WhatsAppTo"];
+        var toWhatsApp = !string.IsNullOrEmpty(user?.WhatsAppTo) ? user.WhatsAppTo : _config["Twilio:WhatsAppTo"];
         
         var messageBody = $"📧 Daily Email Summary\n" +
                           $"✅ {importantCount} important emails\n" +
                           $"📋 Dashboard: {dashboardUrl}";
 
-        await SendMessageAsync(toWhatsApp ?? "", messageBody);
+        await SendMessageAsync(user, toWhatsApp ?? "", messageBody);
     }
 }

@@ -14,12 +14,15 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using EmailAgent.Core.Entities;
 
+using Google.Apis.Auth.OAuth2.Flows;
+using Google.Apis.Auth.OAuth2.Responses;
+
 namespace EmailAgent.Infrastructure.Gmail;
 
 public interface IGmailService
 {
-    Task<IEnumerable<EmailMessage>> FetchUnreadEmailsLast24HoursAsync(CancellationToken cancellationToken = default);
-    Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default);
+    Task<IEnumerable<EmailMessage>> FetchUnreadEmailsLast24HoursAsync(UserPreferences user, CancellationToken cancellationToken = default);
+    Task SendEmailAsync(string to, string subject, string body, UserPreferences user, CancellationToken cancellationToken = default);
 }
 
 public class GmailService : IGmailService
@@ -38,36 +41,42 @@ public class GmailService : IGmailService
         _logger = logger;
     }
 
-    private async Task<Google.Apis.Gmail.v1.GmailService> GetGmailServiceAsync(CancellationToken cancellationToken)
+    private Google.Apis.Gmail.v1.GmailService GetGmailService(UserPreferences user)
     {
         try
         {
-            var clientId = _config["Gmail:ClientId"];
-            var clientSecret = _config["Gmail:ClientSecret"];
+            if (string.IsNullOrEmpty(user.GoogleAccessToken))
+            {
+                throw new InvalidOperationException("User has not linked their Google account. Missing GoogleAccessToken.");
+            }
+
+            var clientId = _config["Google:ClientId"];
+            var clientSecret = _config["Google:ClientSecret"];
 
             if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
             {
-                throw new InvalidOperationException("Gmail ClientId and ClientSecret must be configured in appsettings.json");
+                throw new InvalidOperationException("Google:ClientId or Google:ClientSecret is missing from server configuration.");
             }
 
-            var secrets = new ClientSecrets
+            var tokenResponse = new TokenResponse
             {
-                ClientId = clientId,
-                ClientSecret = clientSecret
+                AccessToken = user.GoogleAccessToken,
+                RefreshToken = user.GoogleRefreshToken,
+                ExpiresInSeconds = user.GoogleTokenExpiry.HasValue ? (long)(user.GoogleTokenExpiry.Value - DateTimeOffset.UtcNow).TotalSeconds : 3600,
+                IssuedUtc = DateTime.UtcNow
             };
 
-            // Use a local folder in the project/user directory to store the credentials token
-            var tokenPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GmailTokenStore");
-            var dataStore = new FileDataStore(tokenPath, true);
+            var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
+            {
+                ClientSecrets = new ClientSecrets
+                {
+                    ClientId = clientId,
+                    ClientSecret = clientSecret
+                },
+                Scopes = Scopes
+            });
 
-            _logger.LogInformation("Authenticating Gmail API with UserCredential...");
-            var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                secrets,
-                Scopes,
-                "user",
-                cancellationToken,
-                dataStore
-            );
+            var credential = new UserCredential(flow, user.Id.ToString(), tokenResponse);
 
             return new Google.Apis.Gmail.v1.GmailService(new BaseClientService.Initializer
             {
@@ -77,17 +86,17 @@ public class GmailService : IGmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to authenticate or initialize Gmail API service.");
+            _logger.LogError(ex, "Failed to initialize Gmail API service with User Token.");
             throw;
         }
     }
 
-    public async Task<IEnumerable<EmailMessage>> FetchUnreadEmailsLast24HoursAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<EmailMessage>> FetchUnreadEmailsLast24HoursAsync(UserPreferences user, CancellationToken cancellationToken = default)
     {
         var emails = new List<EmailMessage>();
         try
         {
-            var service = await GetGmailServiceAsync(cancellationToken);
+            var service = GetGmailService(user);
 
             _logger.LogInformation("Fetching unread emails from the last 24 hours...");
             var listRequest = service.Users.Messages.List("me");
@@ -128,11 +137,11 @@ public class GmailService : IGmailService
         return emails;
     }
 
-    public async Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
+    public async Task SendEmailAsync(string to, string subject, string body, UserPreferences user, CancellationToken cancellationToken = default)
     {
         try
         {
-            var service = await GetGmailServiceAsync(cancellationToken);
+            var service = GetGmailService(user);
             _logger.LogInformation("Sending email to: {To}, Subject: {Subject}", to, subject);
 
             var subjectEncoded = $"=?utf-8?B?{Convert.ToBase64String(Encoding.UTF8.GetBytes(subject))}?=";

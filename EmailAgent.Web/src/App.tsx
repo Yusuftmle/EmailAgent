@@ -1,21 +1,135 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DailySummary } from './components/DailySummary';
 import { PreferencesPage } from './components/PreferencesPage';
 import { ChatBot } from './components/ChatBot';
+import { CommandCenter } from './components/CommandCenter';
+import { ChatView } from './components/ChatView';
 import { apiService, UserPreferences } from './services/api';
-import { Cpu, Terminal, Compass, Sparkles, AlertTriangle, ShieldCheck, Mail } from 'lucide-react';
+import { Cpu, Terminal, Sparkles } from 'lucide-react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './components/LoginPage';
+import { OmniRobot, Behavior } from './components/AssistantMascot';
 
-interface TelemetryLog {
+const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
+  const particleCount = 20; // soft and cozy amount for the main dashboard!
+  const particles = React.useMemo(() => {
+    return Array.from({ length: particleCount }).map((_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      bottom: `${Math.random() * 10}%`,
+      size: Math.random() * 5 + 3,
+      delay: `${Math.random() * 8}s`,
+      duration: `${Math.random() * 14 + 12}s`,
+      color: mode === 'morning' 
+        ? '#fbbf24' 
+        : mode === 'afternoon'
+        ? '#c084fc' 
+        : '#fb923c',
+    }));
+  }, [mode]);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            left: p.left,
+            bottom: p.bottom,
+            width: p.size,
+            height: p.size,
+            backgroundColor: p.color,
+            filter: 'blur(1px) drop-shadow(0 0 3px currentColor)',
+            animation: `cozyFloatMain ${p.duration} ease-in-out ${p.delay} infinite`,
+            opacity: 0,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes cozyFloatMain {
+          0% {
+            transform: translateY(10%) translateX(0px);
+            opacity: 0;
+          }
+          15% {
+            opacity: 0.5;
+          }
+          85% {
+            opacity: 0.5;
+          }
+          100% {
+            transform: translateY(-800px) translateX(45px);
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export interface TelemetryLog {
   timestamp: string;
   category: 'SYSTEM' | 'FETCH' | 'AGENT' | 'ALERT';
   text: string;
 }
 
-export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'preferences'>('dashboard');
+export const AppLayout: React.FC = () => {
+  const [currentView, setCurrentView] = useState<'dashboard' | 'chat' | 'plugins' | 'preferences'>('dashboard');
   const [logs, setLogs] = useState<TelemetryLog[]>([]);
   const [prefs, setPrefs] = useState<UserPreferences>({ focusCompanies: [], keywords: [] });
+
+  // ── Mascot states & handlers for the HUD Cognitive Core ──
+  const [isCoreHovered, setIsCoreHovered] = useState(false);
+  const [waveAngle, setWaveAngle] = useState(0);
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Waving timer tick
+  useEffect(() => {
+    if (!isCoreHovered) {
+      setWaveAngle(0);
+      return;
+    }
+    let t = 0;
+    const intervalId = setInterval(() => {
+      t += 0.28;
+      setWaveAngle(-80 + Math.sin(t) * 55);
+    }, 16);
+    return () => clearInterval(intervalId);
+  }, [isCoreHovered]);
+
+  // Card mouse handlers for gaze tracking
+  const handleCardMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const cardCenterX = rect.left + rect.width / 2;
+    const cardCenterY = rect.top + rect.height / 2;
+    const dx = e.clientX - cardCenterX;
+    const dy = e.clientY - cardCenterY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist === 0) return;
+    const maxOffset = 5.5;
+    setMouseOffset({
+      x: (dx / dist) * Math.min(maxOffset, dist * 0.04),
+      y: (dy / dist) * Math.min(maxOffset * 0.6, dist * 0.025),
+    });
+  }, []);
+
+  const handleCardMouseLeave = useCallback(() => {
+    setIsCoreHovered(false);
+    setMouseOffset({ x: 0, y: 0 });
+  }, []);
+
+  // ── Determine time of day ──
+  const [timeMode] = useState<'morning' | 'afternoon' | 'night'>(() => {
+    const hr = new Date().getHours();
+    if (hr >= 6 && hr < 12) return 'morning';
+    if (hr >= 12 && hr < 18) return 'afternoon';
+    return 'night';
+  });
+
 
   const initialLogs: TelemetryLog[] = [
     { timestamp: "08:00:00", category: "SYSTEM", text: "Claude Inbox Agent initialized successfully." },
@@ -59,7 +173,7 @@ export const App: React.FC = () => {
       const timeStr = now.toTimeString().split(' ')[0];
       
       setLogs(prev => {
-        const newLogs = [...prev, { timestamp: timeStr, category: 'SYSTEM', text: randomText }];
+        const newLogs: TelemetryLog[] = [...prev, { timestamp: timeStr, category: 'SYSTEM' as const, text: randomText }];
         // Limit to last 15 lines to avoid memory leak
         return newLogs.slice(-15);
       });
@@ -68,16 +182,67 @@ export const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] relative overflow-hidden">
-      
-      {/* Hyper-futuristic dynamic lighting effects */}
-      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-indigo-500/5 blur-[160px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-cyan-500/5 blur-[160px] pointer-events-none animate-pulse" />
-      <div className="absolute top-[30%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/5 blur-[160px] pointer-events-none" />
+  const bgGradient = 
+    timeMode === 'morning' ? 'from-[#0a0f1d] via-[#121c32] to-[#25152a]' :
+    timeMode === 'afternoon' ? 'from-[#0b1420] via-[#0f212f] to-[#0f2a20]' :
+    'from-[#05080e] via-[#09101f] to-[#120b20]';
 
-      {/* Futuristic Grid Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+  return (
+    <div className={`min-h-screen bg-gradient-to-br ${bgGradient} text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] relative overflow-hidden`}>
+
+      {/* Repeating Telegram-Style Cute Doodle Wallpaper */}
+      <svg className="absolute inset-0 w-full h-full opacity-[0.02] pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="telegram-doodles-app" width="120" height="120" patternUnits="userSpaceOnUse">
+            {/* Doodle 1: Mail Envelope */}
+            <path d="M10,15 L30,15 L30,30 L10,30 Z M10,15 L20,23 L30,15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Doodle 2: Cute Cloud */}
+            <path d="M55,23 C53,23 51,21 51,19 C51,16 53,14 56,14 C57,12 60,12 61,14 C63,14 65,16 65,19 C65,21 63,23 61,23 Z" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            {/* Doodle 3: Tiny Star */}
+            <path d="M90,15 L92,19 L96,19 L93,22 L94,26 L90,24 L86,26 L87,22 L84,19 L88,19 Z" fill="none" stroke="currentColor" strokeWidth="1" />
+            {/* Doodle 4: Coffee Cup */}
+            <path d="M20,65 L32,65 C32,65 32,73 30,75 C28,77 24,77 22,75 C20,73 20,65 20,65 Z M32,67 C34,67 34,71 32,71" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            {/* Doodle 5: Robot Smiley (Omni!) */}
+            <rect x="52" y="62" width="16" height="12" rx="3" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            <circle cx="56" cy="67" r="0.8" fill="currentColor" />
+            <circle cx="64" cy="67" r="0.8" fill="currentColor" />
+            <path d="M57,70 Q60,72 63,70" fill="none" stroke="currentColor" strokeWidth="1" />
+            {/* Doodle 6: Chat Bubble */}
+            <path d="M85,65 C85,61 90,61 93,61 C96,61 98,63 98,66 C98,69 95,70 93,70 L90,70 L88,72 L88,70 C85,70 85,67 85,65 Z" fill="none" stroke="currentColor" strokeWidth="1" />
+            {/* Doodle 7: Sparkles & dots */}
+            <circle cx="10" cy="100" r="1" fill="currentColor" />
+            <circle cx="105" cy="100" r="0.8" fill="currentColor" />
+            <circle cx="112" cy="50" r="1" fill="currentColor" />
+            <circle cx="45" cy="45" r="0.8" fill="currentColor" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#telegram-doodles-app)" />
+      </svg>
+
+      {/* Dynamic Background Glow Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        {timeMode === 'morning' && (
+          <>
+            <div className="absolute -top-20 -left-20 w-[45vw] h-[45vw] rounded-full bg-pink-500/10 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+            <div className="absolute -bottom-20 -right-20 w-[50vw] h-[50vw] rounded-full bg-amber-500/8 blur-[130px] animate-pulse" style={{ animationDuration: '10s' }} />
+          </>
+        )}
+        {timeMode === 'afternoon' && (
+          <>
+            <div className="absolute -top-20 -right-20 w-[45vw] h-[45vw] rounded-full bg-teal-500/8 blur-[120px] animate-pulse" style={{ animationDuration: '9s' }} />
+            <div className="absolute -bottom-20 -left-20 w-[50vw] h-[50vw] rounded-full bg-indigo-500/10 blur-[130px] animate-pulse" style={{ animationDuration: '11s' }} />
+          </>
+        )}
+        {timeMode === 'night' && (
+          <>
+            <div className="absolute -bottom-40 right-20 w-[55vw] h-[55vw] rounded-full bg-amber-500/12 blur-[140px] animate-pulse" style={{ animationDuration: '12s' }} />
+            <div className="absolute -top-20 -left-20 w-[40vw] h-[40vw] rounded-full bg-purple-900/10 blur-[120px]" />
+          </>
+        )}
+      </div>
+
+      {/* Cozy Firefly/Sunbeam particles drifting up */}
+      <CozyParticles mode={timeMode} />
 
       {/* Top Hologram Navigation Bar */}
       <nav className="glass-panel border-b border-white/5 py-4 px-6 sticky top-0 z-40 backdrop-blur-md">
@@ -91,9 +256,9 @@ export const App: React.FC = () => {
             </div>
             <div>
               <span className="font-extrabold tracking-wide text-lg text-slate-100 flex items-center gap-1.5">
-                Email<span className="gradient-text">Agent</span>
+                Omni<span className="gradient-text">Agent</span>
                 <span className="hologram-gradient text-[9px] px-2.5 py-0.5 rounded-full text-white font-bold uppercase tracking-wider">
-                  CLAUDE 4.5
+                  AEGIS CORE
                 </span>
               </span>
             </div>
@@ -108,7 +273,27 @@ export const App: React.FC = () => {
                   : 'hover:text-white'
               }`}
             >
-              DASHBOARD
+              COMMAND CENTER
+            </button>
+            <button 
+              onClick={() => setCurrentView('chat')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                currentView === 'chat' 
+                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-md shadow-emerald-500/5' 
+                  : 'hover:text-white'
+              }`}
+            >
+              CHAT
+            </button>
+            <button 
+              onClick={() => setCurrentView('plugins')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                currentView === 'plugins' 
+                  ? 'text-orange-400 bg-orange-500/10 border border-orange-500/20 shadow-md shadow-orange-500/5' 
+                  : 'hover:text-white'
+              }`}
+            >
+              PLUGINS
             </button>
             <button 
               onClick={() => setCurrentView('preferences')}
@@ -118,7 +303,7 @@ export const App: React.FC = () => {
                   : 'hover:text-white'
               }`}
             >
-              FILTERS
+              SETTINGS
             </button>
           </div>
         </div>
@@ -131,34 +316,49 @@ export const App: React.FC = () => {
         <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] overflow-hidden">
           
           {/* Claude core interactive Orb */}
-          <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden">
+          <div 
+            ref={cardRef}
+            onMouseMove={handleCardMouseMove}
+            onMouseEnter={() => setIsCoreHovered(true)}
+            onMouseLeave={handleCardMouseLeave}
+            className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 hover:border-indigo-500/25 shadow-lg group"
+          >
             
             {/* Background scanner sweep line */}
             <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 h-10 w-full animate-pulse top-0" style={{ animationDuration: '3s' }} />
 
-            {/* Glowing 3D Orb representing Claude Core */}
-            <motion.div 
-              drag
-              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.4}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative w-36 h-36 flex items-center justify-center cursor-grab active:cursor-grabbing mb-4"
-            >
+            {/* Glowing 3D Orb area replaced with OmniRobot Capsule */}
+            <div className="relative w-36 h-36 flex items-center justify-center mb-4 select-none cursor-pointer">
               {/* Outer Orbit Ring */}
               <div className="absolute inset-0 border border-dashed border-indigo-500/35 rounded-full animate-orb" />
-              {/* Inner Pulsing Core */}
-              <div className="absolute w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-500/20 via-purple-500/30 to-cyan-500/20 blur-sm orb-glow animate-pulse" />
-              <div className="absolute w-20 h-20 rounded-full bg-gradient-to-bl from-cyan-400/40 via-indigo-500/50 to-purple-400/40 border border-white/10 flex items-center justify-center">
-                <Sparkles size={32} className="text-white animate-bounce" style={{ animationDuration: '4s' }} />
+              {/* Inner Pulsing Core / Ambient Hologram Glow */}
+              <div className="absolute w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-500/10 via-purple-500/20 to-cyan-500/10 blur-md opacity-75 animate-pulse" />
+              
+              {/* Scale animation wrapper for hover feedback (Spring feel) */}
+              <div 
+                style={{ 
+                  transform: isCoreHovered ? 'scale(1.08)' : 'scale(1)', 
+                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' 
+                }}
+                className="flex items-center justify-center z-10 animate-floating"
+              >
+                <OmniRobot
+                  behavior={isCoreHovered ? 'wave' : 'idle'}
+                  facingLeft={false}
+                  walkCycle={0}
+                  jumpY={0}
+                  waveAngle={waveAngle}
+                  mouseEyeOffset={mouseOffset}
+                  headOnly={true}
+                />
               </div>
-            </motion.div>
+            </div>
 
             <h3 className="font-extrabold text-slate-100 text-lg tracking-wide uppercase flex items-center gap-1.5">
-              Claude <span className="gradient-text">Cognitive Core</span>
+              Aegis <span className="gradient-text">Cognitive Core</span>
             </h3>
             <p className="text-xs text-slate-400 max-w-xs mt-1">
-              Active cognitive layer processing unread mail streams and formulating responsive drafting logic. Drag the core to interact.
+              Active cognitive layer processing background tasks, plugins, and generating responses. Hover the core to interact.
             </p>
 
             {/* Core Preference Monitor */}
@@ -221,9 +421,16 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.35, ease: 'easeInOut' }}
             >
-              {currentView === 'dashboard' ? (
+              {currentView === 'dashboard' && (
+                <CommandCenter onNavigate={(view) => setCurrentView(view as any)} />
+              )}
+              {currentView === 'chat' && (
+                <ChatView />
+              )}
+              {currentView === 'plugins' && (
                 <DailySummary onGoToPreferences={() => setCurrentView('preferences')} />
-              ) : (
+              )}
+              {currentView === 'preferences' && (
                 <PreferencesPage onBackToDashboard={() => setCurrentView('dashboard')} />
               )}
             </motion.div>
@@ -233,7 +440,7 @@ export const App: React.FC = () => {
       </div>
 
       {/* Floating Assistant Chatbot Widget */}
-      <ChatBot />
+      {currentView !== 'chat' && <ChatBot />}
 
       {/* Holographic Footer */}
       <footer className="py-6 border-t border-white/5 bg-slate-950/60 relative z-10 text-xs text-slate-500 text-center select-none">
@@ -248,6 +455,18 @@ export const App: React.FC = () => {
       </footer>
 
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  const token = localStorage.getItem('jwt');
+  const isAuthenticated = !!token;
+
+  return (
+    <Routes>
+      <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/" />} />
+      <Route path="*" element={isAuthenticated ? <AppLayout /> : <Navigate to="/login" />} />
+    </Routes>
   );
 };
 

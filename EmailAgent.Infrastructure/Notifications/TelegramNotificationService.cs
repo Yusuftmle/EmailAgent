@@ -10,7 +10,7 @@ namespace EmailAgent.Infrastructure.Notifications;
 
 public interface ITelegramNotificationService
 {
-    Task SendDailySummaryAsync(int importantCount, string dashboardUrl, CancellationToken cancellationToken = default);
+    Task SendDailySummaryAsync(EmailAgent.Core.Entities.UserPreferences user, int importantCount, string dashboardUrl, CancellationToken cancellationToken = default);
 }
 
 public class TelegramNotificationService : ITelegramNotificationService
@@ -24,12 +24,12 @@ public class TelegramNotificationService : ITelegramNotificationService
         _logger = logger;
     }
 
-    public async Task SendDailySummaryAsync(int importantCount, string dashboardUrl, CancellationToken cancellationToken = default)
+    public async Task SendDailySummaryAsync(EmailAgent.Core.Entities.UserPreferences user, int importantCount, string dashboardUrl, CancellationToken cancellationToken = default)
     {
         try
         {
             var botToken = _config["Telegram:BotToken"];
-            var chatIdStr = _config["Telegram:ChatId"];
+            var chatIdStr = !string.IsNullOrEmpty(user?.TelegramChatId) ? user.TelegramChatId : _config["Telegram:ChatId"];
 
             if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(chatIdStr))
             {

@@ -18,13 +18,19 @@ using EmailAgent.Agent;
 using EmailAgent.Agent.Chat;
 using EmailAgent.API.Plugins;
 using EmailAgent.Agent.Connectors;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
 // 1. Database Configuration (PostgreSQL)
-var connectionString = builder.Configuration.GetConnectionString("Default") 
-    ?? "Host=localhost;Database=emailagent;Username=postgres;Password=postgres";
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Database connection string 'Default' is missing from configuration.");
+}
 builder.Services.AddDbContext<EmailAgentDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -38,57 +44,24 @@ builder.Services.AddScoped<IGmailService, GmailService>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
 
-// 4. Semantic Kernel & AI Orchestration
-var aiProvider = builder.Configuration["AI:Provider"] ?? "Gemini";
-var apiKey = builder.Configuration["AI:ApiKey"] ?? string.Empty;
-var aiModel = builder.Configuration["AI:Model"] ?? "gemini-2.5-flash";
-
-if (aiProvider != "Gemini")
-{
-    // Fallback to custom connector (does not support tool calling)
-    builder.Services.AddClaudeChatCompletion(aiModel, apiKey);
-}
+// Centralized HttpClient Factory
+builder.Services.AddHttpClient("AIAgentClient");
 
 // Register plugins as Singletons/Transients
-builder.Services.AddTransient<EmailPlugin>();
-builder.Services.AddTransient<NotificationPlugin>();
+// (Removed AddTransient for plugins because they are created by the multi-tenant factory)
 
-// Register standard Kernel service in DI
-builder.Services.AddTransient<Kernel>(sp =>
+// Register Plugin Factory for Multi-Tenant users
+builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEnumerable<object>>>(sp => userPrefs =>
 {
-    var kernelBuilder = Kernel.CreateBuilder();
-    
-    if (aiProvider == "Gemini")
+    return new List<object>
     {
-        // Use official Gemini Connector to support Tool Calling
-        kernelBuilder.AddGoogleAIGeminiChatCompletion(modelId: aiModel, apiKey: apiKey);
-    }
-    else if (aiProvider == "Groq")
-    {
-        // Use OpenAI Connector pointed at Groq's API for fast inference
-        kernelBuilder.AddOpenAIChatCompletion(
-            modelId: aiModel,
-            apiKey: apiKey,
-            httpClient: new HttpClient { BaseAddress = new Uri("https://api.groq.com/openai/v1/") });
-    }
-    else
-    {
-        var chatCompletion = sp.GetRequiredService<IChatCompletionService>();
-        // Register our custom completion in the kernel builder
-        kernelBuilder.Services.AddKeyedSingleton<IChatCompletionService>(null, chatCompletion);
-    }
-    
-    var kernel = kernelBuilder.Build();
-    
-    // Import Plugins
-    var emailPlugin = sp.GetRequiredService<EmailPlugin>();
-    var notificationPlugin = sp.GetRequiredService<NotificationPlugin>();
-    
-    kernel.ImportPluginFromObject(emailPlugin, "Email");
-    kernel.ImportPluginFromObject(notificationPlugin, "Notification");
-    
-    return kernel;
+        new EmailPlugin(sp.GetRequiredService<IGmailService>(), userPrefs),
+        new NotificationPlugin(sp.GetRequiredService<IWhatsAppNotificationService>(), sp.GetRequiredService<ITelegramNotificationService>(), userPrefs)
+    };
 });
+
+// Register Orchestrator
+builder.Services.AddTransient<EmailAgent.Agent.Core.AegisAgentOrchestrator>();
 
 // Register AI Agents & Chat services
 builder.Services.AddScoped<IEmailAnalysisAgent, EmailAnalysisAgent>();
@@ -109,21 +82,42 @@ builder.Services.AddHangfire(config =>
 // Add job class to DI so Hangfire can instantiate it
 builder.Services.AddScoped<DailyEmailJob>();
 
+// 5.5 Register Telegram Bot Hosted Service
+builder.Services.AddHostedService<EmailAgent.API.Services.TelegramBotHostedService>();
+
+// Configure CORS for React frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:5173", "http://localhost:3000")
+                   .AllowAnyHeader()
+                   .AllowAnyMethod()
+                   .AllowCredentials();
+        });
+});
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "AegisEmailAgent",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "AegisEmailAgent",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "super_secret_key_that_is_long_enough_for_hmacsha256"))
+        };
+    });
+
 // 6. Controller, CORS & OpenAPI/Swagger Setup
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("ReactAppPolicy", policy =>
-    {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // standard React/Vite ports
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
-});
 
 var app = builder.Build();
 
@@ -139,8 +133,11 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppToken"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppFrom"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppTo"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""TelegramBotToken"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""TelegramChatId"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""PairingCode"" text NOT NULL DEFAULT '';
             TRUNCATE TABLE ""ChatHistory"";
-            UPDATE ""UserPreferences"" SET ""AiProvider"" = 'Gemini', ""ApiKey"" = '';
+            UPDATE ""UserPreferences"" SET ""AiProvider"" = 'Gemini', ""ApiKey"" = '', ""PairingCode"" = gen_random_uuid()::text WHERE ""PairingCode"" = '';
         ");
     }
     catch (Exception ex)
@@ -158,9 +155,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Use CORS
-app.UseCors("ReactAppPolicy");
-
+// Add middleware
+app.UseCors("AllowReactApp");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

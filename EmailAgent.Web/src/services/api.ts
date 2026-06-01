@@ -10,6 +10,16 @@ const client = axios.create({
   withCredentials: true,
 });
 
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('jwt');
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default client;
+
 export interface EmailAnalysis {
   id: number;
   gmailId: string;
@@ -24,14 +34,17 @@ export interface EmailAnalysis {
 export interface UserPreferences {
   id?: number;
   userEmail?: string;
-  aiProvider?: string;
-  apiKey?: string;
   focusCompanies: string[];
   keywords: string[];
-  whatsAppSid?: string;
+  pairingCode?: string;
+  telegramChatId?: string;
   whatsAppToken?: string;
   whatsAppFrom?: string;
   whatsAppTo?: string;
+  aiProvider?: 'Claude' | 'Gemini' | 'Groq';
+  apiKey?: string;
+  whatsAppSid?: string;
+  telegramBotToken?: string;
 }
 
 export interface ChatHistoryMessage {

@@ -42,66 +42,7 @@ public class ClaudeChatCompletionService : IChatCompletionService
         string activeModel = _defaultModel;
 
         // 1. Resolve Active LLM Settings dynamically from configuration/database
-        if (_serviceProvider != null)
-        {
-            try
-            {
-                using var scope = _serviceProvider.CreateScope();
-
-                // Check system-wide default configuration (appsettings.json / appsettings.Local.json)
-                var config = scope.ServiceProvider.GetService<Microsoft.Extensions.Configuration.IConfiguration>();
-                if (config != null)
-                {
-                    var defaultProvider = config["AI:Provider"];
-                    if (!string.IsNullOrEmpty(defaultProvider))
-                    {
-                        activeProvider = defaultProvider;
-                        activeApiKey = config["AI:ApiKey"] ?? _defaultApiKey;
-                        activeModel = config["AI:Model"] ?? (activeProvider switch
-                        {
-                            "Gemini" => "gemini-2.5-flash",
-                            "OpenAI" => "gpt-4o",
-                            "Groq" => "llama-3.3-70b-versatile",
-                            "OpenRouter" => "qwen/qwen-2.5-72b-instruct:free",
-                            _ => "claude-3-5-sonnet-latest"
-                        });
-                    }
-                }
-
-                // Check database user preferences for dynamic run-time override
-                var prefRepo = scope.ServiceProvider.GetService<EmailAgent.Core.Repositories.IUserPreferencesRepository>();
-                if (prefRepo != null)
-                {
-                    var prefs = await prefRepo.GetAsync();
-                    if (prefs != null && !string.IsNullOrEmpty(prefs.ApiKey))
-                    {
-                        activeProvider = prefs.AiProvider;
-                        activeApiKey = prefs.ApiKey;
-                        
-                        string? modelFromConfig = config?["AI:Model"];
-                        if (!string.IsNullOrEmpty(modelFromConfig) && activeProvider == config?["AI:Provider"])
-                        {
-                            activeModel = modelFromConfig;
-                        }
-                        else
-                        {
-                            activeModel = activeProvider switch
-                            {
-                                "Gemini" => "gemini-2.5-flash",
-                                "OpenAI" => "gpt-4o",
-                                "Groq" => "llama-3.3-70b-versatile",
-                                "OpenRouter" => "qwen/qwen-2.5-72b-instruct:free",
-                                _ => "claude-3-5-sonnet-latest"
-                            };
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // Fallback to defaults
-            }
-        }
+        // The orchestrator already provides the specific Model and API Key to the constructor, so we just use them!
 
         string textContent = string.Empty;
 
@@ -374,7 +315,7 @@ public class ClaudeChatCompletionService : IChatCompletionService
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
 
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey.Trim()}";
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
         
         int maxRetries = 4;
         int initialDelayMs = 10000; // 10 seconds initial delay
@@ -382,6 +323,7 @@ public class ClaudeChatCompletionService : IChatCompletionService
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("x-goog-api-key", apiKey.Trim());
             request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
