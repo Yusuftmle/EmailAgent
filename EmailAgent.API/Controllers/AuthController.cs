@@ -91,7 +91,8 @@ public class AuthController : ControllerBase
                     Id = Guid.NewGuid(),
                     UserEmail = email,
                     Name = userInfo.Name ?? "",
-                    PairingCode = Guid.NewGuid().ToString()
+                    PairingCode = Guid.NewGuid().ToString(),
+                    ShoppingTrackerIntervalHours = 12
                 };
                 _dbContext.UserPreferences.Add(user);
             }
@@ -122,7 +123,11 @@ public class AuthController : ControllerBase
                     user.Id, 
                     user.UserEmail, 
                     user.Name,
-                    user.PairingCode
+                    user.PairingCode,
+                    user.WhatsAppTo,
+                    user.TelegramBotToken,
+                    user.TelegramChatId,
+                    user.ShoppingTrackerIntervalHours
                 } 
             });
         }
@@ -130,6 +135,41 @@ public class AuthController : ControllerBase
         {
             return BadRequest($"Authentication failed: {ex.Message}");
         }
+    }
+
+    [HttpPost("dev-login")]
+    public async Task<IActionResult> DevLogin()
+    {
+        var email = "admin@local.test";
+        var user = await _dbContext.UserPreferences.FirstOrDefaultAsync(u => u.UserEmail == email);
+        if (user == null)
+        {
+            user = new UserPreferences
+            {
+                Id = Guid.NewGuid(),
+                UserEmail = email,
+                Name = "Local Developer",
+                PairingCode = Guid.NewGuid().ToString(),
+                ShoppingTrackerIntervalHours = 12
+            };
+            _dbContext.UserPreferences.Add(user);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        var tokenString = GenerateJwtToken(user);
+        return Ok(new { 
+            Token = tokenString, 
+            User = new { 
+                user.Id, 
+                user.UserEmail, 
+                user.Name,
+                user.PairingCode,
+                user.WhatsAppTo,
+                user.TelegramBotToken,
+                user.TelegramChatId,
+                user.ShoppingTrackerIntervalHours
+            } 
+        });
     }
 
     private string GenerateJwtToken(UserPreferences user)

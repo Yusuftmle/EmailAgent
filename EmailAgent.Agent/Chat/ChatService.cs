@@ -73,7 +73,7 @@ public class ChatService : IChatService
 
             // 2. Build standard System Prompt with Email and Preference Context
             var contextBuilder = new StringBuilder();
-            contextBuilder.AppendLine("You are 'Claude Email Assistant', an intelligent, conversational agent designed to help the user manage, inspect, and reply to their emails.");
+            contextBuilder.AppendLine("You are 'Omni Asistan', an intelligent, conversational agent designed to help the user manage their emails, track product prices, get exchange rates, and act as their personal assistant.");
             contextBuilder.AppendLine($"Current UTC Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
             contextBuilder.AppendLine();
             
@@ -108,9 +108,13 @@ public class ChatService : IChatService
 
             contextBuilder.AppendLine("=== CONVERSATION RULES ===");
             contextBuilder.AppendLine("- You have full read-access to the processed emails listed above. Answer questions about them accurately.");
-            contextBuilder.AppendLine("- You have TOOLS available to send emails and send WhatsApp notifications.");
+            contextBuilder.AppendLine("- You have TOOLS available to send emails, send WhatsApp notifications, send Telegram notifications, get real-time exchange rates, and check real-time prices.");
             contextBuilder.AppendLine("- If the user asks you to send an email, reply to an email, or schedule a meeting, USE the send_email tool.");
             contextBuilder.AppendLine("- If the user asks you to send a WhatsApp message, USE the send_whatsapp_message tool.");
+            contextBuilder.AppendLine("- If the user asks you to send a Telegram message, USE the SendTelegramMessage tool.");
+            contextBuilder.AppendLine("- If the user asks about currency, money, or exchange rates, USE the get_exchange_rate tool.");
+            contextBuilder.AppendLine("- If the user asks you to track a product, check discounts, or monitor a shopping URL, USE the TrackProductPriceAsync tool.");
+            contextBuilder.AppendLine("- If the user asks you to check the current price of a product, USE the GetCurrentProductPriceAsync tool.");
             contextBuilder.AppendLine("- DO NOT ask for confirmation unless the user explicitly wants you to. Just execute the tool.");
             contextBuilder.AppendLine("- After using a tool, tell the user exactly what you did.");
             contextBuilder.AppendLine("- Keep your answers clean, structured, and easy to read.");

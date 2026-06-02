@@ -43,6 +43,10 @@ builder.Services.AddScoped<IChatHistoryRepository, ChatHistoryRepository>();
 builder.Services.AddScoped<IGmailService, GmailService>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
+builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ProductScraperService>();
+builder.Services.AddScoped<EmailAgent.Infrastructure.Services.CategoryScraperService>();
+builder.Services.AddScoped<EmailAgent.Agent.DealEvaluatorAgent>();
+builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ISpeechToTextService, EmailAgent.Infrastructure.Services.GroqSpeechToTextService>();
 
 // Centralized HttpClient Factory
 builder.Services.AddHttpClient("AIAgentClient");
@@ -56,7 +60,14 @@ builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEn
     return new List<object>
     {
         new EmailPlugin(sp.GetRequiredService<IGmailService>(), userPrefs),
-        new NotificationPlugin(sp.GetRequiredService<IWhatsAppNotificationService>(), sp.GetRequiredService<ITelegramNotificationService>(), userPrefs)
+        new NotificationPlugin(sp.GetRequiredService<IWhatsAppNotificationService>(), sp.GetRequiredService<ITelegramNotificationService>(), userPrefs),
+        new CurrencyPlugin(),
+        new ShoppingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.ProductScraperService>()),
+        new EmailAgent.API.Plugins.WebSearchPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
+        new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
+        new EmailAgent.API.Plugins.DocumentPlugin(),
+        new EmailAgent.API.Plugins.FinancePlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
+        new EmailAgent.API.Plugins.CategoryTrackingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id)
     };
 });
 
@@ -81,6 +92,8 @@ builder.Services.AddHangfire(config =>
 
 // Add job class to DI so Hangfire can instantiate it
 builder.Services.AddScoped<DailyEmailJob>();
+builder.Services.AddScoped<ShoppingTrackerJob>();
+builder.Services.AddScoped<DailyBriefingJob>();
 
 // 5.5 Register Telegram Bot Hosted Service
 builder.Services.AddHostedService<EmailAgent.API.Services.TelegramBotHostedService>();
@@ -136,8 +149,23 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""TelegramBotToken"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""TelegramChatId"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""PairingCode"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""ShoppingTrackerIntervalHours"" integer NOT NULL DEFAULT 12;
+
+            CREATE TABLE IF NOT EXISTS ""TrackedCategories"" (
+                ""Id"" uuid NOT NULL,
+                ""UserId"" uuid NOT NULL,
+                ""CategoryUrl"" text NOT NULL,
+                ""CategoryName"" text NOT NULL,
+                ""MinDiscountPercentage"" numeric NOT NULL,
+                ""CreatedAt"" timestamp with time zone NOT NULL,
+                ""LastCheckedAt"" timestamp with time zone NULL,
+                CONSTRAINT ""PK_TrackedCategories"" PRIMARY KEY (""Id"")
+            );
+
+            ALTER TABLE ""TrackedCategories"" ADD COLUMN IF NOT EXISTS ""RequiredFeatures"" text NULL;
+
             TRUNCATE TABLE ""ChatHistory"";
-            UPDATE ""UserPreferences"" SET ""AiProvider"" = 'Gemini', ""ApiKey"" = '', ""PairingCode"" = gen_random_uuid()::text WHERE ""PairingCode"" = '';
+            UPDATE ""UserPreferences"" SET ""PairingCode"" = gen_random_uuid()::text WHERE ""PairingCode"" = '';
         ");
     }
     catch (Exception ex)
@@ -187,5 +215,40 @@ app.UseHangfireDashboard(hangfirePath);
 //         }
 //     );
 // }
+
+// Shopping Tracker Job - Runs every 12 hours
+using (var scope = app.Services.CreateScope())
+{
+    try 
+    {
+        var recurringJobManager = scope.ServiceProvider.GetService<IRecurringJobManager>();
+        if (recurringJobManager != null)
+        {
+            recurringJobManager.AddOrUpdate<ShoppingTrackerJob>(
+                "shopping-tracker-job",
+                job => job.CheckPricesAsync(),
+                "0 * * * *", // Every hour
+                new RecurringJobOptions
+                {
+                    TimeZone = TimeZoneInfo.Local
+                }
+            );
+
+            recurringJobManager.AddOrUpdate<DailyBriefingJob>(
+                "daily-briefing-job",
+                job => job.SendMorningBriefingAsync(),
+                "0 8 * * *", // Every day at 08:00 AM
+                new RecurringJobOptions
+                {
+                    TimeZone = TimeZoneInfo.Local
+                }
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Hangfire registration warning: {ex.Message}");
+    }
+}
 
 app.Run();

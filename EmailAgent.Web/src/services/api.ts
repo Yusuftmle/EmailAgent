@@ -18,6 +18,18 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('jwt');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default client;
 
 export interface EmailAnalysis {
@@ -45,6 +57,7 @@ export interface UserPreferences {
   apiKey?: string;
   whatsAppSid?: string;
   telegramBotToken?: string;
+  shoppingTrackerIntervalHours?: number;
 }
 
 export interface ChatHistoryMessage {

@@ -15,6 +15,8 @@ public class EmailAgentDbContext : DbContext
     public DbSet<EmailAnalysis> EmailAnalyses => Set<EmailAnalysis>();
     public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
     public DbSet<ChatHistory> ChatHistories => Set<ChatHistory>();
+    public DbSet<TrackedProduct> TrackedProducts => Set<TrackedProduct>();
+    public DbSet<TrackedCategory> TrackedCategories => Set<TrackedCategory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

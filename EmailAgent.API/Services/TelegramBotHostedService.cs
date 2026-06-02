@@ -73,22 +73,92 @@ public class TelegramBotHostedService : BackgroundService
         if (update.Message is not { } message)
             return;
 
-        if (message.Text is not { } messageText)
+        if (message.Type != MessageType.Text && message.Type != MessageType.Voice && message.Type != MessageType.Document)
             return;
 
         var chatId = message.Chat.Id;
+        string messageText = message.Text ?? string.Empty;
+
+        using var scope = _serviceProvider.CreateScope();
+
+        if (message.Type == MessageType.Voice && message.Voice != null)
+        {
+            _logger.LogInformation($"Received a voice message in chat {chatId}.");
+            await botClient.SendChatAction(chatId, ChatAction.Typing, cancellationToken: cancellationToken);
+            
+            try
+            {
+                var fileId = message.Voice.FileId;
+                var fileInfo = await botClient.GetFile(fileId, cancellationToken);
+                
+                using var memoryStream = new System.IO.MemoryStream();
+                await botClient.DownloadFile(fileInfo.FilePath ?? string.Empty, memoryStream, cancellationToken);
+                memoryStream.Position = 0;
+
+                var sttService = scope.ServiceProvider.GetRequiredService<EmailAgent.Infrastructure.Services.ISpeechToTextService>();
+                messageText = await sttService.TranscribeAudioAsync(memoryStream, "voice.ogg", cancellationToken);
+
+                if (string.IsNullOrEmpty(messageText))
+                {
+                    await botClient.SendMessage(chatId, "❌ Sesinizi anlayamadım veya servis yanıt vermedi. Lütfen tekrar deneyin veya yazın.", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                await botClient.SendMessage(chatId, $"✍️ _Anlaşılan:_ {messageText}", ParseMode.Markdown, cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing voice message");
+                await botClient.SendMessage(chatId, "❌ Ses dosyası işlenirken bir hata oluştu.", cancellationToken: cancellationToken);
+                return;
+            }
+        }
+
+        if (message.Type == MessageType.Document && message.Document != null)
+        {
+            _logger.LogInformation($"Received a document in chat {chatId}.");
+            await botClient.SendChatAction(chatId, ChatAction.Typing, cancellationToken: cancellationToken);
+            
+            try
+            {
+                var fileId = message.Document.FileId;
+                var fileName = message.Document.FileName ?? "document.pdf";
+                var fileInfo = await botClient.GetFile(fileId, cancellationToken);
+                
+                var filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName);
+                using var fileStream = new System.IO.FileStream(filePath, System.IO.FileMode.Create);
+                await botClient.DownloadFile(fileInfo.FilePath ?? string.Empty, fileStream, cancellationToken);
+                fileStream.Close();
+
+                string caption = message.Caption ?? "Lütfen bu belgeyi incele/özetle.";
+                messageText = $"[Kullanıcı sana Telegram'dan bir dosya gönderdi. Dosya yerel sunucuda şu yola kaydedildi: {filePath}. " +
+                              $"Kullanıcının dosya ile ilgili notu/mesajı: '{caption}'. Lütfen DocumentPlugin kullanarak bu dosyanın içeriğini oku ve kullanıcının isteğine cevap ver.]";
+                
+                await botClient.SendMessage(chatId, "📄 _Belge indirildi, analiz ediliyor..._", ParseMode.Markdown, cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing document message");
+                await botClient.SendMessage(chatId, "❌ Belge indirilirken bir hata oluştu.", cancellationToken: cancellationToken);
+                return;
+            }
+        }
+
+        if (string.IsNullOrEmpty(messageText))
+            return;
+
         _logger.LogInformation($"Received a '{messageText}' message in chat {chatId}.");
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
             var userPrefsRepo = scope.ServiceProvider.GetRequiredService<IUserPreferencesRepository>();
             var currentUser = await userPrefsRepo.GetByTelegramChatIdAsync(chatId.ToString());
 
             // 1. Is this a pairing request? (e.g., "/start 1234-abcd..." or just "1234-abcd...")
-            if (messageText.Contains('-') && messageText.Length >= 32)
+            var potentialGuid = messageText.Replace("/start", "").Trim();
+            if (Guid.TryParse(potentialGuid, out Guid parsedGuid))
             {
-                var inputGuid = messageText.Replace("/start", "").Trim();
+                var inputGuid = parsedGuid.ToString();
                 
                 var pairedUser = await userPrefsRepo.GetByPairingCodeAsync(inputGuid);
                 if (pairedUser != null)

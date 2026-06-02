@@ -30,20 +30,24 @@ public class AegisKernelBuilder
     {
         if (provider == "Gemini")
         {
-            // Note: In newer Semantic Kernel versions, Gemini requires Microsoft.SemanticKernel.Connectors.Google
-            // Assuming it's already added in the project
-            _builder.AddGoogleAIGeminiChatCompletion(modelId: modelId, apiKey: apiKey);
+            _builder.AddGoogleAIGeminiChatCompletion(
+                modelId: modelId, 
+                apiKey: apiKey, 
+                httpClient: customClient,
+                apiVersion: Microsoft.SemanticKernel.Connectors.Google.GoogleAIVersion.V1_Beta);
         }
         else if (provider == "Groq")
         {
+            var groqHandler = new GroqEndpointHandler(new HttpClientHandler());
+            var groqClient = new HttpClient(groqHandler);
             _builder.AddOpenAIChatCompletion(
-                modelId: modelId,
+                modelId: "llama-3.3-70b-versatile", // Hardcode the best Groq model for now
                 apiKey: apiKey,
-                httpClient: customClient ?? new HttpClient { BaseAddress = new Uri("https://api.groq.com/openai/v1/") });
+                httpClient: groqClient);
         }
         else
         {
-            var chatCompletion = new ClaudeChatCompletionService(modelId, apiKey, customClient, _serviceProvider);
+            var chatCompletion = new ClaudeChatCompletionService(provider, modelId, apiKey, customClient, _serviceProvider);
             _builder.Services.AddKeyedSingleton<IChatCompletionService>(null, chatCompletion);
         }
         return this;
@@ -86,3 +90,21 @@ public class AegisKernelBuilder
         return _builder.Build();
     }
 }
+
+public class GroqEndpointHandler : DelegatingHandler
+{
+    public GroqEndpointHandler(HttpMessageHandler innerHandler) : base(innerHandler)
+    {
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+    {
+        if (request.RequestUri != null && request.RequestUri.Host == "api.openai.com")
+        {
+            request.RequestUri = new Uri($"https://api.groq.com/openai{request.RequestUri.AbsolutePath}{request.RequestUri.Query}");
+        }
+        return base.SendAsync(request, cancellationToken);
+    }
+}
+
+

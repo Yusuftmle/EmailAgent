@@ -18,11 +18,13 @@ public class ClaudeChatCompletionService : IChatCompletionService
 {
     private readonly string _defaultModel;
     private readonly string _defaultApiKey;
+    private readonly string _provider;
     private readonly HttpClient _httpClient;
     private readonly IServiceProvider? _serviceProvider;
 
-    public ClaudeChatCompletionService(string model, string apiKey, HttpClient? httpClient = null, IServiceProvider? serviceProvider = null)
+    public ClaudeChatCompletionService(string provider, string model, string apiKey, HttpClient? httpClient = null, IServiceProvider? serviceProvider = null)
     {
+        _provider = string.IsNullOrEmpty(provider) ? "Claude" : provider;
         _defaultModel = string.IsNullOrEmpty(model) ? "claude-sonnet-4-5" : model;
         _defaultApiKey = apiKey ?? string.Empty;
         _httpClient = httpClient ?? new HttpClient();
@@ -37,7 +39,7 @@ public class ClaudeChatCompletionService : IChatCompletionService
         Kernel? kernel = null,
         CancellationToken cancellationToken = default)
     {
-        string activeProvider = "Claude";
+        string activeProvider = _provider;
         string activeApiKey = _defaultApiKey;
         string activeModel = _defaultModel;
 
@@ -466,7 +468,7 @@ public static class ClaudeKernelBuilderExtensions
     {
         services.AddKeyedSingleton<IChatCompletionService>(null, (serviceProvider, serviceKey) =>
         {
-            return new ClaudeChatCompletionService(model, apiKey, httpClient, serviceProvider);
+            return new ClaudeChatCompletionService("Claude", model, apiKey, httpClient, serviceProvider);
         });
         return services;
     }

@@ -45,7 +45,25 @@ public class NotificationPlugin
         }
     }
 
-    // Since ITelegramNotificationService doesn't have a specific SendMessageAsync method we added yet,
-    // let's leave this as a stub or implement it if the service already has it.
-    // The instructions were for WhatsApp mainly, but user asked for telegram too.
+    [KernelFunction("SendTelegramMessage")]
+    [Description("Sends a direct Telegram message to the user. Use this when the user asks you to text them or send them a Telegram message.")]
+    public async Task<string> SendTelegramMessageAsync(
+        [Description("The exact message text to send to the user via Telegram")] string message)
+    {
+        try
+        {
+            var user = _user;
+            var chatId = !string.IsNullOrEmpty(user?.TelegramChatId) ? user.TelegramChatId : "";
+            
+            if (string.IsNullOrEmpty(chatId))
+                return "Failed to send: User has no configured Telegram Chat ID.";
+
+            await _telegramService.SendMessageAsync(chatId, message);
+            return "Successfully sent Telegram message to user.";
+        }
+        catch
+        {
+            return "Failed to send Telegram message.";
+        }
+    }
 }

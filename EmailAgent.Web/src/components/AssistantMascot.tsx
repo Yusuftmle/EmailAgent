@@ -78,7 +78,7 @@ const Arm: React.FC<{
       {/* Segment 1: Upper arm */}
       <rect x={ax} y={90} width={16} height={20} rx={8} fill="#1a2a3d" stroke="#334155" strokeWidth="1.5" />
       <rect x={ax} y={90} width={16} height={20} rx={8} fill="url(#limbG)" />
-      
+
       {/* Joint: Elbow */}
       <circle cx={hx} cy={113} r={6} fill="#263244" stroke="#334155" strokeWidth="1.2" />
 
@@ -90,13 +90,13 @@ const Arm: React.FC<{
       <circle cx={hx} cy={144} r={10} fill="#263244" stroke="#334155" strokeWidth="1.5" />
       {/* Knuckle highlight */}
       <ellipse cx={hx} cy={141} rx={6} ry={3} fill="#334155" opacity={0.5} />
-      
+
       {/* Wave fingers on right arm */}
       {waving && !isLeft && (
         <>
           <line x1={hx - 5} y1={136} x2={hx - 8} y2={126} stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round" filter="url(#cyanGlow)" />
-          <line x1={hx}     y1={135} x2={hx}      y2={124} stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round" filter="url(#cyanGlow)" />
-          <line x1={hx + 5} y1={136} x2={hx + 8}  y2={126} stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round" filter="url(#cyanGlow)" />
+          <line x1={hx} y1={135} x2={hx} y2={124} stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round" filter="url(#cyanGlow)" />
+          <line x1={hx + 5} y1={136} x2={hx + 8} y2={126} stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round" filter="url(#cyanGlow)" />
         </>
       )}
     </g>
@@ -185,7 +185,7 @@ export const OmniRobot: React.FC<{
   const headTurnDeg = Math.max(-15, Math.min(15, facingLeft ? -rawHeadTurn : rawHeadTurn));
 
   // Happy big eyes when dragging or chatting
-  const eyeSize = isDragging ? 13.5 : (isChatting ? 13 : 11);
+  const eyeSize = isDragging ? 13.5 : (isChatting ? 13 : 11); void eyeSize;
 
   return (
     <svg
@@ -221,10 +221,10 @@ export const OmniRobot: React.FC<{
           <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <filter id="cyanGlow">
-          <feGaussianBlur stdDeviation="2.2" result="blur"/>
+          <feGaussianBlur stdDeviation="2.2" result="blur" />
           <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
       </defs>
@@ -272,7 +272,7 @@ export const OmniRobot: React.FC<{
             {/* Head Capsule */}
             <rect x="20" y="18" width="80" height="62" rx="20" fill="#1e293b" stroke="#334155" strokeWidth="2" />
             <rect x="20" y="18" width="80" height="62" rx="20" fill="url(#headG2)" />
-            
+
             {/* Top Light Shine overlay for premium illustration feel */}
             <ellipse cx="60" cy="24" rx="30" ry="4" fill="white" opacity="0.08" />
 
@@ -376,7 +376,7 @@ export const OmniRobot: React.FC<{
             {/* Segment 1: Upper leg */}
             <rect x="28" y="151" width="22" height="15" rx="8" fill="#1a2a3d" stroke="#334155" strokeWidth="1.5" />
             <rect x="28" y="151" width="22" height="15" rx="8" fill="url(#limbG)" />
-            
+
             {/* Joint: Knee */}
             <circle cx="39" cy="169" r="5" fill="#263244" stroke="#334155" strokeWidth="1.2" />
 
@@ -392,7 +392,7 @@ export const OmniRobot: React.FC<{
             {/* Segment 1: Upper leg */}
             <rect x="70" y="151" width="22" height="15" rx="8" fill="#1a2a3d" stroke="#334155" strokeWidth="1.5" />
             <rect x="70" y="151" width="22" height="15" rx="8" fill="url(#limbG)" />
-            
+
             {/* Joint: Knee */}
             <circle cx="81" cy="169" r="5" fill="#263244" stroke="#334155" strokeWidth="1.2" />
 
@@ -439,7 +439,7 @@ export const OmniRobot: React.FC<{
           {/* Head Capsule */}
           <rect x="20" y="18" width="80" height="62" rx="20" fill="#1e293b" stroke="#334155" strokeWidth="2" />
           <rect x="20" y="18" width="80" height="62" rx="20" fill="url(#headG2)" />
-          
+
           {/* Top Light Shine overlay for premium illustration feel */}
           <ellipse cx="60" cy="24" rx="30" ry="4" fill="white" opacity="0.08" />
 
@@ -470,7 +470,7 @@ export const OmniRobot: React.FC<{
             {/* ── Glowing Cyan Mouth ── */}
             {behavior === 'wave' ? (
               /* Waving / Happy smile when hovered inside Aegis card */
-              <path d="M 44 68 Q 60 80 76 68" stroke="#f472b6" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+              <path d="M 44 68 Q 60 80 76 68" stroke="#f472b6" strokeWidth="3.5" fill="none" strokeLinecap="round" />
             ) : isDragging ? (
               <path d="M 46 56 Q 60 70 74 56 Z" fill="#4df0ff" filter="url(#cyanGlow)" opacity="0.95" />
             ) : isYawning ? (
@@ -483,7 +483,7 @@ export const OmniRobot: React.FC<{
           </g>
 
           {/* ── Neck ── */}
-          <rect x="48" y="80" width="24" height="11" rx="5.5" fill="#263244"/>
+          <rect x="48" y="80" width="24" height="11" rx="5.5" fill="#263244" />
         </g>
       )}
 
@@ -492,14 +492,14 @@ export const OmniRobot: React.FC<{
         <g transform="translate(-20, 166)">
           {/* Cup Body (Big ceramic cup) */}
           <path d="M-8,6 L18,6 C18,6 18,24 14,28 C10,32 0,32 -4,28 C-8,24 -8,6 -8,6 Z" fill="#ffffff" stroke="#334155" strokeWidth="2" />
-          
+
           {/* Cup Handle */}
           <path d="M18,10 C22,10 22,20 18,20" fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
           <path d="M18,10 C22,10 22,20 18,20" fill="none" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" />
 
           {/* Coffee inside */}
           <ellipse cx="5" cy="6" rx="12" ry="2" fill="#543d2b" />
-          
+
           {/* Omni text label on the mug */}
           <text x="5" y="20" fontFamily="'Plus Jakarta Sans', sans-serif" fontWeight="800" fontSize="7" fill="#475569" textAnchor="middle">Omni</text>
 
@@ -556,7 +556,7 @@ export const AssistantMascot = React.forwardRef<MascotHandle, {}>((_, ref) => {
   // Dragging mechanics
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, startX: 0, startJumpY: 0 });
-  const gravityIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const gravityIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   behaviorRef.current = behavior;
 

@@ -58,7 +58,23 @@ public class AegisAgentOrchestrator
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
         };
 
-        var responseContent = await chatCompletion.GetChatMessageContentAsync(history, executionSettings, kernel);
-        return responseContent.Content ?? "I couldn't process that request.";
+        if (string.IsNullOrWhiteSpace(activeKey))
+        {
+            return $"Lütfen ayarlar sayfasından {activeProvider} için geçerli bir API Anahtarı (API Key) girin.";
+        }
+
+        try
+        {
+            var responseContent = await chatCompletion.GetChatMessageContentAsync(history, executionSettings, kernel);
+            return responseContent.Content ?? "I couldn't process that request.";
+        }
+        catch (Microsoft.SemanticKernel.HttpOperationException ex)
+        {
+            return $"Yapay Zeka Motoru ({activeProvider}) ile bağlantı kurulamadı. API anahtarınızın (API Key) doğruluğunu kontrol edin. Hata Detayı: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            return $"Beklenmeyen bir hata oluştu: {ex.Message}";
+        }
     }
 }

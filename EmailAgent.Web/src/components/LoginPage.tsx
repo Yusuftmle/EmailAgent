@@ -123,18 +123,24 @@ const LoginPage: React.FC = () => {
     },
   });
 
-  const handleDeveloperLogin = () => {
+  const handleDeveloperLogin = async () => {
     setLoading(true);
     setError(null);
-    localStorage.setItem('jwt', 'mock-jwt-token-for-local-admin');
-    localStorage.setItem('user', JSON.stringify({ 
-      email: 'admin@local.test', 
-      name: 'Local Developer' 
-    }));
-    mascotRef.current?.celebrate();
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 2800);
+    try {
+      const res = await api.post('/api/auth/dev-login');
+      const { token, user } = res.data;
+      localStorage.setItem('jwt', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      mascotRef.current?.celebrate();
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2800);
+    } catch (err: any) {
+      console.error('Dev Login Error', err);
+      setError(err.message || 'Local Dev Authentication failed. Is the .NET API running?');
+      setLoading(false);
+    }
   };
 
   const bgGradient = 

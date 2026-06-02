@@ -23,10 +23,16 @@ public class UserPreferences
     public string GoogleRefreshToken { get; set; } = string.Empty;
     public DateTimeOffset? GoogleTokenExpiry { get; set; }
 
-    // Integrations
-    public string TelegramChatId { get; set; } = string.Empty;
+    // WhatsApp Notifications
     public string WhatsAppSid { get; set; } = string.Empty;
     public string WhatsAppToken { get; set; } = string.Empty;
     public string WhatsAppFrom { get; set; } = string.Empty;
     public string WhatsAppTo { get; set; } = string.Empty;
+
+    // Telegram Notifications
+    public string TelegramBotToken { get; set; } = string.Empty;
+    public string TelegramChatId { get; set; } = string.Empty;
+
+    // Preferences
+    public int ShoppingTrackerIntervalHours { get; set; } = 12;
 }

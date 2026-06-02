@@ -50,6 +50,7 @@ public class UserPreferencesRepository : IUserPreferencesRepository
         }
         else
         {
+            existing.AiProvider = preferences.AiProvider;
             existing.ApiKey = preferences.ApiKey;
             existing.FocusCompanies = preferences.FocusCompanies;
             existing.Keywords = preferences.Keywords;
@@ -57,8 +58,9 @@ public class UserPreferencesRepository : IUserPreferencesRepository
             existing.WhatsAppToken = preferences.WhatsAppToken;
             existing.WhatsAppFrom = preferences.WhatsAppFrom;
             existing.WhatsAppTo = preferences.WhatsAppTo;
-            existing.TelegramChatId = preferences.TelegramChatId;
-            existing.PairingCode = preferences.PairingCode;
+            existing.TelegramBotToken = preferences.TelegramBotToken;
+            existing.ShoppingTrackerIntervalHours = preferences.ShoppingTrackerIntervalHours > 0 ? preferences.ShoppingTrackerIntervalHours : 12;
+            
             _context.UserPreferences.Update(existing);
         }
         await _context.SaveChangesAsync();

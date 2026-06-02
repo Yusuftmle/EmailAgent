@@ -11,6 +11,7 @@ namespace EmailAgent.Infrastructure.Notifications;
 public interface ITelegramNotificationService
 {
     Task SendDailySummaryAsync(EmailAgent.Core.Entities.UserPreferences user, int importantCount, string dashboardUrl, CancellationToken cancellationToken = default);
+    Task SendMessageAsync(string chatIdStr, string message, CancellationToken cancellationToken = default);
 }
 
 public class TelegramNotificationService : ITelegramNotificationService
@@ -56,6 +57,28 @@ public class TelegramNotificationService : ITelegramNotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send Telegram notification.");
+        }
+    }
+
+    public async Task SendMessageAsync(string chatIdStr, string message, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var botToken = _config["Telegram:BotToken"];
+            if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(chatIdStr)) return;
+
+            var botClient = new TelegramBotClient(botToken);
+            var chatId = new ChatId(chatIdStr);
+
+            await botClient.SendMessage(
+                chatId: chatId,
+                text: message,
+                cancellationToken: cancellationToken
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send direct Telegram notification.");
         }
     }
 }

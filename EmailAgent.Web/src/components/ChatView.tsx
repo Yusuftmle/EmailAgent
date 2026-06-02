@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { apiService, ChatHistoryMessage } from '../services/api';
 import { MessageSquare, Send, Trash2, Cpu } from 'lucide-react';
@@ -14,11 +14,11 @@ const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ 
       size: Math.random() * 4 + 2.5, // 2.5px to 6.5px
       delay: `${Math.random() * 8}s`,
       duration: `${Math.random() * 12 + 10}s`,
-      color: mode === 'morning' 
-        ? '#fbbf24' 
+      color: mode === 'morning'
+        ? '#fbbf24'
         : mode === 'afternoon'
-        ? '#c084fc' 
-        : '#fb923c',
+          ? '#c084fc'
+          : '#fb923c',
     }));
   }, [mode]);
 
@@ -66,7 +66,16 @@ export const ChatView: React.FC = () => {
   const [messages, setMessages] = useState<ChatHistoryMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState('user-session-101');
+  const [sessionId] = useState(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user && user.id) return user.id;
+      }
+    } catch(e) {}
+    return '00000000-0000-0000-0000-000000000000';
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mascotRef = useRef<MascotHandle>(null);
@@ -114,14 +123,14 @@ export const ChatView: React.FC = () => {
       sessionId,
       content: text,
     };
-    
+
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
     setIsLoading(true);
 
     try {
       const response = await apiService.sendChatMessage(sessionId, text);
-      
+
       const assistantMsg: ChatHistoryMessage = {
         role: 'assistant',
         sessionId,
@@ -168,10 +177,10 @@ export const ChatView: React.FC = () => {
     "Summarize my daily tasks",
   ];
 
-  const bgGradient = 
+  const bgGradient =
     timeMode === 'morning' ? 'from-[#0a0f1d] via-[#121c32] to-[#25152a]' :
-    timeMode === 'afternoon' ? 'from-[#0b1420] via-[#0f212f] to-[#0f2a20]' :
-    'from-[#05080e] via-[#09101f] to-[#120b20]';
+      timeMode === 'afternoon' ? 'from-[#0b1420] via-[#0f212f] to-[#0f2a20]' :
+        'from-[#05080e] via-[#09101f] to-[#120b20]';
 
   return (
     <div className={`glass-panel rounded-3xl border border-white/5 flex flex-col h-[calc(100vh-160px)] overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
@@ -234,7 +243,7 @@ export const ChatView: React.FC = () => {
       <div className="absolute left-0 right-0 top-0 bottom-[80px] overflow-hidden pointer-events-none z-0">
         <AssistantMascot ref={mascotRef} />
       </div>
-      
+
       {/* Header */}
       <div className="p-6 border-b border-white/5 flex items-center justify-between relative z-10 bg-slate-900/30">
         <div className="flex items-center gap-4">
@@ -249,7 +258,7 @@ export const ChatView: React.FC = () => {
             </div>
           </div>
         </div>
-        <button 
+        <button
           onClick={handleClearChat}
           className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all font-bold text-xs uppercase tracking-wider flex items-center gap-2"
         >
@@ -260,26 +269,24 @@ export const ChatView: React.FC = () => {
       {/* Chat Area */}
       <div className="flex-1 p-6 overflow-y-auto space-y-6 relative z-10 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         {messages.map((msg, index) => (
-          <motion.div 
+          <motion.div
             key={index}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             className={`flex gap-4 max-w-[80%] ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-extrabold ${
-              msg.role === 'user' 
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-extrabold ${msg.role === 'user'
+                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-            }`}>
+              }`}>
               {msg.role === 'user' ? 'USR' : 'AI'}
             </div>
 
-            <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-lg ${
-              msg.role === 'user'
+            <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-lg ${msg.role === 'user'
                 ? 'bg-indigo-600/90 text-white rounded-tr-none border border-indigo-500/50'
                 : 'bg-slate-900/80 border border-emerald-500/20 text-slate-200 rounded-tl-none'
-            }`}>
+              }`}>
               {msg.content.split('\n').map((line, lIdx) => (
                 <p key={lIdx} className={lIdx > 0 ? 'mt-2' : ''}>{line}</p>
               ))}
@@ -321,7 +328,7 @@ export const ChatView: React.FC = () => {
           </div>
         )}
 
-        <form 
+        <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSendMessage(inputValue);

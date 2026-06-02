@@ -6,10 +6,13 @@ using Microsoft.Extensions.Logging;
 using EmailAgent.Core.Entities;
 using EmailAgent.Agent.Chat;
 
+using System.Security.Claims;
+
 namespace EmailAgent.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Microsoft.AspNetCore.Authorization.Authorize]
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
@@ -31,8 +34,11 @@ public class ChatController : ControllerBase
 
         try
         {
-            var sessionId = string.IsNullOrWhiteSpace(request.SessionId) ? "default-session" : request.SessionId;
-            _logger.LogInformation("Chat Message received for session: {SessionId}", sessionId);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Session is invalid. Please login again.");
+
+            var sessionId = userIdString; // Use the UserId as the SessionId
+            _logger.LogInformation("Chat Message received for user session: {SessionId}", sessionId);
 
             var reply = await _chatService.SendMessageAsync(sessionId, request.Message);
 
@@ -55,8 +61,11 @@ public class ChatController : ControllerBase
     {
         try
         {
-            var targetSession = string.IsNullOrWhiteSpace(sessionId) ? "default-session" : sessionId;
-            _logger.LogInformation("Retrieving chat history for session: {SessionId}", targetSession);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Session is invalid. Please login again.");
+
+            var targetSession = userIdString;
+            _logger.LogInformation("Retrieving chat history for user session: {SessionId}", targetSession);
 
             var history = await _chatService.GetHistoryAsync(targetSession);
             return Ok(history);
@@ -73,8 +82,11 @@ public class ChatController : ControllerBase
     {
         try
         {
-            var targetSession = string.IsNullOrWhiteSpace(sessionId) ? "default-session" : sessionId;
-            _logger.LogInformation("Clearing chat history for session: {SessionId}", targetSession);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Session is invalid. Please login again.");
+
+            var targetSession = userIdString;
+            _logger.LogInformation("Clearing chat history for user session: {SessionId}", targetSession);
 
             await _chatService.ClearHistoryAsync(targetSession);
             return NoContent();

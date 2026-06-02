@@ -6,10 +6,10 @@ import { ChatBot } from './components/ChatBot';
 import { CommandCenter } from './components/CommandCenter';
 import { ChatView } from './components/ChatView';
 import { apiService, UserPreferences } from './services/api';
-import { Cpu, Terminal, Sparkles } from 'lucide-react';
+import { Cpu, Terminal } from 'lucide-react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
-import { OmniRobot, Behavior } from './components/AssistantMascot';
+import { OmniRobot } from './components/AssistantMascot';
 
 const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
   const particleCount = 20; // soft and cozy amount for the main dashboard!
@@ -21,11 +21,11 @@ const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ 
       size: Math.random() * 5 + 3,
       delay: `${Math.random() * 8}s`,
       duration: `${Math.random() * 14 + 12}s`,
-      color: mode === 'morning' 
-        ? '#fbbf24' 
+      color: mode === 'morning'
+        ? '#fbbf24'
         : mode === 'afternoon'
-        ? '#c084fc' 
-        : '#fb923c',
+          ? '#c084fc'
+          : '#fb923c',
     }));
   }, [mode]);
 
@@ -146,7 +146,7 @@ export const AppLayout: React.FC = () => {
 
   useEffect(() => {
     setLogs(initialLogs);
-    
+
     // Fetch preferences to display on side monitor
     const fetchPrefs = async () => {
       try {
@@ -171,7 +171,7 @@ export const AppLayout: React.FC = () => {
       const randomText = liveActions[Math.floor(Math.random() * liveActions.length)];
       const now = new Date();
       const timeStr = now.toTimeString().split(' ')[0];
-      
+
       setLogs(prev => {
         const newLogs: TelemetryLog[] = [...prev, { timestamp: timeStr, category: 'SYSTEM' as const, text: randomText }];
         // Limit to last 15 lines to avoid memory leak
@@ -182,10 +182,10 @@ export const AppLayout: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const bgGradient = 
+  const bgGradient =
     timeMode === 'morning' ? 'from-[#0a0f1d] via-[#121c32] to-[#25152a]' :
-    timeMode === 'afternoon' ? 'from-[#0b1420] via-[#0f212f] to-[#0f2a20]' :
-    'from-[#05080e] via-[#09101f] to-[#120b20]';
+      timeMode === 'afternoon' ? 'from-[#0b1420] via-[#0f212f] to-[#0f2a20]' :
+        'from-[#05080e] via-[#09101f] to-[#120b20]';
 
   return (
     <div className={`min-h-screen bg-gradient-to-br ${bgGradient} text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] relative overflow-hidden`}>
@@ -247,7 +247,7 @@ export const AppLayout: React.FC = () => {
       {/* Top Hologram Navigation Bar */}
       <nav className="glass-panel border-b border-white/5 py-4 px-6 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-          <div 
+          <div
             onClick={() => setCurrentView('dashboard')}
             className="flex items-center gap-3 cursor-pointer group"
           >
@@ -265,43 +265,39 @@ export const AppLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 text-xs md:text-sm font-semibold tracking-wider text-slate-400">
-            <button 
+            <button
               onClick={() => setCurrentView('dashboard')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                currentView === 'dashboard' 
-                  ? 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 shadow-md shadow-cyan-500/5' 
+              className={`px-3 py-1.5 rounded-lg transition-all ${currentView === 'dashboard'
+                  ? 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 shadow-md shadow-cyan-500/5'
                   : 'hover:text-white'
-              }`}
+                }`}
             >
               COMMAND CENTER
             </button>
-            <button 
+            <button
               onClick={() => setCurrentView('chat')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                currentView === 'chat' 
-                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-md shadow-emerald-500/5' 
+              className={`px-3 py-1.5 rounded-lg transition-all ${currentView === 'chat'
+                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-md shadow-emerald-500/5'
                   : 'hover:text-white'
-              }`}
+                }`}
             >
               CHAT
             </button>
-            <button 
+            <button
               onClick={() => setCurrentView('plugins')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                currentView === 'plugins' 
-                  ? 'text-orange-400 bg-orange-500/10 border border-orange-500/20 shadow-md shadow-orange-500/5' 
+              className={`px-3 py-1.5 rounded-lg transition-all ${currentView === 'plugins'
+                  ? 'text-orange-400 bg-orange-500/10 border border-orange-500/20 shadow-md shadow-orange-500/5'
                   : 'hover:text-white'
-              }`}
+                }`}
             >
               PLUGINS
             </button>
-            <button 
+            <button
               onClick={() => setCurrentView('preferences')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                currentView === 'preferences' 
-                  ? 'text-purple-400 bg-purple-500/10 border border-purple-500/20 shadow-md shadow-purple-500/5' 
+              className={`px-3 py-1.5 rounded-lg transition-all ${currentView === 'preferences'
+                  ? 'text-purple-400 bg-purple-500/10 border border-purple-500/20 shadow-md shadow-purple-500/5'
                   : 'hover:text-white'
-              }`}
+                }`}
             >
               SETTINGS
             </button>
@@ -311,19 +307,19 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Core Columns */}
       <div className="flex-1 w-full max-w-[1400px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
-        
+
         {/* LEFT COLUMN: Holographic Core HUD Panel */}
         <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] overflow-hidden">
-          
+
           {/* Claude core interactive Orb */}
-          <div 
+          <div
             ref={cardRef}
             onMouseMove={handleCardMouseMove}
             onMouseEnter={() => setIsCoreHovered(true)}
             onMouseLeave={handleCardMouseLeave}
             className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 hover:border-indigo-500/25 shadow-lg group"
           >
-            
+
             {/* Background scanner sweep line */}
             <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 h-10 w-full animate-pulse top-0" style={{ animationDuration: '3s' }} />
 
@@ -333,12 +329,12 @@ export const AppLayout: React.FC = () => {
               <div className="absolute inset-0 border border-dashed border-indigo-500/35 rounded-full animate-orb" />
               {/* Inner Pulsing Core / Ambient Hologram Glow */}
               <div className="absolute w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-500/10 via-purple-500/20 to-cyan-500/10 blur-md opacity-75 animate-pulse" />
-              
+
               {/* Scale animation wrapper for hover feedback (Spring feel) */}
-              <div 
-                style={{ 
-                  transform: isCoreHovered ? 'scale(1.08)' : 'scale(1)', 
-                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' 
+              <div
+                style={{
+                  transform: isCoreHovered ? 'scale(1.08)' : 'scale(1)',
+                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
                 }}
                 className="flex items-center justify-center z-10 animate-floating"
               >
@@ -395,12 +391,11 @@ export const AppLayout: React.FC = () => {
               {logs.map((log, index) => (
                 <div key={index} className="flex gap-2 items-start hover:bg-white/5 p-1 rounded transition-colors duration-150">
                   <span className="text-slate-500 text-[10px]">{log.timestamp}</span>
-                  <span className={`font-bold text-[9px] px-1 rounded flex-shrink-0 ${
-                    log.category === 'SYSTEM' ? 'bg-indigo-500/10 text-indigo-400' :
-                    log.category === 'FETCH' ? 'bg-cyan-500/10 text-cyan-400' :
-                    log.category === 'AGENT' ? 'bg-purple-500/10 text-purple-400' :
-                    'bg-red-500/10 text-red-400'
-                  }`}>
+                  <span className={`font-bold text-[9px] px-1 rounded flex-shrink-0 ${log.category === 'SYSTEM' ? 'bg-indigo-500/10 text-indigo-400' :
+                      log.category === 'FETCH' ? 'bg-cyan-500/10 text-cyan-400' :
+                        log.category === 'AGENT' ? 'bg-purple-500/10 text-purple-400' :
+                          'bg-red-500/10 text-red-400'
+                    }`}>
                     {log.category}
                   </span>
                   <span className="flex-1 terminal-line break-words">{log.text}</span>
