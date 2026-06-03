@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Mail, MessageSquare, Send, Sparkles, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { apiService, UserPreferences } from '../services/api';
+import { DashboardAnalytics } from './DashboardAnalytics';
 
 interface CommandCenterProps {
   onNavigate: (view: string) => void;
@@ -115,6 +116,9 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onNavigate }) => {
           ))}
         </div>
       </div>
+
+      {/* Real-time Dashboard Analytics */}
+      <DashboardAnalytics userId={prefs?.id?.toString()} />
     </div>
   );
 };

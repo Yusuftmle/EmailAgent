@@ -12,39 +12,52 @@ namespace EmailAgent.API.Plugins;
 public class WebSearchPlugin
 {
     private readonly HttpClient _httpClient;
+    private readonly string _serperApiKey = "416db12e9bf14c637595056af29a774fe9945275";
 
     public WebSearchPlugin(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
     [KernelFunction("SearchWebAsync")]
-    [Description("Searches the internet for information, including product prices across Europe (e.g. MediaMarkt, Saturn, Amazon Europe, etc). Use this when the user asks to compare prices or find cheaper alternatives.")]
+    [Description("Searches the internet to find exact product links, category pages, or prices (e.g. MediaMarkt, Vatan Bilgisayar, Amazon Europe). Use this FIRST to find the URL of a category if the user asks you to track a category but only provides the store name.")]
     public async Task<string> SearchWebAsync(
-        [Description("The search query. To find European prices, append 'price germany' or 'MediaMarkt' etc. to the query.")] string query)
+        [Description("The search query. For finding category links, use '{Store Name} {Product Name}' e.g., 'Vatan Bilgisayar iPhone 13 Pro'")] string query)
     {
         try
         {
-            var searchUrl = $"https://html.duckduckgo.com/html/?q={Uri.EscapeDataString(query)}";
-            var html = await _httpClient.GetStringAsync(searchUrl);
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://google.serper.dev/search");
+            request.Headers.Add("X-API-KEY", _serperApiKey);
+            request.Content = new StringContent($"{{\"q\":\"{query}\"}}", System.Text.Encoding.UTF8, "application/json");
 
-            // Extremely basic regex to extract DuckDuckGo snippets (result__snippet) and URLs (result__url)
-            var snippetRegex = new Regex("<a class=\"result__snippet[^>]*>(.*?)</a>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            var matches = snippetRegex.Matches(html);
-
-            if (matches.Count == 0)
-                return "İnternette arama yapıldı ancak sonuç bulunamadı.";
-
-            var results = new List<string>();
-            int limit = Math.Min(5, matches.Count);
-            for (int i = 0; i < limit; i++)
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
             {
-                var cleanSnippet = WebUtility.HtmlDecode(Regex.Replace(matches[i].Groups[1].Value, "<.*?>", ""));
-                results.Add($"- {cleanSnippet}");
+                return $"Arama API'si başarısız oldu: {response.StatusCode}";
             }
 
-            return "İnternet Arama Sonuçları:\n" + string.Join("\n", results);
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            
+            if (!doc.RootElement.TryGetProperty("organic", out var organicResults))
+            {
+                return "İnternette arama yapıldı ancak organik sonuç bulunamadı.";
+            }
+
+            var results = new List<string>();
+            int limit = Math.Min(5, organicResults.GetArrayLength());
+            
+            for (int i = 0; i < limit; i++)
+            {
+                var result = organicResults[i];
+                var title = result.TryGetProperty("title", out var t) ? t.GetString() : "No Title";
+                var link = result.TryGetProperty("link", out var l) ? l.GetString() : "No Link";
+                var snippet = result.TryGetProperty("snippet", out var s) ? s.GetString() : "No Snippet";
+                
+                results.Add($"Sonuç {i+1}:\nBaşlık: {title}\nLink: {link}\nÖzet: {snippet}\n");
+            }
+
+            return $"Arama Sorgusu: '{query}'\n\nBulunan Sonuçlar:\n" + string.Join("\n", results);
         }
         catch (Exception ex)
         {

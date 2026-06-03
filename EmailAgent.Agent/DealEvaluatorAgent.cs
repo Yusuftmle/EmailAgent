@@ -13,17 +13,19 @@ public class DealEvaluatorAgent
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly HttpClient _httpClient;
+    private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
 
-    public DealEvaluatorAgent(IServiceProvider serviceProvider, IHttpClientFactory httpClientFactory)
+    public DealEvaluatorAgent(IServiceProvider serviceProvider, IHttpClientFactory httpClientFactory, Microsoft.Extensions.Configuration.IConfiguration config)
     {
         _serviceProvider = serviceProvider;
         _httpClient = httpClientFactory.CreateClient("AIAgentClient");
+        _config = config;
     }
 
     public async Task<bool> EvaluateDealAsync(UserPreferences userPrefs, string productTitle, string requiredFeatures)
     {
         var provider = string.IsNullOrEmpty(userPrefs.AiProvider) ? "Gemini" : userPrefs.AiProvider;
-        var apiKey = userPrefs.ApiKey;
+        var apiKey = string.IsNullOrWhiteSpace(userPrefs.ApiKey) ? _config[$"{provider}:ApiKey"] : userPrefs.ApiKey;
 
         // Create an isolated sub-agent (kernel)
         var kernel = new AegisKernelBuilder(_serviceProvider)

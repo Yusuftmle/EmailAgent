@@ -19,7 +19,7 @@ public class ProductScraperService
         _logger = logger;
     }
 
-    public async Task<(decimal? Price, string? Currency, string? Title)> ScrapeProductAsync(string url)
+    public async Task<(decimal? Price, string? Currency, string? Title, bool IsInStock)> ScrapeProductAsync(string url)
     {
         try
         {
@@ -36,7 +36,6 @@ public class ProductScraperService
                     using var doc = JsonDocument.Parse(jsonStr);
                     var root = doc.RootElement;
                     
-                    // JSON-LD can be an array of objects or a single object
                     if (root.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var item in root.EnumerateArray())
@@ -47,7 +46,6 @@ public class ProductScraperService
                     }
                     else if (root.ValueKind == JsonValueKind.Object)
                     {
-                        // Check if it's a @graph containing multiple objects
                         if (root.TryGetProperty("@graph", out var graph) && graph.ValueKind == JsonValueKind.Array)
                         {
                             foreach (var item in graph.EnumerateArray())
@@ -63,23 +61,20 @@ public class ProductScraperService
                         }
                     }
                 }
-                catch (JsonException)
-                {
-                    // Ignore parsing errors for individual blocks
-                }
+                catch (JsonException) { }
             }
 
             _logger.LogWarning("Could not find Product Schema on {Url}", url);
-            return (null, null, null);
+            return (null, null, null, false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error scraping URL: {Url}", url);
-            return (null, null, null);
+            return (null, null, null, false);
         }
     }
 
-    private (decimal? Price, string? Currency, string? Title) ExtractFromSchema(JsonElement item)
+    private (decimal? Price, string? Currency, string? Title, bool IsInStock) ExtractFromSchema(JsonElement item)
     {
         if (item.TryGetProperty("@type", out var typeProp))
         {
@@ -90,40 +85,44 @@ public class ProductScraperService
                 
                 if (item.TryGetProperty("offers", out var offers))
                 {
-                    // Offers can be a single object or array
                     if (offers.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var offer in offers.EnumerateArray())
                         {
-                            if (ExtractPriceFromOffer(offer, out var price, out var currency))
+                            if (ExtractPriceFromOffer(offer, out var price, out var currency, out var inStock))
                             {
-                                return (price, currency, title);
+                                return (price, currency, title, inStock);
                             }
                         }
                     }
                     else if (offers.ValueKind == JsonValueKind.Object)
                     {
-                        if (ExtractPriceFromOffer(offers, out var price, out var currency))
+                        if (ExtractPriceFromOffer(offers, out var price, out var currency, out var inStock))
                         {
-                            return (price, currency, title);
+                            return (price, currency, title, inStock);
                         }
                     }
                 }
             }
         }
-        return (null, null, null);
+        return (null, null, null, false);
     }
 
-    private bool ExtractPriceFromOffer(JsonElement offer, out decimal price, out string currency)
+    private bool ExtractPriceFromOffer(JsonElement offer, out decimal price, out string currency, out bool isInStock)
     {
         price = 0;
         currency = "EUR";
+        isInStock = true; // Assume in stock unless availability says otherwise
+
+        if (offer.TryGetProperty("availability", out var availProp))
+        {
+            var avail = availProp.GetString() ?? "";
+            isInStock = avail.Contains("InStock", StringComparison.OrdinalIgnoreCase);
+        }
 
         if (offer.TryGetProperty("price", out var priceProp) && offer.TryGetProperty("priceCurrency", out var currencyProp))
         {
             currency = currencyProp.GetString() ?? "EUR";
-            
-            // Price can be string "199.99" or number 199.99
             if (priceProp.ValueKind == JsonValueKind.Number)
             {
                 price = priceProp.GetDecimal();

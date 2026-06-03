@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { apiService, ChatHistoryMessage } from '../services/api';
-import { MessageSquare, Send, Trash2, Cpu } from 'lucide-react';
+import { MessageSquare, Send, Trash2, Cpu, Mic, MicOff } from 'lucide-react';
 import AssistantMascot, { MascotHandle } from './AssistantMascot';
 
 const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
@@ -66,6 +66,10 @@ export const ChatView: React.FC = () => {
   const [messages, setMessages] = useState<ChatHistoryMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+
   const [sessionId] = useState(() => {
     try {
       const userStr = localStorage.getItem('user');
@@ -151,6 +155,60 @@ export const ChatView: React.FC = () => {
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleRecording = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+      setIsRecording(false);
+    } else {
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          setIsLoading(true);
+
+          try {
+            const response = await apiService.sendVoiceMessage(sessionId, audioBlob);
+            
+            // Add what we heard as user message
+            if (response.transcribedText) {
+              setMessages(prev => [...prev, { role: 'user', sessionId, content: `🎤 ${response.transcribedText}` }]);
+            }
+
+            // Add AI response
+            setMessages(prev => [...prev, { role: 'assistant', sessionId, content: response.reply }]);
+            mascotRef.current?.celebrate();
+          } catch (error) {
+            console.error("Failed to post voice message", error);
+            setMessages(prev => [...prev, { role: 'assistant', sessionId, content: "Could not process your voice command. Please try again." }]);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error("Error accessing microphone:", err);
+        alert("Please allow microphone access to use voice commands.");
+      }
     }
   };
 
@@ -342,15 +400,28 @@ export const ChatView: React.FC = () => {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isRecording}
             placeholder="Send a message to Aegis..."
             className="flex-1 px-4 py-4 pl-12 rounded-2xl bg-slate-950/80 border border-slate-800 focus:border-emerald-500/50 outline-none text-slate-200 disabled:opacity-50 transition-all text-sm shadow-inner"
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            type="button"
+            onClick={handleToggleRecording}
+            className={`px-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all ${
+              isRecording 
+                ? 'bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.3)]' 
+                : 'bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700'
+            }`}
+          >
+            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             type="submit"
-            disabled={!inputValue.trim() || isLoading}
+            disabled={!inputValue.trim() || isLoading || isRecording}
             className="px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-extrabold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:shadow-none transition-all"
           >
             <span>SEND</span>

@@ -26,5 +26,7 @@ public class TrackedProduct
     
     public DateTimeOffset LastCheckedAt { get; set; } = DateTimeOffset.UtcNow;
     
+    public bool IsInStock { get; set; } = true;
+    
     public bool IsActive { get; set; } = true;
 }

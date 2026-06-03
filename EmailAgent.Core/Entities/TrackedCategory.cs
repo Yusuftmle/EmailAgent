@@ -14,10 +14,12 @@ public class TrackedCategory
     // User-friendly name e.g. "Gaming Laptops"
     public string CategoryName { get; set; } = string.Empty;
     
-    // E.g., 15 for 15% minimum discount to trigger an alert
     public decimal MinDiscountPercentage { get; set; } = 15;
     
     public string? RequiredFeatures { get; set; }
+    
+    // Optional Guid to group multiple categories together for cross-border comparison
+    public Guid? ComparisonGroupId { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     

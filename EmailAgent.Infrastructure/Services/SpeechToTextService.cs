@@ -45,8 +45,14 @@ public class GroqSpeechToTextService : ISpeechToTextService
             
             // Add the audio stream
             var streamContent = new StreamContent(audioStream);
-            // Telegram usually sends OGG with Opus codec for voice messages.
-            streamContent.Headers.ContentType = new MediaTypeHeaderValue("audio/ogg"); 
+            
+            // Try to infer content type based on extension
+            string contentType = "audio/ogg"; // Default for telegram
+            if (filename.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)) contentType = "audio/webm";
+            else if (filename.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase)) contentType = "audio/mpeg";
+            else if (filename.EndsWith(".wav", StringComparison.OrdinalIgnoreCase)) contentType = "audio/wav";
+            
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType); 
             content.Add(streamContent, "file", filename);
 
             // Add model and response format

@@ -15,111 +15,68 @@
   }
 
   body {
-    background-color: #030712;
+    background-color: #000000;
     color: #f8fafc;
     overflow-x: hidden;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
-  /* Custom Scrollbars */
+  /* Sleek Scrollbars */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.15);
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.35);
+    background: rgba(255, 255, 255, 0.2);
   }
 }
 
 /* Holographic Glow Panels */
 .glass-panel {
-  background: rgba(11, 15, 25, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  background: rgba(9, 9, 11, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .holo-card {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(168, 85, 247, 0.03) 50%, rgba(3, 7, 18, 0.65) 100%);
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.02);
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease;
 }
 
 .holo-card:hover {
-  border-color: rgba(99, 102, 241, 0.2);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), inset 0 0 24px rgba(99, 102, 241, 0.05);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Core Orb Holographic breathing filters */
 .orb-glow {
-  filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.6))
-          drop-shadow(0 0 60px rgba(168, 85, 247, 0.4))
-          drop-shadow(0 0 100px rgba(6, 182, 212, 0.3));
-}
-
-.glow-indigo {
-  box-shadow: 0 0 30px -5px rgba(99, 102, 241, 0.25);
-}
-
-.glow-purple {
-  box-shadow: 0 0 30px -5px rgba(168, 85, 247, 0.25);
+  filter: drop-shadow(0 0 30px rgba(16, 185, 129, 0.4));
 }
 
 /* Animations */
 @keyframes orbRotate {
-  0% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.04);
-  }
-  100% {
-    transform: rotate(360deg) scale(1);
-  }
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.02); }
+  100% { transform: rotate(360deg) scale(1); }
 }
 
 .animate-orb {
-  animation: orbRotate 15s infinite linear;
-}
-
-@keyframes holographicSweep {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.hologram-gradient {
-  background: linear-gradient(270deg, #6366f1, #a855f7, #06b6d4, #d946ef);
-  background-size: 800% 800%;
-  animation: holographicSweep 12s infinite ease;
+  animation: orbRotate 20s infinite linear;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 40%, #22d3ee 100%);
+  background: linear-gradient(135deg, #a7f3d0 0%, #34d399 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-/* Live Terminal Log Styles */
-.terminal-line::before {
-  content: '➜ ';
-  color: #06b6d4;
-  font-weight: bold;
 }
 
 @keyframes typingDots {

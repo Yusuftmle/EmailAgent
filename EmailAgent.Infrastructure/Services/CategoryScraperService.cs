@@ -6,23 +6,17 @@ using System.Threading.Tasks;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 
-namespace EmailAgent.Infrastructure.Services;
+using EmailAgent.Core.Entities;
 
-public class CategoryDeal
-{
-    public string Title { get; set; } = string.Empty;
-    public string ProductUrl { get; set; } = string.Empty;
-    public decimal OriginalPrice { get; set; }
-    public decimal CurrentPrice { get; set; }
-    public decimal DiscountPercentage => OriginalPrice > 0 ? ((OriginalPrice - CurrentPrice) / OriginalPrice) * 100 : 0;
-}
+namespace EmailAgent.Infrastructure.Services;
 
 public class CategoryScraperService
 {
     private readonly HttpClient _httpClient;
+    private readonly EmailAgent.Agent.UniversalScraperAgent _universalScraperAgent;
     private readonly ILogger<CategoryScraperService> _logger;
 
-    public CategoryScraperService(IHttpClientFactory httpClientFactory, ILogger<CategoryScraperService> logger)
+    public CategoryScraperService(IHttpClientFactory httpClientFactory, EmailAgent.Agent.UniversalScraperAgent universalScraperAgent, ILogger<CategoryScraperService> logger)
     {
         // Using a standard client but setting a desktop user-agent to bypass basic blocks
         _httpClient = httpClientFactory.CreateClient("AIAgentClient");
@@ -34,10 +28,11 @@ public class CategoryScraperService
         {
             _httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
         }
+        _universalScraperAgent = universalScraperAgent;
         _logger = logger;
     }
 
-    public async Task<List<CategoryDeal>> FindDealsInCategoryAsync(string categoryUrl, decimal minDiscount)
+    public async Task<List<CategoryDeal>> FindDealsInCategoryAsync(EmailAgent.Core.Entities.UserPreferences userPrefs, string categoryUrl, decimal minDiscount)
     {
         var deals = new List<CategoryDeal>();
         try
@@ -45,6 +40,39 @@ public class CategoryScraperService
             var html = await _httpClient.GetStringAsync(categoryUrl);
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
+
+            // HYBRID LOGIC: If it's not Amazon, delegate to AI
+            if (!categoryUrl.ToLower().Contains("amazon."))
+            {
+                // Minify HTML to save tokens
+                var nodesToRemove = doc.DocumentNode.SelectNodes("//script|//style|//svg|//nav|//footer|//header|//iframe|//noscript");
+                if (nodesToRemove != null)
+                {
+                    foreach (var node in nodesToRemove)
+                    {
+                        node.Remove();
+                    }
+                }
+                var minifiedHtml = doc.DocumentNode.InnerText; // Just raw text is often enough for the AI, but let's pass InnerHtml to keep links
+                minifiedHtml = doc.DocumentNode.InnerHtml;
+                // Basic compression
+                minifiedHtml = System.Text.RegularExpressions.Regex.Replace(minifiedHtml, @"\s+", " ").Trim();
+
+                var uri = new Uri(categoryUrl);
+                var baseUrl = $"{uri.Scheme}://{uri.Host}";
+
+                var aiDeals = await _universalScraperAgent.ExtractDealsAsync(userPrefs, minifiedHtml, baseUrl);
+                
+                // Filter by minDiscount
+                foreach (var deal in aiDeals)
+                {
+                    if (deal.DiscountPercentage >= minDiscount)
+                    {
+                        deals.Add(deal);
+                    }
+                }
+                return deals;
+            }
 
             // Amazon search results typically have data-component-type="s-search-result"
             var productNodes = doc.DocumentNode.SelectNodes("//div[@data-component-type='s-search-result']");
@@ -65,7 +93,12 @@ public class CategoryScraperService
 
                     var title = titleNode.InnerText.Trim();
                     var url = linkNode.GetAttributeValue("href", "");
-                    if (!url.StartsWith("http")) url = "https://www.amazon.de" + url;
+                    if (!url.StartsWith("http")) 
+                    {
+                        var uri = new Uri(categoryUrl);
+                        var baseUrl = $"{uri.Scheme}://{uri.Host}";
+                        url = baseUrl + url;
+                    }
 
                     // Extract Prices
                     // Current price is usually inside a span with class 'a-price' -> 'a-offscreen'

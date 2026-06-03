@@ -22,6 +22,7 @@ public class DailyBriefingJob
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<DailyBriefingJob> _logger;
+    private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
 
     public DailyBriefingJob(
         IUserPreferencesRepository prefRepo,
@@ -29,7 +30,8 @@ public class DailyBriefingJob
         EmailAgentDbContext dbContext,
         IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
-        ILogger<DailyBriefingJob> logger)
+        ILogger<DailyBriefingJob> logger,
+        Microsoft.Extensions.Configuration.IConfiguration config)
     {
         _prefRepo = prefRepo;
         _telegramService = telegramService;
@@ -37,6 +39,7 @@ public class DailyBriefingJob
         _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _config = config;
     }
 
     public async Task SendMorningBriefingAsync()
@@ -81,12 +84,14 @@ public class DailyBriefingJob
 
                 // 4. Generate AI Message
                 var provider = string.IsNullOrEmpty(user.AiProvider) ? "Gemini" : user.AiProvider;
+                var apiKey = string.IsNullOrWhiteSpace(user.ApiKey) ? _config[$"{provider}:ApiKey"] : user.ApiKey;
                 var kernel = new AegisKernelBuilder(_serviceProvider)
-                    .UseModel(provider, "gemini-flash-latest", user.ApiKey, _httpClientFactory.CreateClient("AIAgentClient"))
+                    .UseModel(provider, "gemini-flash-latest", apiKey, _httpClientFactory.CreateClient("AIAgentClient"))
                     .Build();
 
                 var chatService = kernel.GetRequiredService<IChatCompletionService>();
-                var chatHistory = new ChatHistory("Sen kullanıcının kişisel yapay zeka asistanısın. Görevin, ona her sabah enerjik, samimi ve motive edici bir 'Günaydın / Sabah Bülteni' mesajı hazırlamak. Sadece aşağıdaki verileri kullanarak kısa ve şık bir özet yaz. Aşırı uzun olmasın, emoji kullan.");
+                var persona = user.AssistantPersona ?? "Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın.";
+                var chatHistory = new ChatHistory($"Sen kullanıcının kişisel yapay zeka asistanısın. Görevin, ona her sabah aşağıdaki karakter ve davranış profiline uygun bir 'Günaydın / Sabah Bülteni' mesajı hazırlamak.\nSenin Karakterin: {persona}\nSadece aşağıdaki verileri kullanarak kısa ve şık bir özet yaz.");
                 
                 string prompt = $@"
 Kullanıcı Adı: {user.Name ?? "Yusuf"}

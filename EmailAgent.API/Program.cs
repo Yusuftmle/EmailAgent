@@ -25,6 +25,9 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
+// 0. Data Protection for encrypting sensitive fields like ApiKey
+builder.Services.AddDataProtection();
+
 // 1. Database Configuration (PostgreSQL)
 var connectionString = builder.Configuration.GetConnectionString("Default");
 if (string.IsNullOrEmpty(connectionString))
@@ -45,6 +48,7 @@ builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationSer
 builder.Services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ProductScraperService>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.CategoryScraperService>();
+builder.Services.AddScoped<EmailAgent.Agent.UniversalScraperAgent>();
 builder.Services.AddScoped<EmailAgent.Agent.DealEvaluatorAgent>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ISpeechToTextService, EmailAgent.Infrastructure.Services.GroqSpeechToTextService>();
 
@@ -62,12 +66,14 @@ builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEn
         new EmailPlugin(sp.GetRequiredService<IGmailService>(), userPrefs),
         new NotificationPlugin(sp.GetRequiredService<IWhatsAppNotificationService>(), sp.GetRequiredService<ITelegramNotificationService>(), userPrefs),
         new CurrencyPlugin(),
-        new ShoppingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.ProductScraperService>()),
+        new ShoppingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.ProductScraperService>(), userPrefs.Id),
         new EmailAgent.API.Plugins.WebSearchPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
         new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
         new EmailAgent.API.Plugins.DocumentPlugin(),
         new EmailAgent.API.Plugins.FinancePlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
-        new EmailAgent.API.Plugins.CategoryTrackingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id)
+        new EmailAgent.API.Plugins.CategoryTrackingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id),
+        new EmailAgent.API.Plugins.BulkAnalysisPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id),
+        new EmailAgent.API.Plugins.ReminderPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id)
     };
 });
 
@@ -94,6 +100,7 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddScoped<DailyEmailJob>();
 builder.Services.AddScoped<ShoppingTrackerJob>();
 builder.Services.AddScoped<DailyBriefingJob>();
+builder.Services.AddScoped<MorningBriefingJob>();
 
 // 5.5 Register Telegram Bot Hosted Service
 builder.Services.AddHostedService<EmailAgent.API.Services.TelegramBotHostedService>();
@@ -150,6 +157,7 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""TelegramChatId"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""PairingCode"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""ShoppingTrackerIntervalHours"" integer NOT NULL DEFAULT 12;
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""AssistantPersona"" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
 
             CREATE TABLE IF NOT EXISTS ""TrackedCategories"" (
                 ""Id"" uuid NOT NULL,
@@ -163,8 +171,37 @@ using (var scope = app.Services.CreateScope())
             );
 
             ALTER TABLE ""TrackedCategories"" ADD COLUMN IF NOT EXISTS ""RequiredFeatures"" text NULL;
+            ALTER TABLE ""TrackedCategories"" ADD COLUMN IF NOT EXISTS ""ComparisonGroupId"" uuid NULL;
+            ALTER TABLE ""TrackedProducts"" ADD COLUMN IF NOT EXISTS ""IsInStock"" boolean NOT NULL DEFAULT true;
 
-            TRUNCATE TABLE ""ChatHistory"";
+            CREATE TABLE IF NOT EXISTS ""PriceHistory"" (
+                ""Id"" uuid NOT NULL,
+                ""ProductId"" uuid NOT NULL,
+                ""Price"" numeric NOT NULL,
+                ""IsInStock"" boolean NOT NULL DEFAULT true,
+                ""CheckedAt"" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT ""PK_PriceHistory"" PRIMARY KEY (""Id"")
+            );
+
+            CREATE TABLE IF NOT EXISTS ""Reminders"" (
+                ""Id"" uuid NOT NULL,
+                ""UserId"" uuid NOT NULL,
+                ""Message"" text NOT NULL,
+                ""RemindAt"" timestamp NOT NULL,
+                ""IsSent"" boolean NOT NULL DEFAULT false,
+                ""CreatedAt"" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT ""PK_Reminders"" PRIMARY KEY (""Id"")
+            );
+
+            CREATE TABLE IF NOT EXISTS ""NotificationLogs"" (
+                ""Id"" uuid NOT NULL,
+                ""UserId"" uuid NOT NULL,
+                ""Message"" text NOT NULL,
+                ""Type"" text NOT NULL DEFAULT 'PriceDrop',
+                ""SentAt"" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT ""PK_NotificationLogs"" PRIMARY KEY (""Id"")
+            );
+
             UPDATE ""UserPreferences"" SET ""PairingCode"" = gen_random_uuid()::text WHERE ""PairingCode"" = '';
         ");
     }
@@ -241,6 +278,17 @@ using (var scope = app.Services.CreateScope())
                 new RecurringJobOptions
                 {
                     TimeZone = TimeZoneInfo.Local
+                }
+            );
+
+            // Our new MorningBriefingJob that also processes reminders every 5 minutes
+            recurringJobManager.AddOrUpdate<MorningBriefingJob>(
+                "morning-briefing-and-reminders",
+                job => job.RunAsync(),
+                "*/5 * * * *", // Every 5 minutes
+                new RecurringJobOptions
+                {
+                    TimeZone = TimeZoneInfo.Utc
                 }
             );
         }

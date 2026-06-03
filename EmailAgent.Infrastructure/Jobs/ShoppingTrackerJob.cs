@@ -42,6 +42,7 @@ public class ShoppingTrackerJob
     {
         await CheckProductsAsync();
         await CheckCategoriesAsync();
+        await CheckCategoryComparisonsAsync();
     }
 
     private async Task CheckProductsAsync()
@@ -70,21 +71,36 @@ public class ShoppingTrackerJob
                 if (result.Price.HasValue)
                 {
                     if (string.IsNullOrEmpty(product.Title) && !string.IsNullOrEmpty(result.Title))
-                    {
                         product.Title = result.Title;
-                    }
+
+                    bool wasInStock = product.IsInStock;
+                    bool nowInStock = result.IsInStock;
 
                     product.LastKnownPrice = result.Price.Value;
                     product.Currency = result.Currency ?? product.Currency;
                     product.LastCheckedAt = DateTimeOffset.UtcNow;
+                    product.IsInStock = nowInStock;
 
-                    _logger.LogInformation("Scraped {Title}: {Price} {Currency}", product.Title, product.LastKnownPrice, product.Currency);
+                    // Save price history snapshot
+                    _dbContext.PriceHistories.Add(new PriceHistory
+                    {
+                        ProductId = product.Id,
+                        Price = result.Price.Value,
+                        IsInStock = nowInStock,
+                        CheckedAt = DateTime.UtcNow
+                    });
 
-                    if (product.LastKnownPrice <= product.TargetPrice)
+                    _logger.LogInformation("Scraped {Title}: {Price} {Currency} InStock={InStock}", product.Title, product.LastKnownPrice, product.Currency, nowInStock);
+
+                    // Stock alert: was out of stock, now back in!
+                    if (!wasInStock && nowInStock)
+                    {
+                        await NotifyStockReturnedAsync(product);
+                    }
+
+                    if (product.LastKnownPrice <= product.TargetPrice && nowInStock)
                     {
                         await NotifyUserAsync(product);
-                        // Disable after notifying to prevent spam, or keep it active if user wants continuous updates
-                        // product.IsActive = false; 
                     }
                 }
             }
@@ -131,7 +147,7 @@ public class ShoppingTrackerJob
                     continue;
                 }
 
-                var deals = await _categoryScraperService.FindDealsInCategoryAsync(category.CategoryUrl, category.MinDiscountPercentage);
+                var deals = await _categoryScraperService.FindDealsInCategoryAsync(userPrefs, category.CategoryUrl, category.MinDiscountPercentage);
                 foreach (var deal in deals)
                 {
                     // SMART FILTERING
@@ -158,6 +174,102 @@ public class ShoppingTrackerJob
         await _dbContext.SaveChangesAsync();
     }
 
+    private async Task CheckCategoryComparisonsAsync()
+    {
+        _logger.LogInformation("Starting Category Comparison Job...");
+        
+        var allCategories = await _dbContext.TrackedCategories
+            .Where(c => c.ComparisonGroupId != null)
+            .ToListAsync();
+
+        var groupedCategories = allCategories.GroupBy(c => c.ComparisonGroupId.Value);
+
+        var eurToPln = 4.3; // fallback
+        try
+        {
+            using var httpClient = new System.Net.Http.HttpClient();
+            var response = await httpClient.GetStringAsync("https://api.frankfurter.app/latest?from=EUR&to=PLN");
+            using var doc = System.Text.Json.JsonDocument.Parse(response);
+            if (doc.RootElement.GetProperty("rates").TryGetProperty("PLN", out var rateElement))
+            {
+                eurToPln = rateElement.GetDouble();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to fetch EUR to PLN rate. Using fallback.");
+        }
+
+        foreach (var group in groupedCategories)
+        {
+            if (group.Count() < 2) continue; // Need at least two to compare
+            
+            var userPrefs = await _dbContext.UserPreferences.FindAsync(group.First().UserId);
+            if (userPrefs == null) continue;
+
+            var lowestDeals = new Dictionary<TrackedCategory, CategoryDeal>();
+
+            foreach (var category in group)
+            {
+                // Find top deals, ignore minimum discount to find absolute lowest price for comparison
+                var deals = await _categoryScraperService.FindDealsInCategoryAsync(userPrefs, category.CategoryUrl, 0);
+                
+                CategoryDeal? bestDeal = null;
+                foreach (var deal in deals)
+                {
+                    if (!string.IsNullOrEmpty(category.RequiredFeatures))
+                    {
+                        bool isMatch = await _dealEvaluatorAgent.EvaluateDealAsync(userPrefs, deal.Title, category.RequiredFeatures);
+                        if (!isMatch) continue;
+                    }
+
+                    if (bestDeal == null || deal.CurrentPrice < bestDeal.CurrentPrice)
+                    {
+                        bestDeal = deal;
+                    }
+                }
+
+                if (bestDeal != null)
+                {
+                    lowestDeals[category] = bestDeal;
+                }
+            }
+
+            if (lowestDeals.Count >= 2)
+            {
+                var sorted = lowestDeals.OrderBy(kvp => 
+                {
+                    // Normalize to EUR
+                    if (kvp.Key.CategoryUrl.Contains(".pl")) return kvp.Value.CurrentPrice / (decimal)eurToPln;
+                    return kvp.Value.CurrentPrice;
+                }).ToList();
+
+                var cheapest = sorted.First();
+                var secondCheapest = sorted.Skip(1).First();
+
+                var cheapestPriceEur = cheapest.Key.CategoryUrl.Contains(".pl") ? cheapest.Value.CurrentPrice / (decimal)eurToPln : cheapest.Value.CurrentPrice;
+                var secondPriceEur = secondCheapest.Key.CategoryUrl.Contains(".pl") ? secondCheapest.Value.CurrentPrice / (decimal)eurToPln : secondCheapest.Value.CurrentPrice;
+
+                // If cheapest is at least MinDiscountPercentage cheaper than second cheapest
+                var minDiscountRequired = cheapest.Key.MinDiscountPercentage;
+                if (secondPriceEur > 0 && ((secondPriceEur - cheapestPriceEur) / secondPriceEur) * 100 >= minDiscountRequired)
+                {
+                    string message = $"🌍 **Cross-Border FIRSAT ARBİTRAJI!** 🌍\n\n" +
+                                     $"Kıyasladığın kategoride DEV BİR FARK var:\n" +
+                                     $"🏆 **KAZANAN:** {cheapest.Key.CategoryName}\n" +
+                                     $"📦 Ürün: {cheapest.Value.Title}\n" +
+                                     $"💰 Fiyat: ~{Math.Round(cheapestPriceEur, 2)} EUR ({cheapest.Value.CurrentPrice})\n" +
+                                     $"🔗 {cheapest.Value.ProductUrl}\n\n" +
+                                     $"🥈 Kaybeden: {secondCheapest.Key.CategoryName} (~{Math.Round(secondPriceEur, 2)} EUR)\n\n" +
+                                     $"Yani {cheapest.Key.CategoryName} almak tam %{Math.Round(((secondPriceEur - cheapestPriceEur) / secondPriceEur) * 100, 1)} daha ucuz!";
+                    
+                    if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
+                        await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
+                }
+            }
+        }
+    }
+
     private async Task NotifyCategoryDealAsync(UserPreferences userPrefs, TrackedCategory category, CategoryDeal deal, double eurToTryRate)
     {
         var priceInTry = Math.Round(deal.CurrentPrice * (decimal)eurToTryRate, 2);
@@ -175,6 +287,28 @@ public class ShoppingTrackerJob
             await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
     }
 
+    private async Task NotifyStockReturnedAsync(TrackedProduct product)
+    {
+        var userPrefs = await _dbContext.UserPreferences.FindAsync(product.UserId);
+        if (userPrefs == null) return;
+
+        string message = $"📦 **STOK ALARMI** 📦\n\nTakip ettiğin ürün tekrar stoka girdi!\n" +
+                         $"📦 Ürün: {product.Title}\n" +
+                         $"💰 Güncel Fiyat: {product.LastKnownPrice} {product.Currency}\n\n" +
+                         $"🔗 Link: {product.Url}";
+
+        if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
+            await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
+
+        _dbContext.NotificationLogs.Add(new NotificationLog
+        {
+            UserId = product.UserId,
+            Message = message,
+            Type = "StockAlert",
+            SentAt = DateTime.UtcNow
+        });
+    }
+
     private async Task NotifyUserAsync(TrackedProduct product)
     {
         var userPrefs = await _dbContext.UserPreferences.FindAsync(product.UserId);
@@ -186,16 +320,18 @@ public class ShoppingTrackerJob
                          $"🎯 Hedefin: {product.TargetPrice} {product.Currency}\n\n" +
                          $"🔗 Link: {product.Url}";
 
-        // Send to Telegram
         if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
-        {
             await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
-        }
 
-        // Send to WhatsApp
         if (!string.IsNullOrEmpty(userPrefs.WhatsAppTo))
-        {
             await _whatsAppService.SendMessageAsync(userPrefs, userPrefs.WhatsAppTo, message);
-        }
+
+        _dbContext.NotificationLogs.Add(new NotificationLog
+        {
+            UserId = product.UserId,
+            Message = message,
+            Type = "PriceDrop",
+            SentAt = DateTime.UtcNow
+        });
     }
 }

@@ -73,17 +73,12 @@ public class ChatService : IChatService
 
             // 2. Build standard System Prompt with Email and Preference Context
             var contextBuilder = new StringBuilder();
-            contextBuilder.AppendLine("You are 'Omni Asistan', an intelligent, conversational agent designed to help the user manage their emails, track product prices, get exchange rates, and act as their personal assistant.");
+            contextBuilder.AppendLine($"You are an AI assistant. The user has defined your exact personality and behavior below. You MUST strictly adhere to this personality in your tone and responses:");
+            contextBuilder.AppendLine("=== YOUR PERSONALITY / PERSONA ===");
+            contextBuilder.AppendLine(preferences?.AssistantPersona ?? "Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.");
+            contextBuilder.AppendLine("==================================");
             contextBuilder.AppendLine($"Current UTC Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
             contextBuilder.AppendLine();
-            
-            if (preferences != null)
-            {
-                contextBuilder.AppendLine("=== USER FOCUS PREFERENCES ===");
-                contextBuilder.AppendLine($"- Focus Companies: {string.Join(", ", preferences.FocusCompanies)}");
-                contextBuilder.AppendLine($"- Key Keywords: {string.Join(", ", preferences.Keywords)}");
-                contextBuilder.AppendLine();
-            }
 
             contextBuilder.AppendLine("=== EMAIL RECORDS IN SYSTEM ===");
             var emailList = todayEmails.ToList();
@@ -115,6 +110,9 @@ public class ChatService : IChatService
             contextBuilder.AppendLine("- If the user asks about currency, money, or exchange rates, USE the get_exchange_rate tool.");
             contextBuilder.AppendLine("- If the user asks you to track a product, check discounts, or monitor a shopping URL, USE the TrackProductPriceAsync tool.");
             contextBuilder.AppendLine("- If the user asks you to check the current price of a product, USE the GetCurrentProductPriceAsync tool.");
+            contextBuilder.AppendLine("- If the user asks to compare their tracked products or see which is the best deal, USE the GetTrackedProductsSummary tool.");
+            contextBuilder.AppendLine("- If the user asks you to remind them about something in the future, USE the SetReminder tool.");
+            contextBuilder.AppendLine("- If you mention ANY price in a foreign currency (e.g. EUR, USD, GBP, PLN), ALWAYS use the get_exchange_rate tool to find the current rate and show the Turkish Lira (TRY) equivalent automatically.");
             contextBuilder.AppendLine("- DO NOT ask for confirmation unless the user explicitly wants you to. Just execute the tool.");
             contextBuilder.AppendLine("- After using a tool, tell the user exactly what you did.");
             contextBuilder.AppendLine("- Keep your answers clean, structured, and easy to read.");

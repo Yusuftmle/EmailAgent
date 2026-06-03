@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService, UserPreferences } from '../services/api';
-import { ArrowLeft, Save, Plus, X, Building, Key, Sparkles, Mail, Cpu, Eye, EyeOff, MessageCircle, Send, User, Bell, Clock, Sliders } from 'lucide-react';
+import { ArrowLeft, Save, Key, Sparkles, Mail, Cpu, Eye, EyeOff, MessageCircle, Send, User, Bell, Clock, Sliders } from 'lucide-react';
 
 interface PreferencesPageProps {
   onBackToDashboard: () => void;
@@ -9,8 +9,7 @@ interface PreferencesPageProps {
 
 export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashboard }) => {
   const [prefs, setPrefs] = useState<UserPreferences>({
-    focusCompanies: [],
-    keywords: [],
+    assistantPersona: 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın.',
     userEmail: '',
     aiProvider: 'Claude',
     apiKey: '',
@@ -24,9 +23,7 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
     shoppingTrackerIntervalHours: 12
   });
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'ai' | 'filters' | 'notifications'>('profile');
-  const [companyInput, setCompanyInput] = useState('');
-  const [keywordInput, setKeywordInput] = useState('');
+  const [activeTab, setActiveTab] = useState<'profile' | 'ai' | 'personality' | 'notifications'>('profile');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -43,41 +40,7 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
     fetchPrefs();
   }, []);
 
-  const handleAddCompany = () => {
-    const trimmed = companyInput.trim();
-    if (trimmed && !prefs.focusCompanies.includes(trimmed)) {
-      setPrefs(prev => ({
-        ...prev,
-        focusCompanies: [...prev.focusCompanies, trimmed]
-      }));
-      setCompanyInput('');
-    }
-  };
 
-  const handleRemoveCompany = (company: string) => {
-    setPrefs(prev => ({
-      ...prev,
-      focusCompanies: prev.focusCompanies.filter(c => c !== company)
-    }));
-  };
-
-  const handleAddKeyword = () => {
-    const trimmed = keywordInput.trim();
-    if (trimmed && !prefs.keywords.includes(trimmed)) {
-      setPrefs(prev => ({
-        ...prev,
-        keywords: [...prev.keywords, trimmed]
-      }));
-      setKeywordInput('');
-    }
-  };
-
-  const handleRemoveKeyword = (keyword: string) => {
-    setPrefs(prev => ({
-      ...prev,
-      keywords: prev.keywords.filter(k => k !== keyword)
-    }));
-  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -150,7 +113,7 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
         {[
           { id: 'profile', icon: User, label: 'Profile & Tracker' },
           { id: 'ai', icon: Cpu, label: 'AI Engine' },
-          { id: 'filters', icon: Sliders, label: 'Filters' },
+          { id: 'personality', icon: Sliders, label: 'Personality' },
           { id: 'notifications', icon: Bell, label: 'Notifications' },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -290,53 +253,25 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
           </motion.div>
         )}
 
-        {/* Filters Tab */}
-        {activeTab === 'filters' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             {/* Focus Companies */}
+        {/* Personality Tab */}
+        {activeTab === 'personality' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6">
             <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col min-h-[350px]">
               <div className="flex items-center gap-2.5 mb-2 border-b border-white/5 pb-3">
-                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/15">
-                  <Building size={16} />
+                <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/15">
+                  <User size={16} />
                 </div>
-                <h2 className="text-base font-bold text-slate-200 uppercase tracking-wider">Focus Companies</h2>
+                <h2 className="text-base font-bold text-slate-200 uppercase tracking-wider">Assistant Persona</h2>
               </div>
-              <div className="flex gap-2 mb-6 mt-3">
-                <input type="text" value={companyInput} onChange={(e) => setCompanyInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCompany()} placeholder="e.g. Microsoft, Google..." className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-indigo-500/40 outline-none text-slate-200" />
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleAddCompany} className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/10"><Plus size={18} /></motion.button>
-              </div>
-              <div className="flex flex-wrap gap-2 overflow-y-auto max-h-[160px] pr-1">
-                  <AnimatePresence>
-                    {prefs.focusCompanies.map(company => (
-                      <motion.span key={company} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">
-                        <span>{company}</span><button onClick={() => handleRemoveCompany(company)} className="p-0.5 rounded-full hover:bg-indigo-500/25 text-indigo-400 hover:text-white"><X size={11} /></button>
-                      </motion.span>
-                    ))}
-                  </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Focus Keywords */}
-            <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col min-h-[350px]">
-              <div className="flex items-center gap-2.5 mb-2 border-b border-white/5 pb-3">
-                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/15">
-                  <Key size={16} />
-                </div>
-                <h2 className="text-base font-bold text-slate-200 uppercase tracking-wider">Focus Keywords</h2>
-              </div>
-              <div className="flex gap-2 mb-6 mt-3">
-                <input type="text" value={keywordInput} onChange={(e) => setKeywordInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()} placeholder="e.g. alignment, alert..." className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-cyan-500/40 outline-none text-slate-200" />
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleAddKeyword} className="p-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-500/10"><Plus size={18} /></motion.button>
-              </div>
-              <div className="flex flex-wrap gap-2 overflow-y-auto max-h-[160px] pr-1">
-                  <AnimatePresence>
-                    {prefs.keywords.map(keyword => (
-                      <motion.span key={keyword} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-semibold bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
-                        <span>{keyword}</span><button onClick={() => handleRemoveKeyword(keyword)} className="p-0.5 rounded-full hover:bg-cyan-500/25 text-cyan-400 hover:text-white"><X size={11} /></button>
-                      </motion.span>
-                    ))}
-                  </AnimatePresence>
-              </div>
+              <p className="text-xs text-slate-400 mt-2 mb-4">
+                Tell your AI assistant how to act. Describe its personality, tone, and behavior. The assistant will strictly follow these instructions in all chats and reports.
+              </p>
+              <textarea
+                value={prefs.assistantPersona || ''}
+                onChange={(e) => setPrefs(prev => ({ ...prev, assistantPersona: e.target.value }))}
+                placeholder="e.g. You are a highly professional and strict corporate assistant. Always use formal language."
+                className="flex-1 w-full p-4 rounded-xl bg-slate-950/60 border border-slate-900 focus:border-pink-500/40 outline-none text-sm text-slate-200 resize-none min-h-[250px] leading-relaxed"
+              />
             </div>
           </motion.div>
         )}

@@ -24,17 +24,26 @@ public class CategoryTrackingPlugin
         [Description("The exact URL of the category or search results page to track.")] string categoryUrl,
         [Description("A short, human-readable name for this category (e.g., 'Gaming Laptops', 'LG Monitors').")] string categoryName,
         [Description("The minimum discount percentage required to trigger an alert (e.g., 15 for 15%). If the user doesn't specify, default to 15.")] decimal minDiscountPercentage = 15,
-        [Description("Optional. Specific features or keywords the user wants to filter by (e.g., 'iPhone 13 Pro classification only, no accessories'). AI will use this to evaluate deals.")] string? requiredFeatures = null)
+        [Description("Optional. Specific features or keywords the user wants to filter by (e.g., 'iPhone 13 Pro classification only, no accessories'). AI will use this to evaluate deals.")] string? requiredFeatures = null,
+        [Description("An optional Guid to link multiple categories together for cross-border comparison. Generate a new Guid if starting a new comparison group, and pass the same Guid to both.")] string? comparisonGroupId = null)
     {
         try
         {
+            Guid? groupId = null;
+            if (!string.IsNullOrEmpty(comparisonGroupId) && Guid.TryParse(comparisonGroupId, out Guid parsedId))
+            {
+                groupId = parsedId;
+            }
+
             var trackedCategory = new TrackedCategory
             {
                 UserId = _userId,
                 CategoryUrl = categoryUrl,
                 CategoryName = categoryName,
                 MinDiscountPercentage = minDiscountPercentage,
-                RequiredFeatures = requiredFeatures
+                RequiredFeatures = requiredFeatures,
+                ComparisonGroupId = groupId,
+                CreatedAt = DateTimeOffset.UtcNow.UtcDateTime
             };
 
             _dbContext.TrackedCategories.Add(trackedCategory);

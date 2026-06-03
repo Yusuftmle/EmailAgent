@@ -12,6 +12,7 @@ public class UserPreferences
     // AI Engine Configuration
     public string AiProvider { get; set; } = "Claude"; // "Claude", "Gemini", "OpenAI"
     public string ApiKey { get; set; } = string.Empty;
+    public string AssistantPersona { get; set; } = "Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.";
     public List<string> FocusCompanies { get; set; } = new();
     public List<string> Keywords { get; set; } = new();
 

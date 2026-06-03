@@ -46,8 +46,7 @@ export interface EmailAnalysis {
 export interface UserPreferences {
   id?: number;
   userEmail?: string;
-  focusCompanies: string[];
-  keywords: string[];
+  assistantPersona?: string;
   pairingCode?: string;
   telegramChatId?: string;
   whatsAppToken?: string;
@@ -58,6 +57,8 @@ export interface UserPreferences {
   whatsAppSid?: string;
   telegramBotToken?: string;
   shoppingTrackerIntervalHours?: number;
+  focusCompanies?: string[];
+  keywords?: string[];
 }
 
 export interface ChatHistoryMessage {
@@ -113,9 +114,57 @@ const mockEmails: EmailAnalysis[] = [
 ];
 
 let mockPreferences: UserPreferences = {
-  focusCompanies: ["Microsoft", "Amazon", "Google", "Tesla"],
-  keywords: ["partnership", "alert", "database", "priority", "critical"]
+  assistantPersona: "Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol."
 };
+
+export interface DashboardStats {
+  totalEmails: number;
+  totalChats: number;
+  totalTrackedProducts: number;
+  hoursSaved: number;
+  totalSavings: number;
+}
+
+export interface TrackedProduct {
+  id: string;
+  userId: string;
+  url: string;
+  title: string;
+  targetPrice: number;
+  lastKnownPrice: number;
+  currency: string;
+  isActive: boolean;
+  createdAt: string;
+  lastCheckedAt: string;
+}
+
+export interface TrackedCategory {
+  id: string;
+  userId: string;
+  categoryUrl: string;
+  categoryName: string;
+  minDiscountPercentage: number;
+  requiredFeatures?: string;
+  comparisonGroupId?: string;
+  createdAt: string;
+  lastCheckedAt?: string;
+}
+
+export interface PriceHistory {
+  id: string;
+  productId: string;
+  price: number;
+  isInStock: boolean;
+  checkedAt: string;
+}
+
+export interface NotificationLog {
+  id: string;
+  userId: string;
+  message: string;
+  type: string;
+  sentAt: string;
+}
 
 let mockChatHistory: ChatHistoryMessage[] = [
   {
@@ -209,28 +258,82 @@ export const apiService = {
       return { reply: response.data.reply };
     } catch (error) {
       console.warn("API Offline. Generating simulated Claude reply.");
-      // Record user message
       mockChatHistory.push({ role: 'user', sessionId, content: message });
-      
       let reply = "I can see your request, but I'm currently running in standalone demo mode. When you launch your .NET 9 API backend, I will query Claude Sonnet 4.5 and the live PostgreSQL database to answer you directly!";
-      
-      const lower = message.toLowerCase();
-      if (lower.includes("important") || lower.includes("today's emails")) {
-        reply = `Looking at today's emails in the demo database, you have **2 important emails**:\n\n1. **From:** Satya Nadella (Microsoft) - *Strategic Partnership Alignment Discussion*\n2. **From:** AWS Cloud Support - *Action Required: AWS Database Cluster Alert*\n\nWould you like me to draft customized responses to either of these messages?`;
-      } else if (lower.includes("satya") || lower.includes("microsoft")) {
-        reply = `Satya Nadella proposed a 30-minute sync next Thursday. Here is the draft response I have prepared for you:\n\n\`\`\`\nDear Satya,\n\nThank you for reaching out. I am available next Thursday at 3:00 PM EST...\n\`\`\`\n\nWould you like me to modify the meeting times or finalize the draft?`;
-      }
-
       mockChatHistory.push({ role: 'assistant', sessionId, content: reply });
       return new Promise(resolve => setTimeout(() => resolve({ reply }), 600));
+    }
+  },
+
+  async sendVoiceMessage(sessionId: string, audioBlob: Blob): Promise<{ reply: string; transcribedText?: string }> {
+    try {
+      const formData = new FormData();
+      formData.append('audioFile', audioBlob, 'voice.webm');
+      formData.append('sessionId', sessionId);
+      
+      const response = await client.post<{ reply: string; sessionId: string; transcribedText?: string }>('/api/chat/voice', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return { reply: response.data.reply, transcribedText: response.data.transcribedText };
+    } catch (error) {
+      console.error("Failed to send voice message:", error);
+      throw error;
     }
   },
 
   async clearChatHistory(sessionId: string): Promise<void> {
     try {
       await client.delete(`/api/chat/history?sessionId=${sessionId}`);
-    } catch (error) {
+    } catch (err: unknown) {
       mockChatHistory = mockChatHistory.filter(c => c.sessionId !== sessionId);
+      console.warn("API Offline. Cleared simulated history for " + sessionId);
+    }
+  },
+
+  async getDashboardStats(userId: string): Promise<DashboardStats> {
+    try {
+      const response = await client.get<DashboardStats>(`/api/dashboard/stats?userId=${userId}`);
+      return response.data;
+    } catch (error) {
+      return { totalEmails: 24, totalChats: 12, totalTrackedProducts: 3, hoursSaved: 4.2, totalSavings: 0 };
+    }
+  },
+
+  async getTrackedProducts(userId: string): Promise<TrackedProduct[]> {
+    try {
+      const response = await client.get<TrackedProduct[]>(`/api/dashboard/tracked-products?userId=${userId}`);
+      return response.data;
+    } catch (error) {
+      return [];
+    }
+  },
+
+  async getTrackedCategories(userId: string): Promise<TrackedCategory[]> {
+    try {
+      const response = await client.get<TrackedCategory[]>(`/api/dashboard/tracked-categories?userId=${userId}`);
+      return response.data;
+    } catch (error) {
+      return [];
+    }
+  },
+
+  async getPriceHistory(productId: string): Promise<PriceHistory[]> {
+    try {
+      const response = await client.get<PriceHistory[]>(`/api/dashboard/price-history/${productId}`);
+      return response.data;
+    } catch (error) {
+      return [];
+    }
+  },
+
+  async getNotificationLogs(userId: string): Promise<NotificationLog[]> {
+    try {
+      const response = await client.get<NotificationLog[]>(`/api/dashboard/notification-log?userId=${userId}`);
+      return response.data;
+    } catch (error) {
+      return [];
     }
   }
 };

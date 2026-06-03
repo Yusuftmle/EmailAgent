@@ -11,32 +11,28 @@ public class ShoppingPlugin
 {
     private readonly EmailAgentDbContext _dbContext;
     private readonly EmailAgent.Infrastructure.Services.ProductScraperService _scraperService;
+    private readonly Guid _userId;
 
-    public ShoppingPlugin(EmailAgentDbContext dbContext, EmailAgent.Infrastructure.Services.ProductScraperService scraperService)
+    public ShoppingPlugin(EmailAgentDbContext dbContext, EmailAgent.Infrastructure.Services.ProductScraperService scraperService, Guid userId)
     {
         _dbContext = dbContext;
         _scraperService = scraperService;
+        _userId = userId;
     }
 
     [KernelFunction, Description("Adds a product URL to the tracking list to be monitored for price drops.")]
     public async Task<string> TrackProductPriceAsync(
         [Description("The URL of the product to track")] string url,
-        [Description("The target price threshold (e.g., 100.00). If the price drops below this, the user will be alerted.")] double targetPrice,
-        [Description("The Guid UserId of the current user")] string userId)
+        [Description("The target price threshold (e.g., 100.00). If the price drops below this, the user will be alerted.")] double targetPrice)
     {
         try
         {
-            if (!Guid.TryParse(userId, out Guid userGuid))
-            {
-                return "Error: Invalid user ID format.";
-            }
-
             var (scrapedPrice, currency, title) = await _scraperService.ScrapeProductAsync(url);
             decimal initialPrice = scrapedPrice ?? 0m;
 
             var trackedProduct = new TrackedProduct
             {
-                UserId = userGuid,
+                UserId = _userId,
                 Url = url,
                 TargetPrice = (decimal)targetPrice,
                 LastKnownPrice = initialPrice,
