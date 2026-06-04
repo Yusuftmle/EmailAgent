@@ -27,7 +27,7 @@ public class ShoppingPlugin
     {
         try
         {
-            var (scrapedPrice, currency, title) = await _scraperService.ScrapeProductAsync(url);
+            var (scrapedPrice, currency, title, _) = await _scraperService.ScrapeProductAsync(url);
             decimal initialPrice = scrapedPrice ?? 0m;
 
             var trackedProduct = new TrackedProduct
@@ -64,7 +64,7 @@ public class ShoppingPlugin
     {
         try
         {
-            var (price, currency, title) = await _scraperService.ScrapeProductAsync(url);
+            var (price, currency, title, _) = await _scraperService.ScrapeProductAsync(url);
             if (price.HasValue)
             {
                 return $"The current price of the product '{title ?? url}' is {price} {currency}.";

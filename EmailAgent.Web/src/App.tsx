@@ -7,7 +7,7 @@ import { CommandCenter } from './components/CommandCenter';
 import { ChatView } from './components/ChatView';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
-import { OmniRobot } from './components/AssistantMascot';
+import omniImg from './components/omni-walk.png';
 
 const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
   const particleCount = 20; // soft and cozy amount for the main dashboard!
@@ -94,30 +94,28 @@ export const AppLayout: React.FC = () => {
 
       <CozyParticles mode={timeMode} />
 
-      {/* Floating Glass Navbar */}
+      {/* Glowing Glass Navbar */}
       <nav className="sticky top-0 z-40 px-4 pt-6 pb-2">
-        <div className="max-w-6xl mx-auto glass-panel border border-white/10 rounded-2xl py-3 px-6 shadow-2xl shadow-black/50 backdrop-blur-xl flex items-center justify-between">
+        <div className="max-w-6xl mx-auto bg-slate-900/60 border border-emerald-500/20 rounded-2xl py-3 px-6 shadow-[0_8px_30px_rgb(0,0,0,0.4)] backdrop-blur-2xl flex items-center justify-between hover:border-emerald-500/40 transition-colors duration-500">
           
           {/* Logo & Mascot */}
           <div 
             onClick={() => setCurrentView('dashboard')}
             className="flex items-center gap-4 cursor-pointer group"
           >
-            <div className="w-12 h-12 relative flex items-center justify-center rounded-full bg-slate-900/50 border border-white/5 overflow-hidden shadow-inner group-hover:border-emerald-500/30 transition-colors">
-               <div className="absolute inset-0 scale-[1.5] translate-y-2">
-                  <OmniRobot behavior="idle" facingLeft={false} walkCycle={0} jumpY={0} waveAngle={0} mouseEyeOffset={{x:0, y:0}} headOnly={true} />
-               </div>
+            <div className="w-14 h-14 relative flex items-center justify-center rounded-full bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.3)] group-hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] group-hover:border-emerald-400/50 transition-all duration-300">
+               <img src={omniImg} alt="Omni Mascot" className="w-[160%] max-w-none h-auto absolute top-[-10%] left-[-25%] object-cover object-top group-hover:scale-110 transition-transform duration-300" />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold tracking-tight text-xl text-slate-100 flex items-center gap-1.5">
-                Aegis <span className="text-emerald-400">Core</span>
+              <span className="font-extrabold tracking-tight text-2xl flex items-center gap-1.5 bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 to-teal-500 drop-shadow-sm">
+                Omni <span className="text-emerald-500 font-black">Agent</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Executive Dashboard</span>
+              <span className="text-[10px] text-emerald-400/80 font-bold tracking-widest uppercase">AI Executive Assistant</span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <div className="flex items-center gap-2 p-1 bg-slate-900/50 rounded-xl border border-white/5">
+          <div className="flex items-center gap-1 p-1.5 bg-black/40 rounded-xl border border-white/5 shadow-inner">
             {[
               { id: 'dashboard', label: 'Overview' },
               { id: 'chat', label: 'Intelligence' },
@@ -127,10 +125,10 @@ export const AppLayout: React.FC = () => {
               <button
                 key={nav.id}
                 onClick={() => setCurrentView(nav.id as any)}
-                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-300 relative overflow-hidden ${
                   currentView === nav.id
-                    ? 'bg-slate-800 text-emerald-400 shadow-md border border-white/10'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                    ? 'text-white bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)] border border-emerald-500/30'
+                    : 'text-slate-400 hover:text-emerald-300 hover:bg-emerald-500/10'
                 }`}
               >
                 {nav.label}

@@ -36,4 +36,12 @@ public class UserPreferences
 
     // Preferences
     public int ShoppingTrackerIntervalHours { get; set; } = 12;
+
+    // Feature Toggles (Bot Capabilities)
+    public bool EnableEmailFeature { get; set; } = true;
+    public bool EnableShoppingFeature { get; set; } = true;
+    public bool EnableFinanceFeature { get; set; } = true;
+    public bool EnableWebSearchFeature { get; set; } = true;
+    public bool EnableDocumentAnalysisFeature { get; set; } = true;
+    public bool EnableRemindersFeature { get; set; } = true;
 }

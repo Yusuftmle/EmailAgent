@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { apiService, ChatHistoryMessage } from '../services/api';
 import { MessageSquare, Send, Trash2, Cpu, Mic, MicOff } from 'lucide-react';
 import AssistantMascot, { MascotHandle } from './AssistantMascot';
+import omniImg from './omni-walk.png';
 
 const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
   const particleCount = 14; // slightly fewer for chat pane to keep it clean!
@@ -334,11 +335,11 @@ export const ChatView: React.FC = () => {
             transition={{ duration: 0.3 }}
             className={`flex gap-4 max-w-[80%] ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-extrabold ${msg.role === 'user'
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-extrabold overflow-hidden ${msg.role === 'user'
                 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
               }`}>
-              {msg.role === 'user' ? 'USR' : 'AI'}
+              {msg.role === 'user' ? 'USR' : <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />}
             </div>
 
             <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-lg ${msg.role === 'user'
@@ -354,8 +355,8 @@ export const ChatView: React.FC = () => {
 
         {isLoading && (
           <div className="flex gap-4 max-w-[80%]">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center text-xs font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-              AI
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+              <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />
             </div>
             <div className="p-4 rounded-2xl rounded-tl-none bg-slate-900/80 border border-emerald-500/20 text-slate-400 flex items-center gap-1.5 h-[52px]">
               <span className="typing-dot bg-emerald-400"></span>

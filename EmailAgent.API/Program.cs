@@ -61,20 +61,46 @@ builder.Services.AddHttpClient("AIAgentClient");
 // Register Plugin Factory for Multi-Tenant users
 builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEnumerable<object>>>(sp => userPrefs =>
 {
-    return new List<object>
+    var plugins = new List<object>();
+
+    // Always loaded
+    plugins.Add(new NotificationPlugin(sp.GetRequiredService<IWhatsAppNotificationService>(), sp.GetRequiredService<ITelegramNotificationService>(), userPrefs));
+    plugins.Add(new CurrencyPlugin()); // Currency plugin is core
+
+    if (userPrefs.EnableEmailFeature)
     {
-        new EmailPlugin(sp.GetRequiredService<IGmailService>(), userPrefs),
-        new NotificationPlugin(sp.GetRequiredService<IWhatsAppNotificationService>(), sp.GetRequiredService<ITelegramNotificationService>(), userPrefs),
-        new CurrencyPlugin(),
-        new ShoppingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.ProductScraperService>(), userPrefs.Id),
-        new EmailAgent.API.Plugins.WebSearchPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
-        new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
-        new EmailAgent.API.Plugins.DocumentPlugin(),
-        new EmailAgent.API.Plugins.FinancePlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")),
-        new EmailAgent.API.Plugins.CategoryTrackingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id),
-        new EmailAgent.API.Plugins.BulkAnalysisPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id),
-        new EmailAgent.API.Plugins.ReminderPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id)
-    };
+        plugins.Add(new EmailPlugin(sp.GetRequiredService<IGmailService>(), userPrefs));
+        plugins.Add(new EmailAgent.API.Plugins.BulkAnalysisPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id));
+    }
+
+    if (userPrefs.EnableShoppingFeature)
+    {
+        plugins.Add(new ShoppingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.ProductScraperService>(), userPrefs.Id));
+        plugins.Add(new EmailAgent.API.Plugins.CategoryTrackingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id));
+    }
+
+    if (userPrefs.EnableWebSearchFeature)
+    {
+        plugins.Add(new EmailAgent.API.Plugins.WebSearchPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")));
+        plugins.Add(new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")));
+    }
+
+    if (userPrefs.EnableFinanceFeature)
+    {
+        plugins.Add(new EmailAgent.API.Plugins.FinancePlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")));
+    }
+
+    if (userPrefs.EnableDocumentAnalysisFeature)
+    {
+        plugins.Add(new EmailAgent.API.Plugins.DocumentPlugin());
+    }
+
+    if (userPrefs.EnableRemindersFeature)
+    {
+        plugins.Add(new EmailAgent.API.Plugins.ReminderPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id));
+    }
+
+    return plugins;
 });
 
 // Register Orchestrator
@@ -158,6 +184,12 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""PairingCode"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""ShoppingTrackerIntervalHours"" integer NOT NULL DEFAULT 12;
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""AssistantPersona"" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableEmailFeature"" boolean NOT NULL DEFAULT true;
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableShoppingFeature"" boolean NOT NULL DEFAULT true;
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableFinanceFeature"" boolean NOT NULL DEFAULT true;
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableWebSearchFeature"" boolean NOT NULL DEFAULT true;
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableDocumentAnalysisFeature"" boolean NOT NULL DEFAULT true;
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableRemindersFeature"" boolean NOT NULL DEFAULT true;
 
             CREATE TABLE IF NOT EXISTS ""TrackedCategories"" (
                 ""Id"" uuid NOT NULL,

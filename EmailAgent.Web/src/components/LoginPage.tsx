@@ -4,6 +4,7 @@ import { Shield, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AssistantMascot, { MascotHandle } from './AssistantMascot';
+import omniImg from './omni-walk.png';
 
 const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
   const particleCount = 18;
@@ -212,8 +213,11 @@ const LoginPage: React.FC = () => {
 
         {/* Header */}
         <div className="p-8 text-center border-b border-slate-700/50 flex flex-col items-center">
+          <div className="w-20 h-20 rounded-full bg-slate-800/50 overflow-hidden flex items-center justify-center border-4 border-slate-700/50 mb-4 shadow-xl">
+            <img src={omniImg} alt="Omni Mascot" className="w-full h-full object-cover scale-150" />
+          </div>
           <h1 className="text-3xl font-bold text-white mb-2">OmniAgent</h1>
-          <p className="text-slate-400">Your intelligent autonomous email assistant.</p>
+          <p className="text-slate-400">Your intelligent autonomous agent.</p>
         </div>
 
         {/* Content */}

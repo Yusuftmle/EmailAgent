@@ -100,6 +100,13 @@ public class UserPreferencesRepository : IUserPreferencesRepository
             existing.WhatsAppTo = preferences.WhatsAppTo;
             existing.TelegramBotToken = preferences.TelegramBotToken;
             existing.ShoppingTrackerIntervalHours = preferences.ShoppingTrackerIntervalHours > 0 ? preferences.ShoppingTrackerIntervalHours : 12;
+            existing.AssistantPersona = preferences.AssistantPersona;
+            existing.EnableEmailFeature = preferences.EnableEmailFeature;
+            existing.EnableShoppingFeature = preferences.EnableShoppingFeature;
+            existing.EnableFinanceFeature = preferences.EnableFinanceFeature;
+            existing.EnableWebSearchFeature = preferences.EnableWebSearchFeature;
+            existing.EnableDocumentAnalysisFeature = preferences.EnableDocumentAnalysisFeature;
+            existing.EnableRemindersFeature = preferences.EnableRemindersFeature;
             
             _context.UserPreferences.Update(existing);
         }

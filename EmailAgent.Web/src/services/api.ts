@@ -59,6 +59,12 @@ export interface UserPreferences {
   shoppingTrackerIntervalHours?: number;
   focusCompanies?: string[];
   keywords?: string[];
+  enableEmailFeature?: boolean;
+  enableShoppingFeature?: boolean;
+  enableFinanceFeature?: boolean;
+  enableWebSearchFeature?: boolean;
+  enableDocumentAnalysisFeature?: boolean;
+  enableRemindersFeature?: boolean;
 }
 
 export interface ChatHistoryMessage {

@@ -20,10 +20,16 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
     telegramBotToken: '',
     telegramChatId: '',
     pairingCode: '',
-    shoppingTrackerIntervalHours: 12
+    shoppingTrackerIntervalHours: 12,
+    enableEmailFeature: true,
+    enableShoppingFeature: true,
+    enableFinanceFeature: true,
+    enableWebSearchFeature: true,
+    enableDocumentAnalysisFeature: true,
+    enableRemindersFeature: true
   });
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'ai' | 'personality' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'ai' | 'personality' | 'capabilities' | 'notifications'>('profile');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -114,6 +120,7 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
           { id: 'profile', icon: User, label: 'Profile & Tracker' },
           { id: 'ai', icon: Cpu, label: 'AI Engine' },
           { id: 'personality', icon: Sliders, label: 'Personality' },
+          { id: 'capabilities', icon: Sparkles, label: 'Bot Capabilities' },
           { id: 'notifications', icon: Bell, label: 'Notifications' },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -272,6 +279,51 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
                 placeholder="e.g. You are a highly professional and strict corporate assistant. Always use formal language."
                 className="flex-1 w-full p-4 rounded-xl bg-slate-950/60 border border-slate-900 focus:border-pink-500/40 outline-none text-sm text-slate-200 resize-none min-h-[250px] leading-relaxed"
               />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Capabilities Tab */}
+        {activeTab === 'capabilities' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/0 via-emerald-500/2 to-teal-500/0 pointer-events-none" />
+              <div className="flex items-center gap-2.5 mb-2 border-b border-white/5 pb-3">
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/15">
+                  <Sparkles size={16} />
+                </div>
+                <h2 className="text-base font-bold text-slate-200 uppercase tracking-wider">Active Bot Capabilities</h2>
+              </div>
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                Toggle the features you want Omni Agent to have access to. Disabling a feature removes the AI's ability to perform tasks related to it.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { id: 'enableEmailFeature', label: 'Email Integration', desc: 'Read, parse, and send emails via Gmail API.' },
+                  { id: 'enableShoppingFeature', label: 'Shopping & Tracking', desc: 'Monitor prices, compare products, and track discounts.' },
+                  { id: 'enableFinanceFeature', label: 'Finance & Crypto', desc: 'Fetch real-time cryptocurrency and stock prices.' },
+                  { id: 'enableWebSearchFeature', label: 'Web Search', desc: 'Search the internet and read web pages for live data.' },
+                  { id: 'enableDocumentAnalysisFeature', label: 'Document Analysis', desc: 'Read and analyze uploaded PDFs and documents.' },
+                  { id: 'enableRemindersFeature', label: 'Reminders', desc: 'Set time-based reminders and alerts.' },
+                ].map((feature) => (
+                  <div key={feature.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-white/5 rounded-2xl hover:border-emerald-500/20 transition-colors">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-200">{feature.label}</h4>
+                      <p className="text-[10px] text-slate-400 mt-1">{feature.desc}</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={prefs[feature.id as keyof UserPreferences] as boolean ?? true}
+                        onChange={(e) => setPrefs(prev => ({ ...prev, [feature.id]: e.target.checked }))}
+                      />
+                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
