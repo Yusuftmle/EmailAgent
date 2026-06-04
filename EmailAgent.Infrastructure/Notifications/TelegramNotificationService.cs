@@ -11,7 +11,7 @@ namespace EmailAgent.Infrastructure.Notifications;
 public interface ITelegramNotificationService
 {
     Task SendDailySummaryAsync(EmailAgent.Core.Entities.UserPreferences user, int importantCount, string dashboardUrl, CancellationToken cancellationToken = default);
-    Task SendMessageAsync(string chatIdStr, string message, CancellationToken cancellationToken = default);
+    Task SendMessageAsync(EmailAgent.Core.Entities.UserPreferences user, string chatIdStr, string message, CancellationToken cancellationToken = default);
 }
 
 public class TelegramNotificationService : ITelegramNotificationService
@@ -29,7 +29,7 @@ public class TelegramNotificationService : ITelegramNotificationService
     {
         try
         {
-            var botToken = _config["Telegram:BotToken"];
+            var botToken = !string.IsNullOrEmpty(user?.TelegramBotToken) ? user.TelegramBotToken : _config["Telegram:BotToken"];
             var chatIdStr = !string.IsNullOrEmpty(user?.TelegramChatId) ? user.TelegramChatId : _config["Telegram:ChatId"];
 
             if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(chatIdStr))
@@ -60,11 +60,11 @@ public class TelegramNotificationService : ITelegramNotificationService
         }
     }
 
-    public async Task SendMessageAsync(string chatIdStr, string message, CancellationToken cancellationToken = default)
+    public async Task SendMessageAsync(EmailAgent.Core.Entities.UserPreferences user, string chatIdStr, string message, CancellationToken cancellationToken = default)
     {
         try
         {
-            var botToken = _config["Telegram:BotToken"];
+            var botToken = !string.IsNullOrEmpty(user?.TelegramBotToken) ? user.TelegramBotToken : _config["Telegram:BotToken"];
             if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(chatIdStr)) return;
 
             var botClient = new TelegramBotClient(botToken);

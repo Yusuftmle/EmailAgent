@@ -264,7 +264,7 @@ public class ShoppingTrackerJob
                                      $"Yani {cheapest.Key.CategoryName} almak tam %{Math.Round(((secondPriceEur - cheapestPriceEur) / secondPriceEur) * 100, 1)} daha ucuz!";
                     
                     if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
-                        await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
+                        await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, message);
                 }
             }
         }
@@ -284,7 +284,7 @@ public class ShoppingTrackerJob
                          $"🔗 Link: {deal.ProductUrl}";
 
         if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
-            await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
+            await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, message);
     }
 
     private async Task NotifyStockReturnedAsync(TrackedProduct product)
@@ -298,7 +298,7 @@ public class ShoppingTrackerJob
                          $"🔗 Link: {product.Url}";
 
         if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
-            await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
+            await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, message);
 
         _dbContext.NotificationLogs.Add(new NotificationLog
         {
@@ -321,7 +321,7 @@ public class ShoppingTrackerJob
                          $"🔗 Link: {product.Url}";
 
         if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
-            await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, message);
+            await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, message);
 
         if (!string.IsNullOrEmpty(userPrefs.WhatsAppTo))
             await _whatsAppService.SendMessageAsync(userPrefs, userPrefs.WhatsAppTo, message);

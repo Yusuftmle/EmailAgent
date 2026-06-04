@@ -58,7 +58,7 @@ public class NotificationPlugin
             if (string.IsNullOrEmpty(chatId))
                 return "Failed to send: User has no configured Telegram Chat ID.";
 
-            await _telegramService.SendMessageAsync(chatId, message);
+            await _telegramService.SendMessageAsync(user, chatId, message);
             return "Successfully sent Telegram message to user.";
         }
         catch

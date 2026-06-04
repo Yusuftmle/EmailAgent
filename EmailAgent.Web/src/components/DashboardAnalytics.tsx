@@ -29,9 +29,10 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ userId }
   };
 
   const fetchData = async () => {
+    if (!userId) return;
     setIsLoading(true);
     try {
-      const uid = userId || '00000000-0000-0000-0000-000000000000'; // Fallback
+      const uid = userId;
       const s = await apiService.getDashboardStats(uid);
       const p = await apiService.getTrackedProducts(uid);
       const c = await apiService.getTrackedCategories(uid);

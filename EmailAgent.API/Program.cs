@@ -53,7 +53,10 @@ builder.Services.AddScoped<EmailAgent.Agent.DealEvaluatorAgent>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ISpeechToTextService, EmailAgent.Infrastructure.Services.GroqSpeechToTextService>();
 
 // Centralized HttpClient Factory
-builder.Services.AddHttpClient("AIAgentClient");
+builder.Services.AddHttpClient("AIAgentClient", client => 
+{
+    client.Timeout = TimeSpan.FromMinutes(5);
+});
 
 // Register plugins as Singletons/Transients
 // (Removed AddTransient for plugins because they are created by the multi-tenant factory)

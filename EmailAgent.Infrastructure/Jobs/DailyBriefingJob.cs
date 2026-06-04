@@ -109,7 +109,7 @@ Lütfen WhatsApp/Telegram'a uygun şık bir bülten metni oluştur.";
                 var message = response.Content ?? "Günaydın! Harika bir gün dilerim.";
 
                 // 5. Send via Telegram
-                await _telegramService.SendMessageAsync(user.TelegramChatId, message);
+                await _telegramService.SendMessageAsync(user, user.TelegramChatId, message);
                 _logger.LogInformation("Sent Daily Briefing to user {UserId}", user.Id);
             }
             catch (Exception ex)

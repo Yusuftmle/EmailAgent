@@ -48,7 +48,7 @@ public class MorningBriefingJob
             var msg = $"⏰ **HATIRLATICI** ⏰\n\n{reminder.Message}";
 
             if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
-                await _telegramService.SendMessageAsync(userPrefs.TelegramChatId, msg);
+                await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, msg);
 
             reminder.IsSent = true;
 
@@ -110,7 +110,7 @@ public class MorningBriefingJob
 
                 sb.AppendLine("\nHarika bir gün sana! 🚀");
 
-                await _telegramService.SendMessageAsync(user.TelegramChatId!, sb.ToString());
+                await _telegramService.SendMessageAsync(user, user.TelegramChatId!, sb.ToString());
 
                 _dbContext.NotificationLogs.Add(new NotificationLog
                 {

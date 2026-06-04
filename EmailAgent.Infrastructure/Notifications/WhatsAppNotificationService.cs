@@ -52,6 +52,10 @@ public class WhatsAppNotificationService : IWhatsAppNotificationService
         {
             cleanNumber = "+90" + cleanNumber.Substring(1);
         }
+        else if (cleanNumber.StartsWith("5") && cleanNumber.Length == 10)
+        {
+            cleanNumber = "+90" + cleanNumber;
+        }
         else if (!cleanNumber.StartsWith("+"))
         {
             cleanNumber = "+" + cleanNumber;

@@ -36,7 +36,7 @@ public class DashboardController : ControllerBase
 
         // Calculate Total Savings: SUM(TargetPrice - LastKnownPrice) where LastKnownPrice <= TargetPrice
         var metTargetProducts = await _context.TrackedProducts
-            .Where(t => t.UserId == uid && t.LastKnownPrice <= t.TargetPrice && t.TargetPrice > 0)
+            .Where(t => t.UserId == uid && t.LastKnownPrice > 0 && t.LastKnownPrice <= t.TargetPrice && t.TargetPrice > 0)
             .ToListAsync();
         
         decimal totalSavings = 0;
