@@ -93,7 +93,7 @@ const LoginPage: React.FC = () => {
 
   const login = useGoogleLogin({
     flow: 'auth-code',
-    scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',
+    scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/calendar.events',
     onSuccess: async (codeResponse) => {
       setLoading(true);
       setError(null);

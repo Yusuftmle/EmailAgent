@@ -7,6 +7,7 @@ using EmailAgent.Infrastructure.Data;
 using EmailAgent.Infrastructure.Services;
 using EmailAgent.Infrastructure.Notifications;
 using EmailAgent.Core.Entities;
+using System.Net.Http;
 
 namespace EmailAgent.Infrastructure.Jobs;
 
@@ -19,6 +20,7 @@ public class ShoppingTrackerJob
     private readonly ITelegramNotificationService _telegramService;
     private readonly IWhatsAppNotificationService _whatsAppService;
     private readonly ILogger<ShoppingTrackerJob> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public ShoppingTrackerJob(
         EmailAgentDbContext dbContext,
@@ -27,7 +29,8 @@ public class ShoppingTrackerJob
         EmailAgent.Agent.DealEvaluatorAgent dealEvaluatorAgent,
         ITelegramNotificationService telegramService,
         IWhatsAppNotificationService whatsAppService,
-        ILogger<ShoppingTrackerJob> logger)
+        ILogger<ShoppingTrackerJob> logger,
+        IHttpClientFactory httpClientFactory)
     {
         _dbContext = dbContext;
         _scraperService = scraperService;
@@ -36,6 +39,7 @@ public class ShoppingTrackerJob
         _telegramService = telegramService;
         _whatsAppService = whatsAppService;
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task CheckPricesAsync()
@@ -68,7 +72,7 @@ public class ShoppingTrackerJob
             {
                 var result = await _scraperService.ScrapeProductAsync(product.Url);
                 
-                if (result.Price.HasValue)
+                if (result.Price.HasValue && result.Price.Value > 0)
                 {
                     if (string.IsNullOrEmpty(product.Title) && !string.IsNullOrEmpty(result.Title))
                         product.Title = result.Title;
@@ -121,7 +125,7 @@ public class ShoppingTrackerJob
         var eurToTry = 35.0; // fallback
         try
         {
-            using var httpClient = new System.Net.Http.HttpClient();
+            var httpClient = _httpClientFactory.CreateClient("AIAgentClient");
             var response = await httpClient.GetStringAsync("https://api.frankfurter.app/latest?from=EUR&to=TRY");
             using var doc = System.Text.Json.JsonDocument.Parse(response);
             if (doc.RootElement.GetProperty("rates").TryGetProperty("TRY", out var rateElement))
@@ -148,7 +152,8 @@ public class ShoppingTrackerJob
                 }
 
                 var deals = await _categoryScraperService.FindDealsInCategoryAsync(userPrefs, category.CategoryUrl, category.MinDiscountPercentage);
-                foreach (var deal in deals)
+                var topDeals = deals.OrderByDescending(d => d.DiscountPercentage).Take(5).ToList();
+                foreach (var deal in topDeals)
                 {
                     // SMART FILTERING
                     if (!string.IsNullOrEmpty(category.RequiredFeatures))
@@ -187,7 +192,7 @@ public class ShoppingTrackerJob
         var eurToPln = 4.3; // fallback
         try
         {
-            using var httpClient = new System.Net.Http.HttpClient();
+            var httpClient = _httpClientFactory.CreateClient("AIAgentClient");
             var response = await httpClient.GetStringAsync("https://api.frankfurter.app/latest?from=EUR&to=PLN");
             using var doc = System.Text.Json.JsonDocument.Parse(response);
             if (doc.RootElement.GetProperty("rates").TryGetProperty("PLN", out var rateElement))
@@ -207,15 +212,23 @@ public class ShoppingTrackerJob
             var userPrefs = await _dbContext.UserPreferences.FindAsync(group.First().UserId);
             if (userPrefs == null) continue;
 
+            // Interval Check using the first category in the group as a reference
+            var refCategory = group.First();
+            if (refCategory.LastCheckedAt.HasValue && (DateTimeOffset.UtcNow.UtcDateTime - refCategory.LastCheckedAt.Value).TotalHours < userPrefs.ShoppingTrackerIntervalHours)
+            {
+                continue;
+            }
+
             var lowestDeals = new Dictionary<TrackedCategory, CategoryDeal>();
 
             foreach (var category in group)
             {
                 // Find top deals, ignore minimum discount to find absolute lowest price for comparison
                 var deals = await _categoryScraperService.FindDealsInCategoryAsync(userPrefs, category.CategoryUrl, 0);
+                var topDealsToEvaluate = deals.OrderBy(d => d.CurrentPrice).Take(10).ToList();
                 
                 CategoryDeal? bestDeal = null;
-                foreach (var deal in deals)
+                foreach (var deal in topDealsToEvaluate)
                 {
                     if (!string.IsNullOrEmpty(category.RequiredFeatures))
                     {
@@ -267,7 +280,14 @@ public class ShoppingTrackerJob
                         await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, message);
                 }
             }
+
+            // Update LastCheckedAt for all categories in the group
+            foreach (var category in group)
+            {
+                category.LastCheckedAt = DateTimeOffset.UtcNow.UtcDateTime;
+            }
         }
+        await _dbContext.SaveChangesAsync();
     }
 
     private async Task NotifyCategoryDealAsync(UserPreferences userPrefs, TrackedCategory category, CategoryDeal deal, double eurToTryRate)

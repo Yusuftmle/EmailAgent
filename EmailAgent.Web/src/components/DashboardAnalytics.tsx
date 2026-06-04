@@ -8,6 +8,13 @@ interface DashboardAnalyticsProps {
   userId?: string;
 }
 
+const decodeHTMLEntities = (text: string | null | undefined) => {
+  if (!text) return '';
+  const textArea = document.createElement('textarea');
+  textArea.innerHTML = text;
+  return textArea.value;
+};
+
 export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ userId }) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [products, setProducts] = useState<TrackedProduct[]>([]);
@@ -106,7 +113,7 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ userId }
                       onClick={() => handleProductClick(p.id)}
                     >
                       <div className="flex flex-col gap-1 overflow-hidden flex-1 pr-4">
-                        <span className="text-sm font-semibold text-slate-200 truncate">{p.title || p.url}</span>
+                        <span className="text-sm font-semibold text-slate-200 truncate">{decodeHTMLEntities(p.title) || p.url}</span>
                         <a href={p.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-slate-500 hover:text-emerald-400 flex items-center gap-1 w-fit transition-colors">
                           View Source <ExternalLink size={10} />
                         </a>
@@ -199,7 +206,7 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ userId }
                 {categories.map(c => (
                   <motion.div key={c.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-shrink-0 flex items-center justify-between p-4 rounded-2xl bg-slate-900/40 border border-white/5 hover:border-pink-500/30 transition-all group">
                     <div className="flex flex-col gap-1 overflow-hidden pr-4">
-                      <span className="text-sm font-semibold text-slate-200 truncate">{c.categoryName}</span>
+                      <span className="text-sm font-semibold text-slate-200 truncate">{decodeHTMLEntities(c.categoryName) || 'Unnamed Category'}</span>
                       <a href={c.categoryUrl} target="_blank" rel="noreferrer" className="text-[11px] text-slate-500 hover:text-pink-400 flex items-center gap-1 w-fit transition-colors">
                         Search Link <ExternalLink size={10} />
                       </a>
@@ -263,7 +270,7 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ userId }
                       {/* Left Side */}
                       <div className="flex-1 text-center bg-white/5 rounded-xl p-4 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-br from-transparent to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <span className="block text-sm font-bold text-slate-200 mb-1">{group[0].categoryName}</span>
+                        <span className="block text-sm font-bold text-slate-200 mb-1">{decodeHTMLEntities(group[0].categoryName) || 'Unnamed Store'}</span>
                         <a href={group[0].categoryUrl} target="_blank" rel="noreferrer" className="text-[10px] text-slate-500 hover:text-pink-400 inline-flex items-center gap-1 relative z-10 transition-colors">
                           View Store <ExternalLink size={10} />
                         </a>
@@ -280,7 +287,7 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ userId }
                       {/* Right Side */}
                       <div className="flex-1 text-center bg-white/5 rounded-xl p-4 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-bl from-transparent to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <span className="block text-sm font-bold text-slate-200 mb-1">{group[1].categoryName}</span>
+                        <span className="block text-sm font-bold text-slate-200 mb-1">{decodeHTMLEntities(group[1].categoryName) || 'Unnamed Store'}</span>
                         <a href={group[1].categoryUrl} target="_blank" rel="noreferrer" className="text-[10px] text-slate-500 hover:text-indigo-400 inline-flex items-center gap-1 relative z-10 transition-colors">
                           View Store <ExternalLink size={10} />
                         </a>

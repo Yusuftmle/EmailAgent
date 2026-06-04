@@ -14,6 +14,7 @@ using EmailAgent.Infrastructure.Gmail;
 using EmailAgent.Infrastructure.Jobs;
 using EmailAgent.Infrastructure.Notifications;
 using EmailAgent.Infrastructure.Repositories;
+using EmailAgent.Infrastructure.GoogleCalendar;
 using EmailAgent.Agent;
 using EmailAgent.Agent.Chat;
 using EmailAgent.API.Plugins;
@@ -44,6 +45,7 @@ builder.Services.AddScoped<IChatHistoryRepository, ChatHistoryRepository>();
 
 // 3. Infrastructure Service Dependency Injection
 builder.Services.AddScoped<IGmailService, GmailService>();
+builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ProductScraperService>();
@@ -69,6 +71,7 @@ builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEn
     // Always loaded
     plugins.Add(new NotificationPlugin(sp.GetRequiredService<IWhatsAppNotificationService>(), sp.GetRequiredService<ITelegramNotificationService>(), userPrefs));
     plugins.Add(new CurrencyPlugin()); // Currency plugin is core
+    plugins.Add(new EmailAgent.API.Plugins.AgendaPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id, sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EmailAgent.API.Plugins.AgendaPlugin>>()));
 
     if (userPrefs.EnableEmailFeature)
     {
@@ -123,7 +126,7 @@ builder.Services.AddHangfire(config =>
               options.UseNpgsqlConnection(connectionString);
           }));
 
-// builder.Services.AddHangfireServer(); // Temporarily Disabled for Testing
+builder.Services.AddHangfireServer();
 
 // Add job class to DI so Hangfire can instantiate it
 builder.Services.AddScoped<DailyEmailJob>();
@@ -178,12 +181,23 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<EmailAgentDbContext>();
         db.Database.EnsureCreated(); // creates database tables with new columns (UserEmail, AiProvider, ApiKey)
         db.Database.ExecuteSqlRaw(@"
+            CREATE TABLE IF NOT EXISTS ""PriceHistories"" (
+                ""Id"" uuid NOT NULL,
+                ""ProductId"" uuid NOT NULL,
+                ""Price"" numeric NOT NULL,
+                ""IsInStock"" boolean NOT NULL,
+                ""CheckedAt"" timestamp with time zone NOT NULL,
+                CONSTRAINT ""PK_PriceHistories"" PRIMARY KEY (""Id"")
+            );
+
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppSid"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppToken"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppFrom"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""WhatsAppTo"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""TelegramBotToken"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""TelegramChatId"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""City"" text NOT NULL DEFAULT 'Istanbul';
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""Timezone"" text NOT NULL DEFAULT 'Europe/Istanbul';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""PairingCode"" text NOT NULL DEFAULT '';
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""ShoppingTrackerIntervalHours"" integer NOT NULL DEFAULT 12;
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""AssistantPersona"" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
@@ -193,6 +207,7 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableWebSearchFeature"" boolean NOT NULL DEFAULT true;
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableDocumentAnalysisFeature"" boolean NOT NULL DEFAULT true;
             ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableRemindersFeature"" boolean NOT NULL DEFAULT true;
+            ALTER TABLE ""UserPreferences"" ADD COLUMN IF NOT EXISTS ""EnableCalendarFeature"" boolean NOT NULL DEFAULT true;
 
             CREATE TABLE IF NOT EXISTS ""TrackedCategories"" (
                 ""Id"" uuid NOT NULL,
@@ -237,7 +252,21 @@ using (var scope = app.Services.CreateScope())
                 CONSTRAINT ""PK_NotificationLogs"" PRIMARY KEY (""Id"")
             );
 
+            CREATE TABLE IF NOT EXISTS ""CalendarEvents"" (
+                ""Id"" uuid NOT NULL,
+                ""UserId"" uuid NOT NULL,
+                ""Title"" text NOT NULL,
+                ""Description"" text NOT NULL DEFAULT '',
+                ""EventDate"" timestamp with time zone NOT NULL,
+                ""IsCompleted"" boolean NOT NULL DEFAULT false,
+                ""GoogleEventId"" text NULL,
+                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                CONSTRAINT ""PK_CalendarEvents"" PRIMARY KEY (""Id"")
+            );
+
             UPDATE ""UserPreferences"" SET ""PairingCode"" = gen_random_uuid()::text WHERE ""PairingCode"" = '';
+            
+            ALTER TABLE ""CalendarEvents"" ADD COLUMN IF NOT EXISTS ""GoogleEventId"" text NULL;
         ");
     }
     catch (Exception ex)
@@ -274,19 +303,19 @@ app.UseHangfireDashboard(hangfirePath);
 
 // 9. Register Recurring Background Cron Job (Temporarily Disabled for Testing)
 // Runs daily at 08:00 (Cron: "0 8 * * *")
-// using (var scope = app.Services.CreateScope())
-// {
-//     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-//     recurringJobManager.AddOrUpdate<DailyEmailJob>(
-//         "daily-email-analysis-job",
-//         job => job.RunDailyAnalysisAsync(),
-//         "*/2 * * * *", // Runs every 2 minutes
-//         new RecurringJobOptions
-//         {
-//             TimeZone = TimeZoneInfo.Local
-//         }
-//     );
-// }
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<DailyEmailJob>(
+        "hourly-email-analysis-job",
+        job => job.RunDailyAnalysisAsync(),
+        "0 * * * *", // Runs every hour
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Local
+        }
+    );
+}
 
 // Shopping Tracker Job - Runs every 12 hours
 using (var scope = app.Services.CreateScope())
@@ -306,15 +335,7 @@ using (var scope = app.Services.CreateScope())
                 }
             );
 
-            recurringJobManager.AddOrUpdate<DailyBriefingJob>(
-                "daily-briefing-job",
-                job => job.SendMorningBriefingAsync(),
-                "0 8 * * *", // Every day at 08:00 AM
-                new RecurringJobOptions
-                {
-                    TimeZone = TimeZoneInfo.Local
-                }
-            );
+
 
             // Our new MorningBriefingJob that also processes reminders every 5 minutes
             recurringJobManager.AddOrUpdate<MorningBriefingJob>(

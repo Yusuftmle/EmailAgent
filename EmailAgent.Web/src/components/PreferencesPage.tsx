@@ -11,6 +11,8 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
   const [prefs, setPrefs] = useState<UserPreferences>({
     assistantPersona: 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın.',
     userEmail: '',
+    city: 'Istanbul',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     aiProvider: 'Claude',
     apiKey: '',
     whatsAppSid: '',
@@ -26,7 +28,8 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
     enableFinanceFeature: true,
     enableWebSearchFeature: true,
     enableDocumentAnalysisFeature: true,
-    enableRemindersFeature: true
+    enableRemindersFeature: true,
+    enableCalendarFeature: true
   });
   
   const [activeTab, setActiveTab] = useState<'profile' | 'ai' | 'personality' | 'capabilities' | 'notifications'>('profile');
@@ -38,6 +41,10 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
     const fetchPrefs = async () => {
       try {
         const data = await apiService.getPreferences();
+        // Fallback to browser timezone if not set in DB
+        if (!data.timezone) {
+          data.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
         setPrefs(data);
       } catch (error) {
         console.error("Failed to load preferences", error);
@@ -162,6 +169,31 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
                       className="w-full px-4 py-2.5 pl-10 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-indigo-500/40 outline-none text-slate-200 opacity-80 cursor-not-allowed"
                     />
                     <Mail size={14} className="absolute left-3.5 top-3.5 text-slate-500" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 mt-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">City (For Weather)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={prefs.city || ''}
+                      onChange={(e) => setPrefs(prev => ({ ...prev, city: e.target.value }))}
+                      placeholder="e.g. Adana, Istanbul, New York"
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-indigo-500/40 outline-none text-slate-200 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 mt-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Timezone (Auto-detected)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={prefs.timezone || ''}
+                      readOnly
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-900 text-xs text-emerald-400 opacity-90 cursor-not-allowed"
+                    />
                   </div>
                 </div>
               </div>
@@ -306,6 +338,7 @@ export const PreferencesPage: React.FC<PreferencesPageProps> = ({ onBackToDashbo
                   { id: 'enableWebSearchFeature', label: 'Web Search', desc: 'Search the internet and read web pages for live data.' },
                   { id: 'enableDocumentAnalysisFeature', label: 'Document Analysis', desc: 'Read and analyze uploaded PDFs and documents.' },
                   { id: 'enableRemindersFeature', label: 'Reminders', desc: 'Set time-based reminders and alerts.' },
+                  { id: 'enableCalendarFeature', label: 'Calendar & Agenda', desc: 'Sync events with Google Calendar and schedule meetings.' },
                 ].map((feature) => (
                   <div key={feature.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-white/5 rounded-2xl hover:border-emerald-500/20 transition-colors">
                     <div>

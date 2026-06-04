@@ -8,6 +8,8 @@ public class UserPreferences
     public Guid Id { get; set; } = Guid.NewGuid();
     public string UserEmail { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string City { get; set; } = "Istanbul";
+    public string Timezone { get; set; } = "Europe/Istanbul";
     
     // AI Engine Configuration
     public string AiProvider { get; set; } = "Claude"; // "Claude", "Gemini", "OpenAI"
@@ -44,4 +46,5 @@ public class UserPreferences
     public bool EnableWebSearchFeature { get; set; } = true;
     public bool EnableDocumentAnalysisFeature { get; set; } = true;
     public bool EnableRemindersFeature { get; set; } = true;
+    public bool EnableCalendarFeature { get; set; } = true;
 }

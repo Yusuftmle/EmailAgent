@@ -11,6 +11,7 @@ using EmailAgent.Infrastructure.Notifications;
 using EmailAgent.Infrastructure.Data;
 using EmailAgent.Agent.Core;
 using Microsoft.EntityFrameworkCore;
+using EmailAgent.Infrastructure.GoogleCalendar;
 
 namespace EmailAgent.Infrastructure.Jobs;
 
@@ -23,6 +24,7 @@ public class DailyBriefingJob
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<DailyBriefingJob> _logger;
     private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
+    private readonly IGoogleCalendarService _googleCalendarService;
 
     public DailyBriefingJob(
         IUserPreferencesRepository prefRepo,
@@ -31,7 +33,8 @@ public class DailyBriefingJob
         IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         ILogger<DailyBriefingJob> logger,
-        Microsoft.Extensions.Configuration.IConfiguration config)
+        Microsoft.Extensions.Configuration.IConfiguration config,
+        IGoogleCalendarService googleCalendarService)
     {
         _prefRepo = prefRepo;
         _telegramService = telegramService;
@@ -40,16 +43,19 @@ public class DailyBriefingJob
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _config = config;
+        _googleCalendarService = googleCalendarService;
     }
 
-    public async Task SendMorningBriefingAsync()
+    public async Task SendMorningBriefingForUserAsync(Guid userId)
     {
-        _logger.LogInformation("Starting Daily Briefing Job...");
-        var users = await _prefRepo.GetAllAsync();
-
-        foreach (var user in users)
+        _logger.LogInformation("Starting Daily Briefing Job for user {UserId}...", userId);
+        var user = await _prefRepo.GetByIdAsync(userId);
+        
+        if (user == null || string.IsNullOrEmpty(user.TelegramChatId)) 
         {
-            if (string.IsNullOrEmpty(user.TelegramChatId)) continue;
+            _logger.LogInformation("User {UserId} not found or TelegramChatId is empty. Skipping briefing.", userId);
+            return;
+        }
 
             try
             {
@@ -58,8 +64,8 @@ public class DailyBriefingJob
                 try
                 {
                     var client = _httpClientFactory.CreateClient();
-                    // format=3 returns something like "Istanbul: ⛅️ +15°C"
-                    weather = await client.GetStringAsync("https://wttr.in/Istanbul?format=3");
+                    var city = string.IsNullOrWhiteSpace(user.City) ? "Istanbul" : user.City;
+                    weather = await client.GetStringAsync($"https://wttr.in/{Uri.EscapeDataString(city)}?format=3");
                 }
                 catch { }
 
@@ -82,7 +88,39 @@ public class DailyBriefingJob
                     ? string.Join("\n", trackedProducts.Select(p => $"- {p.Title}: {p.LastKnownPrice} {p.Currency} (Hedef: {p.TargetPrice})"))
                     : "Hedef fiyata düşen ürün yok.";
 
-                // 4. Generate AI Message
+                // 4. Fetch Agenda Events for Today
+                var userTimezone = TimeZoneInfo.FindSystemTimeZoneById(user.Timezone ?? "Europe/Istanbul");
+                var userToday = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimezone).Date;
+                var startOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(userToday, userTimezone);
+                var endOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(userToday.AddDays(1).AddTicks(-1), userTimezone);
+
+                var todaysEvents = await _dbContext.CalendarEvents
+                    .Where(e => e.UserId == user.Id && e.EventDate >= startOfDayUtc && e.EventDate <= endOfDayUtc)
+                    .ToListAsync();
+                
+                try
+                {
+                    var googleEvents = await _googleCalendarService.GetUpcomingEventsAsync(user, startOfDayUtc, endOfDayUtc);
+                    foreach(var ge in googleEvents)
+                    {
+                        if (!todaysEvents.Any(le => le.GoogleEventId == ge.GoogleEventId))
+                        {
+                            todaysEvents.Add(ge);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // Ignore google fetch errors
+                }
+                
+                var orderedEvents = todaysEvents.OrderBy(e => e.EventDate).ToList();
+
+                var agendaSummary = orderedEvents.Any()
+                    ? string.Join("\n", orderedEvents.Select(e => $"- {TimeZoneInfo.ConvertTimeFromUtc(e.EventDate, userTimezone).ToString("HH:mm")}: {e.Title} {(string.IsNullOrWhiteSpace(e.Description) ? "" : "(" + e.Description + ")")}"))
+                    : "Günün boş görünüyor, harika bir gün!";
+
+                // 5. Generate AI Message
                 var provider = string.IsNullOrEmpty(user.AiProvider) ? "Gemini" : user.AiProvider;
                 var apiKey = string.IsNullOrWhiteSpace(user.ApiKey) ? _config[$"{provider}:ApiKey"] : user.ApiKey;
                 var kernel = new AegisKernelBuilder(_serviceProvider)
@@ -91,7 +129,7 @@ public class DailyBriefingJob
 
                 var chatService = kernel.GetRequiredService<IChatCompletionService>();
                 var persona = user.AssistantPersona ?? "Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın.";
-                var chatHistory = new ChatHistory($"Sen kullanıcının kişisel yapay zeka asistanısın. Görevin, ona her sabah aşağıdaki karakter ve davranış profiline uygun bir 'Günaydın / Sabah Bülteni' mesajı hazırlamak.\nSenin Karakterin: {persona}\nSadece aşağıdaki verileri kullanarak kısa ve şık bir özet yaz.");
+                var chatHistory = new ChatHistory($"Sen kullanıcının kişisel yapay zeka asistanısın. Görevin, ona her sabah aşağıdaki karakter ve davranış profiline uygun bir 'Günaydın / Sabah Bülteni' mesajı hazırlamak.\nSenin Karakterin: {persona}\nSadece aşağıdaki verileri kullanarak kısa ve şık bir özet yaz. Ajandada etkinlik varsa onları mutlaka saatleriyle birlikte vurgula.");
                 
                 string prompt = $@"
 Kullanıcı Adı: {user.Name ?? "Yusuf"}
@@ -100,7 +138,8 @@ Dünün Önemli E-postaları:
 {emailSummary}
 İndirime Giren Ürünleri:
 {productsSummary}
-Bugünkü Toplantıları: (Şu an takvim entegrasyonu yok, 'Günün boş görünüyor, harika bir gün!' diyebilirsin).
+Bugünkü Toplantıları / Ajandası:
+{agendaSummary}
 Lütfen WhatsApp/Telegram'a uygun şık bir bülten metni oluştur.";
 
                 chatHistory.AddUserMessage(prompt);
@@ -116,6 +155,5 @@ Lütfen WhatsApp/Telegram'a uygun şık bir bülten metni oluştur.";
             {
                 _logger.LogError(ex, "Failed to send briefing to user {UserId}", user.Id);
             }
-        }
     }
 }

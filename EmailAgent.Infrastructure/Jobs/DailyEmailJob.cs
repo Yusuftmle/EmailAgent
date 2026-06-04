@@ -102,13 +102,23 @@ public class DailyEmailJob
                     var importance = await _analysisAgent.ClassifyEmailAsync(email, preferences);
                     await Task.Delay(1500);
 
-                    _logger.LogInformation("Analyzing email ID: {Id} - Summarizing...", email.Id);
-                    var summary = await _analysisAgent.SummarizeEmailAsync(email, preferences);
-                    await Task.Delay(1500);
+                    string summary = "Önemsiz olarak sınıflandırıldı. (Token tasarrufu için özetleme atlandı)";
+                    string draftReply = "";
 
-                    _logger.LogInformation("Analyzing email ID: {Id} - Drafting reply...", email.Id);
-                    var draftReply = await _analysisAgent.DraftReplyAsync(email, preferences);
-                    await Task.Delay(1500);
+                    if (importance == "important")
+                    {
+                        _logger.LogInformation("Analyzing email ID: {Id} - Summarizing...", email.Id);
+                        summary = await _analysisAgent.SummarizeEmailAsync(email, preferences);
+                        await Task.Delay(1500);
+
+                        _logger.LogInformation("Analyzing email ID: {Id} - Drafting reply...", email.Id);
+                        draftReply = await _analysisAgent.DraftReplyAsync(email, preferences);
+                        await Task.Delay(1500);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Email ID: {Id} is not important. Skipping summary and draft to save tokens.", email.Id);
+                    }
 
                     if (isUpdate && existing != null)
                     {

@@ -38,8 +38,12 @@ export const ChatBot: React.FC = () => {
     }
   }, [isOpen]);
 
+  const prevMessagesLength = useRef(0);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const isBulkLoad = messages.length - prevMessagesLength.current > 1;
+    messagesEndRef.current?.scrollIntoView({ behavior: isBulkLoad ? 'auto' : 'smooth' });
+    prevMessagesLength.current = messages.length;
   }, [messages, isLoading]);
 
   const handleSendMessage = async (text: string) => {

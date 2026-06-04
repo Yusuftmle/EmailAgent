@@ -7,6 +7,7 @@ import { CommandCenter } from './components/CommandCenter';
 import { ChatView } from './components/ChatView';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
+import AgendaPage from './components/AgendaPage';
 import omniImg from './components/omni-walk.png';
 
 const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
@@ -68,7 +69,7 @@ const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ 
 };
 
 export const AppLayout: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'chat' | 'plugins' | 'preferences'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'chat' | 'plugins' | 'agenda' | 'preferences'>('dashboard');
 
   // ── Determine time of day ──
   const [timeMode] = useState<'morning' | 'afternoon' | 'night'>(() => {
@@ -119,6 +120,7 @@ export const AppLayout: React.FC = () => {
             {[
               { id: 'dashboard', label: 'Overview' },
               { id: 'chat', label: 'Intelligence' },
+              { id: 'agenda', label: 'Agenda' },
               { id: 'plugins', label: 'Analysis' },
               { id: 'preferences', label: 'Settings' }
             ].map(nav => (
@@ -134,6 +136,16 @@ export const AppLayout: React.FC = () => {
                 {nav.label}
               </button>
             ))}
+            
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = '/login';
+              }}
+              className="px-5 py-2 rounded-lg text-sm font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300 ml-2"
+            >
+              Log out
+            </button>
           </div>
         </div>
       </nav>
@@ -151,6 +163,7 @@ export const AppLayout: React.FC = () => {
           >
             {currentView === 'dashboard' && <CommandCenter onNavigate={(view) => setCurrentView(view as any)} />}
             {currentView === 'chat' && <ChatView />}
+            {currentView === 'agenda' && <AgendaPage />}
             {currentView === 'plugins' && <DailySummary onGoToPreferences={() => setCurrentView('preferences')} />}
             {currentView === 'preferences' && <PreferencesPage onBackToDashboard={() => setCurrentView('dashboard')} />}
           </motion.div>

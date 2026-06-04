@@ -98,9 +98,10 @@ public class GmailService : IGmailService
         {
             var service = GetGmailService(user);
 
-            _logger.LogInformation("Fetching unread emails from the last 24 hours...");
+            _logger.LogInformation("Fetching unread emails from the last 1 hour...");
             var listRequest = service.Users.Messages.List("me");
-            listRequest.Q = "is:unread newer_than:1d"; // last 24h unread
+            var epochOneHourAgo = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds();
+            listRequest.Q = $"is:unread after:{epochOneHourAgo}"; // last 1h unread
             
             var listResponse = await listRequest.ExecuteAsync(cancellationToken);
             if (listResponse.Messages == null || !listResponse.Messages.Any())

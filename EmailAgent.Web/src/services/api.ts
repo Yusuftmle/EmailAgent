@@ -46,6 +46,8 @@ export interface EmailAnalysis {
 export interface UserPreferences {
   id?: number;
   userEmail?: string;
+  city?: string;
+  timezone?: string;
   assistantPersona?: string;
   pairingCode?: string;
   telegramChatId?: string;
@@ -65,6 +67,7 @@ export interface UserPreferences {
   enableWebSearchFeature?: boolean;
   enableDocumentAnalysisFeature?: boolean;
   enableRemindersFeature?: boolean;
+  enableCalendarFeature?: boolean;
 }
 
 export interface ChatHistoryMessage {
@@ -172,6 +175,16 @@ export interface NotificationLog {
   sentAt: string;
 }
 
+export interface CalendarEvent {
+  id?: string;
+  userId?: string;
+  title: string;
+  description?: string;
+  eventDate: string;
+  isCompleted?: boolean;
+  createdAt?: string;
+}
+
 let mockChatHistory: ChatHistoryMessage[] = [
   {
     role: "assistant",
@@ -246,6 +259,25 @@ export const apiService = {
     }
   },
 
+  // Calendar API
+  async getEvents(): Promise<CalendarEvent[]> {
+    const response = await client.get<CalendarEvent[]>('/api/calendar');
+    return response.data;
+  },
+
+  async addEvent(event: CalendarEvent): Promise<CalendarEvent> {
+    const response = await client.post<CalendarEvent>('/api/calendar', event);
+    return response.data;
+  },
+
+  async updateEvent(id: string, event: CalendarEvent): Promise<void> {
+    await client.put(`/api/calendar/${id}`, event);
+  },
+
+  async deleteEvent(id: string): Promise<void> {
+    await client.delete(`/api/calendar/${id}`);
+  },
+
   async getChatHistory(sessionId: string): Promise<ChatHistoryMessage[]> {
     try {
       const response = await client.get<ChatHistoryMessage[]>(`/api/chat/history?sessionId=${sessionId}`);
@@ -277,11 +309,7 @@ export const apiService = {
       formData.append('audioFile', audioBlob, 'voice.webm');
       formData.append('sessionId', sessionId);
       
-      const response = await client.post<{ reply: string; sessionId: string; transcribedText?: string }>('/api/chat/voice', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await client.post<{ reply: string; sessionId: string; transcribedText?: string }>('/api/chat/voice', formData);
       return { reply: response.data.reply, transcribedText: response.data.transcribedText };
     } catch (error) {
       console.error("Failed to send voice message:", error);

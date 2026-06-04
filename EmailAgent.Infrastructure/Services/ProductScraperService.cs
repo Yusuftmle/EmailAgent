@@ -126,13 +126,13 @@ public class ProductScraperService
             if (priceProp.ValueKind == JsonValueKind.Number)
             {
                 price = priceProp.GetDecimal();
-                return true;
+                return price > 0;
             }
             else if (priceProp.ValueKind == JsonValueKind.String)
             {
                 if (decimal.TryParse(priceProp.GetString()?.Replace(",", "."), out price))
                 {
-                    return true;
+                    return price > 0;
                 }
             }
         }

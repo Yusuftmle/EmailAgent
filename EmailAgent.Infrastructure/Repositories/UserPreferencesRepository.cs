@@ -107,6 +107,9 @@ public class UserPreferencesRepository : IUserPreferencesRepository
             existing.EnableWebSearchFeature = preferences.EnableWebSearchFeature;
             existing.EnableDocumentAnalysisFeature = preferences.EnableDocumentAnalysisFeature;
             existing.EnableRemindersFeature = preferences.EnableRemindersFeature;
+            existing.Name = preferences.Name;
+            existing.City = preferences.City;
+            existing.Timezone = preferences.Timezone;
             
             _context.UserPreferences.Update(existing);
         }

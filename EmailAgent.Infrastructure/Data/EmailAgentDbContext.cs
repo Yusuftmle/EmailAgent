@@ -20,6 +20,7 @@ public class EmailAgentDbContext : DbContext
     public DbSet<PriceHistory> PriceHistories => Set<PriceHistory>();
     public DbSet<Reminder> Reminders => Set<Reminder>();
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
+    public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

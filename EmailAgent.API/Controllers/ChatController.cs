@@ -27,7 +27,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("voice")]
-    public async Task<ActionResult<ChatResponseDto>> SendVoiceMessage(Microsoft.AspNetCore.Http.IFormFile audioFile)
+    public async Task<ActionResult<ChatResponseDto>> SendVoiceMessage([FromForm] Microsoft.AspNetCore.Http.IFormFile audioFile)
     {
         if (audioFile == null || audioFile.Length == 0)
         {

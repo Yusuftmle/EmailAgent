@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { apiService, ChatHistoryMessage } from '../services/api';
-import { MessageSquare, Send, Trash2, Cpu, Mic, MicOff } from 'lucide-react';
+import { MessageSquare, Send, Trash2, Cpu, Mic, MicOff, Star, Copy, Volume2 } from 'lucide-react';
 import AssistantMascot, { MascotHandle } from './AssistantMascot';
 import omniImg from './omni-walk.png';
 
@@ -71,6 +71,74 @@ export const ChatView: React.FC = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
 
+  interface FavoriteMessage {
+    key: string;
+    content: string;
+    date: string;
+  }
+
+  const [favorites, setFavorites] = useState<FavoriteMessage[]>(() => {
+    try {
+      const favs = localStorage.getItem('chat_favorites_v2');
+      return favs ? JSON.parse(favs) : [];
+    } catch { return []; }
+  });
+
+  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
+
+  const toggleFavorite = (msg: ChatHistoryMessage, index: number) => {
+    const key = msg.id ? msg.id.toString() : `temp-${index}-${msg.content.substring(0, 10)}`;
+    setFavorites(prev => {
+      const exists = prev.find(f => f.key === key);
+      let newFavs;
+      if (exists) {
+        newFavs = prev.filter(f => f.key !== key);
+      } else {
+        newFavs = [...prev, { key, content: msg.content, date: new Date().toISOString() }];
+        // Performans optimizasyonu: En fazla 50 favori tut (kasmasını engellemek için)
+        if (newFavs.length > 50) {
+          newFavs = newFavs.slice(newFavs.length - 50);
+        }
+      }
+      localStorage.setItem('chat_favorites_v2', JSON.stringify(newFavs));
+      return newFavs;
+    });
+  };
+
+  const isFavorited = (msg: ChatHistoryMessage, index: number) => {
+    const key = msg.id ? msg.id.toString() : `temp-${index}-${msg.content.substring(0, 10)}`;
+    return favorites.some(f => f.key === key);
+  };
+
+  const scrollToMessage = (key: string) => {
+    setShowFavoritesModal(false);
+    setTimeout(() => {
+      const el = document.getElementById(`chat-msg-${key}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.transition = 'background-color 0.5s ease';
+        el.style.backgroundColor = 'rgba(245, 158, 11, 0.15)'; // Amber highlight
+        setTimeout(() => {
+          el.style.backgroundColor = 'transparent';
+        }, 2000);
+      } else {
+        alert("This message is from an older session or was cleared.");
+      }
+    }, 100);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Could add a small toast here if desired
+  };
+
+  const speakText = (text: string) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'tr-TR'; // Default to Turkish since Omni usually speaks Turkish
+    window.speechSynthesis.speak(utterance);
+  };
+
   const [sessionId] = useState(() => {
     try {
       const userStr = localStorage.getItem('user');
@@ -116,8 +184,12 @@ export const ChatView: React.FC = () => {
     loadHistory();
   }, []);
 
+  const prevMessagesLength = useRef(0);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const isBulkLoad = messages.length - prevMessagesLength.current > 1;
+    messagesEndRef.current?.scrollIntoView({ behavior: isBulkLoad ? 'auto' : 'smooth' });
+    prevMessagesLength.current = messages.length;
   }, [messages, isLoading]);
 
   const handleSendMessage = async (text: string) => {
@@ -317,56 +389,80 @@ export const ChatView: React.FC = () => {
             </div>
           </div>
         </div>
-        <button
-          onClick={handleClearChat}
-          className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all font-bold text-xs uppercase tracking-wider flex items-center gap-2"
-        >
-          <Trash2 size={14} /> Clear History
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFavoritesModal(true)}
+            className="px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition-all font-bold text-xs uppercase tracking-wider flex items-center gap-2"
+          >
+            <Star size={14} /> Saved
+          </button>
+          <button
+            onClick={handleClearChat}
+            className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all font-bold text-xs uppercase tracking-wider flex items-center gap-2"
+          >
+            <Trash2 size={14} /> Clear History
+          </button>
+        </div>
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 p-6 overflow-y-auto space-y-6 relative z-10 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-        {messages.map((msg, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className={`flex gap-4 max-w-[80%] ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-extrabold overflow-hidden ${msg.role === 'user'
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-              }`}>
-              {msg.role === 'user' ? 'USR' : <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />}
-            </div>
+      <div className="flex-1 p-6 overflow-y-auto relative z-10 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="max-w-4xl mx-auto w-full space-y-8 py-4">
+          {messages.map((msg, index) => (
+            <motion.div
+              key={index}
+              id={`chat-msg-${msg.id ? msg.id.toString() : `temp-${index}-${msg.content.substring(0, 10)}`}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`flex gap-6 w-full transition-colors ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              {msg.role === 'assistant' && (
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] mt-1">
+                  <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />
+                </div>
+              )}
 
-            <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-lg ${msg.role === 'user'
-                ? 'bg-indigo-600/90 text-white rounded-tr-none border border-indigo-500/50'
-                : 'bg-slate-900/80 border border-emerald-500/20 text-slate-200 rounded-tl-none'
-              }`}>
-              {msg.content.split('\n').map((line, lIdx) => (
-                <p key={lIdx} className={lIdx > 0 ? 'mt-2' : ''}>{line}</p>
-              ))}
-            </div>
-          </motion.div>
-        ))}
+              <div className={`relative group max-w-[85%] ${msg.role === 'user'
+                  ? 'bg-slate-800/80 px-6 py-4 rounded-3xl text-slate-200 shadow-sm border border-white/5 text-[15px] leading-relaxed'
+                  : 'text-slate-200 text-[15px] leading-relaxed pt-2 pb-8'
+                }`}>
+                {msg.content.split('\n').map((line, lIdx) => (
+                  <p key={lIdx} className={lIdx > 0 ? 'mt-4' : ''}>{line}</p>
+                ))}
 
-        {isLoading && (
-          <div className="flex gap-4 max-w-[80%]">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-              <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />
-            </div>
-            <div className="p-4 rounded-2xl rounded-tl-none bg-slate-900/80 border border-emerald-500/20 text-slate-400 flex items-center gap-1.5 h-[52px]">
-              <span className="typing-dot bg-emerald-400"></span>
-              <span className="typing-dot bg-emerald-400"></span>
-              <span className="typing-dot bg-emerald-400"></span>
-            </div>
-          </div>
-        )}
+                {msg.role === 'assistant' && (
+                  <div className="absolute -bottom-2 left-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => speakText(msg.content)} className="p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors" title="Read Aloud">
+                      <Volume2 size={14} />
+                    </button>
+                    <button onClick={() => copyToClipboard(msg.content)} className="p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors" title="Copy text">
+                      <Copy size={14} />
+                    </button>
+                    <button onClick={() => toggleFavorite(msg, index)} className={`p-1.5 rounded-lg transition-colors ${isFavorited(msg, index) ? 'text-amber-400 bg-slate-800' : 'text-slate-500 hover:text-amber-400 hover:bg-slate-800'}`} title="Favorite">
+                      <Star size={14} fill={isFavorited(msg, index) ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
 
-        <div ref={messagesEndRef} />
+          {isLoading && (
+            <div className="flex gap-6 w-full justify-start">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] mt-1">
+                <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />
+              </div>
+              <div className="pt-4 pb-8 flex items-center gap-1.5 h-[52px]">
+                <span className="typing-dot bg-emerald-400/60"></span>
+                <span className="typing-dot bg-emerald-400/60"></span>
+                <span className="typing-dot bg-emerald-400/60"></span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input Area */}
@@ -430,6 +526,58 @@ export const ChatView: React.FC = () => {
           </motion.button>
         </form>
       </div>
+
+      {/* Favorites Modal */}
+      {showFavoritesModal && (
+        <div className="absolute inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
+             <div className="p-4 border-b border-white/5 flex justify-between items-center bg-slate-800/50 rounded-t-3xl">
+               <h3 className="text-amber-400 font-bold uppercase tracking-wider flex items-center gap-2"><Star size={16} fill="currentColor" /> Saved Messages</h3>
+               <button onClick={() => setShowFavoritesModal(false)} className="text-slate-400 hover:text-white font-bold text-sm">Close</button>
+             </div>
+             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700">
+                {favorites.length === 0 ? (
+                  <p className="text-center text-slate-500 py-10 font-medium">You haven't saved any messages yet.</p>
+                ) : (
+                  favorites.map(fav => (
+                    <div key={fav.key} 
+                         className="bg-slate-800/50 p-4 rounded-xl border border-white/5 text-slate-300 text-sm relative group pr-16 cursor-pointer hover:bg-slate-800 transition-colors"
+                         onClick={() => scrollToMessage(fav.key)}>
+                      {fav.content.split('\n').map((line, idx) => <p key={idx} className={idx > 0 ? 'mt-2' : ''}>{line}</p>)}
+                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(fav.content);
+                          }} 
+                          className="text-slate-500 hover:text-emerald-400 p-1"
+                          title="Copy"
+                        >
+                          <Copy size={14} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const n = favorites.filter(f => f.key !== fav.key);
+                            setFavorites(n);
+                            localStorage.setItem('chat_favorites_v2', JSON.stringify(n));
+                          }} 
+                          className="text-slate-500 hover:text-red-400 p-1"
+                          title="Remove from favorites"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-2 font-bold flex items-center gap-1">
+                         <span>CLICK TO JUMP</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
