@@ -11,12 +11,12 @@ namespace EmailAgent.API.Plugins;
 
 public class DeepWebScraperPlugin
 {
-    private readonly HttpClient _httpClient;
+    private readonly EmailAgent.Infrastructure.Services.PlaywrightScraperService _playwrightScraper;
     private const int MaxContentLength = 10000;
 
-    public DeepWebScraperPlugin(HttpClient httpClient)
+    public DeepWebScraperPlugin(EmailAgent.Infrastructure.Services.PlaywrightScraperService playwrightScraper)
     {
-        _httpClient = httpClient;
+        _playwrightScraper = playwrightScraper;
     }
 
     [KernelFunction("ScrapeWebPageAsync")]
@@ -31,7 +31,7 @@ public class DeepWebScraperPlugin
                 return "Hata: Geçersiz bir URL sağlandı.";
             }
 
-            var html = await _httpClient.GetStringAsync(url);
+            var html = await _playwrightScraper.GetHtmlAsync(url);
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);

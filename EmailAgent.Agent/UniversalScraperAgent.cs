@@ -59,8 +59,13 @@ JSON Schema:
 
         try
         {
+            _logger.LogInformation("UniversalScraperAgent: Yapay zekaya HTML gönderiliyor ve fiyat analizleri isteniyor. İçerik Boyutu: {Length} karakter.", minifiedHtml.Length);
+            
             var response = await chatService.GetChatMessageContentAsync(chatHistory, null, kernel);
             var content = response.Content?.Trim() ?? "";
+
+            _logger.LogInformation("UniversalScraperAgent: AI JSON yanıtı döndürdü. Yanıt Boyutu: {Length} karakter.", content.Length);
+            _logger.LogDebug("UniversalScraperAgent AI JSON Yanıtı: {Response}", content);
 
             // Remove markdown code blocks if the AI ignored the instruction
             if (content.StartsWith("```json")) content = content.Substring(7);

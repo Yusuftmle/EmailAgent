@@ -1,0 +1,990 @@
+2026-06-10 19:18:02.746 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:18:02.768 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:18:02.929 +03:00 [INF] Executed DbCommand (15ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-06-10 19:18:02.955 +03:00 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2026-06-10 19:18:02.962 +03:00 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+            CREATE TABLE IF NOT EXISTS "PriceHistories" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL,
+                "CheckedAt" timestamp with time zone NOT NULL,
+                CONSTRAINT "PK_PriceHistories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppSid" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppFrom" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppTo" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramBotToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramChatId" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "City" text NOT NULL DEFAULT 'Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "Timezone" text NOT NULL DEFAULT 'Europe/Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "PairingCode" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "ShoppingTrackerIntervalHours" integer NOT NULL DEFAULT 12;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "AssistantPersona" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableEmailFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableShoppingFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableFinanceFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableWebSearchFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableDocumentAnalysisFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableRemindersFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableCalendarFeature" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "TrackedCategories" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "CategoryUrl" text NOT NULL,
+                "CategoryName" text NOT NULL,
+                "MinDiscountPercentage" numeric NOT NULL,
+                "CreatedAt" timestamp with time zone NOT NULL,
+                "LastCheckedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_TrackedCategories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "RequiredFeatures" text NULL;
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "ComparisonGroupId" uuid NULL;
+            ALTER TABLE "TrackedProducts" ADD COLUMN IF NOT EXISTS "IsInStock" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "PriceHistory" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL DEFAULT true,
+                "CheckedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_PriceHistory" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "Reminders" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "RemindAt" timestamp NOT NULL,
+                "IsSent" boolean NOT NULL DEFAULT false,
+                "CreatedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_Reminders" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "NotificationLogs" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "Type" text NOT NULL DEFAULT 'PriceDrop',
+                "SentAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_NotificationLogs" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "CalendarEvents" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Title" text NOT NULL,
+                "Description" text NOT NULL DEFAULT '',
+                "EventDate" timestamp with time zone NOT NULL,
+                "IsCompleted" boolean NOT NULL DEFAULT false,
+                "GoogleEventId" text NULL,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_CalendarEvents" PRIMARY KEY ("Id")
+            );
+
+            UPDATE "UserPreferences" SET "PairingCode" = gen_random_uuid()::text WHERE "PairingCode" = '';
+            
+            ALTER TABLE "CalendarEvents" ADD COLUMN IF NOT EXISTS "GoogleEventId" text NULL;
+2026-06-10 19:18:03.020 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-10 19:18:03.028 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-10 19:18:03.134 +03:00 [INF] User profile is available. Using 'C:\Users\hucks\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-06-10 19:18:03.191 +03:00 [INF] Now listening on: http://localhost:5209
+2026-06-10 19:18:03.194 +03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: emailagent_v2, Schema: hangfire'
+2026-06-10 19:18:03.194 +03:00 [INF] Using the following options for PostgreSQL job storage:
+2026-06-10 19:18:03.195 +03:00 [INF]     Queue poll interval: 00:00:15.
+2026-06-10 19:18:03.195 +03:00 [INF]     Invisibility timeout: 00:30:00.
+2026-06-10 19:18:03.195 +03:00 [INF]     Use sliding invisibility timeout: False.
+2026-06-10 19:18:03.195 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-10 19:18:03.201 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-10 19:18:03.201 +03:00 [INF] Hosting environment: Development
+2026-06-10 19:18:03.201 +03:00 [INF] Content root path: C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API
+2026-06-10 19:18:03.208 +03:00 [INF] Server yusuf:4408:b4d4c7f6 successfully announced in 6.0171 ms
+2026-06-10 19:18:03.209 +03:00 [INF] Server yusuf:4408:b4d4c7f6 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-10 19:18:03.211 +03:00 [INF] 2 servers were removed due to timeout
+2026-06-10 19:18:03.213 +03:00 [INF] Server yusuf:4408:b4d4c7f6 all the dispatchers started
+2026-06-10 19:18:03.471 +03:00 [INF] Start listening for @AegisAssistanttBot
+2026-06-10 19:18:03.588 +03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:21:34.552 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:21:34.590 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:21:34.741 +03:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-06-10 19:21:34.767 +03:00 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2026-06-10 19:21:34.773 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+            CREATE TABLE IF NOT EXISTS "PriceHistories" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL,
+                "CheckedAt" timestamp with time zone NOT NULL,
+                CONSTRAINT "PK_PriceHistories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppSid" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppFrom" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppTo" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramBotToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramChatId" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "City" text NOT NULL DEFAULT 'Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "Timezone" text NOT NULL DEFAULT 'Europe/Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "PairingCode" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "ShoppingTrackerIntervalHours" integer NOT NULL DEFAULT 12;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "AssistantPersona" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableEmailFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableShoppingFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableFinanceFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableWebSearchFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableDocumentAnalysisFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableRemindersFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableCalendarFeature" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "TrackedCategories" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "CategoryUrl" text NOT NULL,
+                "CategoryName" text NOT NULL,
+                "MinDiscountPercentage" numeric NOT NULL,
+                "CreatedAt" timestamp with time zone NOT NULL,
+                "LastCheckedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_TrackedCategories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "RequiredFeatures" text NULL;
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "ComparisonGroupId" uuid NULL;
+            ALTER TABLE "TrackedProducts" ADD COLUMN IF NOT EXISTS "IsInStock" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "PriceHistory" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL DEFAULT true,
+                "CheckedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_PriceHistory" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "Reminders" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "RemindAt" timestamp NOT NULL,
+                "IsSent" boolean NOT NULL DEFAULT false,
+                "CreatedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_Reminders" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "NotificationLogs" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "Type" text NOT NULL DEFAULT 'PriceDrop',
+                "SentAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_NotificationLogs" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "CalendarEvents" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Title" text NOT NULL,
+                "Description" text NOT NULL DEFAULT '',
+                "EventDate" timestamp with time zone NOT NULL,
+                "IsCompleted" boolean NOT NULL DEFAULT false,
+                "GoogleEventId" text NULL,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_CalendarEvents" PRIMARY KEY ("Id")
+            );
+
+            UPDATE "UserPreferences" SET "PairingCode" = gen_random_uuid()::text WHERE "PairingCode" = '';
+            
+            ALTER TABLE "CalendarEvents" ADD COLUMN IF NOT EXISTS "GoogleEventId" text NULL;
+2026-06-10 19:21:34.834 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-10 19:21:34.841 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-10 19:21:34.939 +03:00 [INF] User profile is available. Using 'C:\Users\hucks\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-06-10 19:21:34.985 +03:00 [INF] Now listening on: http://localhost:5209
+2026-06-10 19:21:34.987 +03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: emailagent_v2, Schema: hangfire'
+2026-06-10 19:21:34.987 +03:00 [INF] Using the following options for PostgreSQL job storage:
+2026-06-10 19:21:34.987 +03:00 [INF]     Queue poll interval: 00:00:15.
+2026-06-10 19:21:34.987 +03:00 [INF]     Invisibility timeout: 00:30:00.
+2026-06-10 19:21:34.988 +03:00 [INF]     Use sliding invisibility timeout: False.
+2026-06-10 19:21:34.988 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-10 19:21:34.994 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-10 19:21:34.994 +03:00 [INF] Hosting environment: Development
+2026-06-10 19:21:34.994 +03:00 [INF] Content root path: C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API
+2026-06-10 19:21:35.002 +03:00 [INF] Server yusuf:4772:ec1d0c39 successfully announced in 6.7943 ms
+2026-06-10 19:21:35.004 +03:00 [INF] Server yusuf:4772:ec1d0c39 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-10 19:21:35.008 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-10 19:21:35.019 +03:00 [INF] Server yusuf:4772:ec1d0c39 all the dispatchers started
+2026-06-10 19:21:35.255 +03:00 [INF] Start listening for @AegisAssistanttBot
+2026-06-10 19:21:35.394 +03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:25:05.369 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:26:35.046 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-10 19:30:05.491 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:35:05.653 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:40:05.790 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:45:05.982 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:49:52.160 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:49:52.198 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:49:52.352 +03:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-06-10 19:49:52.377 +03:00 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2026-06-10 19:49:52.384 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+            CREATE TABLE IF NOT EXISTS "PriceHistories" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL,
+                "CheckedAt" timestamp with time zone NOT NULL,
+                CONSTRAINT "PK_PriceHistories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppSid" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppFrom" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppTo" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramBotToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramChatId" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "City" text NOT NULL DEFAULT 'Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "Timezone" text NOT NULL DEFAULT 'Europe/Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "PairingCode" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "ShoppingTrackerIntervalHours" integer NOT NULL DEFAULT 12;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "AssistantPersona" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableEmailFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableShoppingFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableFinanceFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableWebSearchFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableDocumentAnalysisFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableRemindersFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableCalendarFeature" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "TrackedCategories" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "CategoryUrl" text NOT NULL,
+                "CategoryName" text NOT NULL,
+                "MinDiscountPercentage" numeric NOT NULL,
+                "CreatedAt" timestamp with time zone NOT NULL,
+                "LastCheckedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_TrackedCategories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "RequiredFeatures" text NULL;
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "ComparisonGroupId" uuid NULL;
+            ALTER TABLE "TrackedProducts" ADD COLUMN IF NOT EXISTS "IsInStock" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "PriceHistory" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL DEFAULT true,
+                "CheckedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_PriceHistory" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "Reminders" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "RemindAt" timestamp NOT NULL,
+                "IsSent" boolean NOT NULL DEFAULT false,
+                "CreatedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_Reminders" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "NotificationLogs" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "Type" text NOT NULL DEFAULT 'PriceDrop',
+                "SentAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_NotificationLogs" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "CalendarEvents" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Title" text NOT NULL,
+                "Description" text NOT NULL DEFAULT '',
+                "EventDate" timestamp with time zone NOT NULL,
+                "IsCompleted" boolean NOT NULL DEFAULT false,
+                "GoogleEventId" text NULL,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_CalendarEvents" PRIMARY KEY ("Id")
+            );
+
+            UPDATE "UserPreferences" SET "PairingCode" = gen_random_uuid()::text WHERE "PairingCode" = '';
+            
+            ALTER TABLE "CalendarEvents" ADD COLUMN IF NOT EXISTS "GoogleEventId" text NULL;
+2026-06-10 19:49:52.447 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-10 19:49:52.454 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-10 19:49:52.560 +03:00 [INF] User profile is available. Using 'C:\Users\hucks\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-06-10 19:49:52.610 +03:00 [INF] Now listening on: http://localhost:5209
+2026-06-10 19:49:52.613 +03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: emailagent_v2, Schema: hangfire'
+2026-06-10 19:49:52.613 +03:00 [INF] Using the following options for PostgreSQL job storage:
+2026-06-10 19:49:52.613 +03:00 [INF]     Queue poll interval: 00:00:15.
+2026-06-10 19:49:52.613 +03:00 [INF]     Invisibility timeout: 00:30:00.
+2026-06-10 19:49:52.613 +03:00 [INF]     Use sliding invisibility timeout: False.
+2026-06-10 19:49:52.613 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-10 19:49:52.620 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-10 19:49:52.620 +03:00 [INF] Hosting environment: Development
+2026-06-10 19:49:52.620 +03:00 [INF] Content root path: C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API
+2026-06-10 19:49:52.627 +03:00 [INF] Server yusuf:13808:e6123aa0 successfully announced in 6.216 ms
+2026-06-10 19:49:52.629 +03:00 [INF] Server yusuf:13808:e6123aa0 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-10 19:49:52.634 +03:00 [INF] Server yusuf:13808:e6123aa0 all the dispatchers started
+2026-06-10 19:49:52.852 +03:00 [INF] Start listening for @AegisAssistanttBot
+2026-06-10 19:50:08.009 +03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:54:52.664 +03:00 [INF] 1 servers were removed due to timeout
+2026-06-10 19:55:08.000 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 19:57:31.749 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:57:31.784 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:59:00.703 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:59:00.739 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:59:22.053 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:59:22.088 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 19:59:22.280 +03:00 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2026-06-10 19:59:22.393 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-06-10 19:59:22.423 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2026-06-10 19:59:22.428 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-06-10 19:59:22.429 +03:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2026-06-10 19:59:22.429 +03:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2026-06-10 19:59:22.433 +03:00 [INF] Applying migration '20260604162221_InitialCreate'.
+2026-06-10 19:59:22.447 +03:00 [ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "UserPreferences" ADD "AssistantPersona" text NOT NULL DEFAULT '';
+2026-06-10 20:00:17.276 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 20:00:17.313 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 20:00:17.455 +03:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-06-10 20:00:17.479 +03:00 [INF] Executed DbCommand (19ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2026-06-10 20:00:17.510 +03:00 [INF] Executed DbCommand (30ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+            CREATE TABLE IF NOT EXISTS "PriceHistories" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL,
+                "CheckedAt" timestamp with time zone NOT NULL,
+                CONSTRAINT "PK_PriceHistories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppSid" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppFrom" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppTo" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramBotToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramChatId" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "City" text NOT NULL DEFAULT 'Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "Timezone" text NOT NULL DEFAULT 'Europe/Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "PairingCode" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "ShoppingTrackerIntervalHours" integer NOT NULL DEFAULT 12;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "AssistantPersona" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableEmailFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableShoppingFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableFinanceFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableWebSearchFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableDocumentAnalysisFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableRemindersFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableCalendarFeature" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "TrackedCategories" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "CategoryUrl" text NOT NULL,
+                "CategoryName" text NOT NULL,
+                "MinDiscountPercentage" numeric NOT NULL,
+                "CreatedAt" timestamp with time zone NOT NULL,
+                "LastCheckedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_TrackedCategories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "RequiredFeatures" text NULL;
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "ComparisonGroupId" uuid NULL;
+            ALTER TABLE "TrackedProducts" ADD COLUMN IF NOT EXISTS "IsInStock" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "TrackedProducts" ADD COLUMN IF NOT EXISTS "LastNotifiedPrice" numeric NULL;
+
+            CREATE TABLE IF NOT EXISTS "NotifiedCategoryDeals" (
+                "Id" uuid NOT NULL,
+                "TrackedCategoryId" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "ProductUrl" text NOT NULL,
+                "NotifiedPrice" numeric NOT NULL,
+                "NotifiedAt" timestamp with time zone NOT NULL,
+                CONSTRAINT "PK_NotifiedCategoryDeals" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "PriceHistory" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL DEFAULT true,
+                "CheckedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_PriceHistory" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "Reminders" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "RemindAt" timestamp NOT NULL,
+                "IsSent" boolean NOT NULL DEFAULT false,
+                "CreatedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_Reminders" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "NotificationLogs" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "Type" text NOT NULL DEFAULT 'PriceDrop',
+                "SentAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_NotificationLogs" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "CalendarEvents" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Title" text NOT NULL,
+                "Description" text NOT NULL DEFAULT '',
+                "EventDate" timestamp with time zone NOT NULL,
+                "IsCompleted" boolean NOT NULL DEFAULT false,
+                "GoogleEventId" text NULL,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_CalendarEvents" PRIMARY KEY ("Id")
+            );
+
+            UPDATE "UserPreferences" SET "PairingCode" = gen_random_uuid()::text WHERE "PairingCode" = '';
+            
+            ALTER TABLE "CalendarEvents" ADD COLUMN IF NOT EXISTS "GoogleEventId" text NULL;
+2026-06-10 20:00:17.567 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-10 20:00:17.573 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-10 20:00:17.681 +03:00 [INF] User profile is available. Using 'C:\Users\hucks\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-06-10 20:00:17.734 +03:00 [INF] Now listening on: http://localhost:5209
+2026-06-10 20:00:17.736 +03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: emailagent_v2, Schema: hangfire'
+2026-06-10 20:00:17.737 +03:00 [INF] Using the following options for PostgreSQL job storage:
+2026-06-10 20:00:17.737 +03:00 [INF]     Queue poll interval: 00:00:15.
+2026-06-10 20:00:17.737 +03:00 [INF]     Invisibility timeout: 00:30:00.
+2026-06-10 20:00:17.737 +03:00 [INF]     Use sliding invisibility timeout: False.
+2026-06-10 20:00:17.737 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-10 20:00:17.743 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-10 20:00:17.743 +03:00 [INF] Hosting environment: Development
+2026-06-10 20:00:17.743 +03:00 [INF] Content root path: C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API
+2026-06-10 20:00:17.750 +03:00 [INF] Server yusuf:23300:f62b41b0 successfully announced in 5.7487 ms
+2026-06-10 20:00:17.752 +03:00 [INF] Server yusuf:23300:f62b41b0 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-10 20:00:17.756 +03:00 [INF] Server yusuf:23300:f62b41b0 all the dispatchers started
+2026-06-10 20:00:17.912 +03:00 [INF] Hangfire Job: starting email analysis background pipeline...
+2026-06-10 20:00:17.913 +03:00 [INF] Starting Shopping Tracker Job...
+2026-06-10 20:00:18.010 +03:00 [INF] Start listening for @AegisAssistanttBot
+2026-06-10 20:00:18.057 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."CreatedAt", t."Currency", t."IsActive", t."IsInStock", t."LastCheckedAt", t."LastKnownPrice", t."LastNotifiedPrice", t."TargetPrice", t."Title", t."Url", t."UserId"
+FROM "TrackedProducts" AS t
+WHERE t."IsActive"
+2026-06-10 20:00:18.057 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AiProvider", u."ApiKey", u."AssistantPersona", u."City", u."EnableCalendarFeature", u."EnableDocumentAnalysisFeature", u."EnableEmailFeature", u."EnableFinanceFeature", u."EnableRemindersFeature", u."EnableShoppingFeature", u."EnableWebSearchFeature", u."FocusCompanies", u."GoogleAccessToken", u."GoogleRefreshToken", u."GoogleTokenExpiry", u."Keywords", u."Name", u."PairingCode", u."ShoppingTrackerIntervalHours", u."TelegramBotToken", u."TelegramChatId", u."Timezone", u."UserEmail", u."WhatsAppFrom", u."WhatsAppSid", u."WhatsAppTo", u."WhatsAppToken"
+FROM "UserPreferences" AS u
+2026-06-10 20:00:18.057 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:00:18.108 +03:00 [INF] Processing emails for User "e500f7ec-ef2d-4aae-a807-f169edfbef17"...
+2026-06-10 20:00:18.111 +03:00 [ERR] Failed to initialize Gmail API service with User Token.
+System.InvalidOperationException: User has not linked their Google account. Missing GoogleAccessToken.
+   at EmailAgent.Infrastructure.Gmail.GmailService.GetGmailService(UserPreferences user) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Gmail\GmailService.cs:line 50
+2026-06-10 20:00:18.122 +03:00 [ERR] Failed to fetch emails from Gmail API.
+System.InvalidOperationException: User has not linked their Google account. Missing GoogleAccessToken.
+   at EmailAgent.Infrastructure.Gmail.GmailService.GetGmailService(UserPreferences user) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Gmail\GmailService.cs:line 50
+   at EmailAgent.Infrastructure.Gmail.GmailService.FetchUnreadEmailsLast24HoursAsync(UserPreferences user, CancellationToken cancellationToken) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Gmail\GmailService.cs:line 99
+2026-06-10 20:00:18.123 +03:00 [INF] No new emails retrieved from Gmail for User "e500f7ec-ef2d-4aae-a807-f169edfbef17".
+2026-06-10 20:00:18.123 +03:00 [INF] Daily Email analysis job finished successfully.
+2026-06-10 20:00:18.137 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@p='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AiProvider", u."ApiKey", u."AssistantPersona", u."City", u."EnableCalendarFeature", u."EnableDocumentAnalysisFeature", u."EnableEmailFeature", u."EnableFinanceFeature", u."EnableRemindersFeature", u."EnableShoppingFeature", u."EnableWebSearchFeature", u."FocusCompanies", u."GoogleAccessToken", u."GoogleRefreshToken", u."GoogleTokenExpiry", u."Keywords", u."Name", u."PairingCode", u."ShoppingTrackerIntervalHours", u."TelegramBotToken", u."TelegramChatId", u."Timezone", u."UserEmail", u."WhatsAppFrom", u."WhatsAppSid", u."WhatsAppTo", u."WhatsAppToken"
+FROM "UserPreferences" AS u
+WHERE u."Id" = @p
+LIMIT 1
+2026-06-10 20:00:18.143 +03:00 [INF] Initializing Playwright Engine...
+2026-06-10 20:00:18.960 +03:00 [INF] Playwright Chromium browser launched successfully.
+2026-06-10 20:00:18.961 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:00:19.154 +03:00 [INF] Navigating to URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:00:23.688 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:00:34.630 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:00:34.631 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1. Skipping update to prevent false alerts.
+2026-06-10 20:00:34.632 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:00:34.782 +03:00 [INF] Navigating to URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:00:39.158 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:00:52.399 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:00:52.399 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1. Skipping update to prevent false alerts.
+2026-06-10 20:00:52.399 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:00:52.544 +03:00 [INF] Navigating to URL: https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 20:00:56.095 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:01:15.458 +03:00 [WRN] The property 'UserPreferences.FocusCompanies' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 20:01:15.501 +03:00 [WRN] The property 'UserPreferences.Keywords' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-06-10 20:01:15.772 +03:00 [INF] Executed DbCommand (15ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-06-10 20:01:15.800 +03:00 [INF] Executed DbCommand (22ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )
+2026-06-10 20:01:15.808 +03:00 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+            CREATE TABLE IF NOT EXISTS "PriceHistories" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL,
+                "CheckedAt" timestamp with time zone NOT NULL,
+                CONSTRAINT "PK_PriceHistories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppSid" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppFrom" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "WhatsAppTo" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramBotToken" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "TelegramChatId" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "City" text NOT NULL DEFAULT 'Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "Timezone" text NOT NULL DEFAULT 'Europe/Istanbul';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "PairingCode" text NOT NULL DEFAULT '';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "ShoppingTrackerIntervalHours" integer NOT NULL DEFAULT 12;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "AssistantPersona" text NOT NULL DEFAULT 'Sen enerjik, samimi ve motive edici bir yapay zeka asistanısın. Kullanıcıya her zaman yardımcı ol.';
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableEmailFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableShoppingFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableFinanceFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableWebSearchFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableDocumentAnalysisFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableRemindersFeature" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "UserPreferences" ADD COLUMN IF NOT EXISTS "EnableCalendarFeature" boolean NOT NULL DEFAULT true;
+
+            CREATE TABLE IF NOT EXISTS "TrackedCategories" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "CategoryUrl" text NOT NULL,
+                "CategoryName" text NOT NULL,
+                "MinDiscountPercentage" numeric NOT NULL,
+                "CreatedAt" timestamp with time zone NOT NULL,
+                "LastCheckedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_TrackedCategories" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "RequiredFeatures" text NULL;
+            ALTER TABLE "TrackedCategories" ADD COLUMN IF NOT EXISTS "ComparisonGroupId" uuid NULL;
+            ALTER TABLE "TrackedProducts" ADD COLUMN IF NOT EXISTS "IsInStock" boolean NOT NULL DEFAULT true;
+            ALTER TABLE "TrackedProducts" ADD COLUMN IF NOT EXISTS "LastNotifiedPrice" numeric NULL;
+
+            CREATE TABLE IF NOT EXISTS "NotifiedCategoryDeals" (
+                "Id" uuid NOT NULL,
+                "TrackedCategoryId" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "ProductUrl" text NOT NULL,
+                "NotifiedPrice" numeric NOT NULL,
+                "NotifiedAt" timestamp with time zone NOT NULL,
+                CONSTRAINT "PK_NotifiedCategoryDeals" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "PriceHistory" (
+                "Id" uuid NOT NULL,
+                "ProductId" uuid NOT NULL,
+                "Price" numeric NOT NULL,
+                "IsInStock" boolean NOT NULL DEFAULT true,
+                "CheckedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_PriceHistory" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "Reminders" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "RemindAt" timestamp NOT NULL,
+                "IsSent" boolean NOT NULL DEFAULT false,
+                "CreatedAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_Reminders" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "NotificationLogs" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Message" text NOT NULL,
+                "Type" text NOT NULL DEFAULT 'PriceDrop',
+                "SentAt" timestamp NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_NotificationLogs" PRIMARY KEY ("Id")
+            );
+
+            CREATE TABLE IF NOT EXISTS "CalendarEvents" (
+                "Id" uuid NOT NULL,
+                "UserId" uuid NOT NULL,
+                "Title" text NOT NULL,
+                "Description" text NOT NULL DEFAULT '',
+                "EventDate" timestamp with time zone NOT NULL,
+                "IsCompleted" boolean NOT NULL DEFAULT false,
+                "GoogleEventId" text NULL,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+                CONSTRAINT "PK_CalendarEvents" PRIMARY KEY ("Id")
+            );
+
+            UPDATE "UserPreferences" SET "PairingCode" = gen_random_uuid()::text WHERE "PairingCode" = '';
+            
+            ALTER TABLE "CalendarEvents" ADD COLUMN IF NOT EXISTS "GoogleEventId" text NULL;
+2026-06-10 20:01:15.872 +03:00 [INF] Start installing Hangfire SQL objects...
+2026-06-10 20:01:15.881 +03:00 [INF] Hangfire SQL objects installed.
+2026-06-10 20:01:15.983 +03:00 [INF] User profile is available. Using 'C:\Users\hucks\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-06-10 20:01:16.029 +03:00 [INF] Now listening on: http://localhost:5209
+2026-06-10 20:01:16.031 +03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: emailagent_v2, Schema: hangfire'
+2026-06-10 20:01:16.032 +03:00 [INF] Using the following options for PostgreSQL job storage:
+2026-06-10 20:01:16.032 +03:00 [INF]     Queue poll interval: 00:00:15.
+2026-06-10 20:01:16.032 +03:00 [INF]     Invisibility timeout: 00:30:00.
+2026-06-10 20:01:16.032 +03:00 [INF]     Use sliding invisibility timeout: False.
+2026-06-10 20:01:16.032 +03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-06-10 20:01:16.038 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-10 20:01:16.038 +03:00 [INF] Hosting environment: Development
+2026-06-10 20:01:16.038 +03:00 [INF] Content root path: C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.API
+2026-06-10 20:01:16.045 +03:00 [INF] Server yusuf:25800:998867c9 successfully announced in 5.8902 ms
+2026-06-10 20:01:16.047 +03:00 [INF] Server yusuf:25800:998867c9 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-06-10 20:01:16.050 +03:00 [INF] Server yusuf:25800:998867c9 all the dispatchers started
+2026-06-10 20:01:16.270 +03:00 [INF] Start listening for @AegisAssistanttBot
+2026-06-10 20:05:01.530 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:06:16.083 +03:00 [INF] 2 servers were removed due to timeout
+2026-06-10 20:10:01.571 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:15:01.690 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:20:01.862 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:25:02.054 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:30:02.244 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:30:32.118 +03:00 [INF] Cleaning up old notified category deals...
+2026-06-10 20:30:32.135 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[@thirtyDaysAgo='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM "NotifiedCategoryDeals" AS n
+WHERE n."NotifiedAt" < @thirtyDaysAgo
+2026-06-10 20:30:32.137 +03:00 [INF] Starting Shopping Tracker Job...
+2026-06-10 20:30:32.144 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."CreatedAt", t."Currency", t."IsActive", t."IsInStock", t."LastCheckedAt", t."LastKnownPrice", t."LastNotifiedPrice", t."TargetPrice", t."Title", t."Url", t."UserId"
+FROM "TrackedProducts" AS t
+WHERE t."IsActive"
+2026-06-10 20:30:32.207 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@p='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AiProvider", u."ApiKey", u."AssistantPersona", u."City", u."EnableCalendarFeature", u."EnableDocumentAnalysisFeature", u."EnableEmailFeature", u."EnableFinanceFeature", u."EnableRemindersFeature", u."EnableShoppingFeature", u."EnableWebSearchFeature", u."FocusCompanies", u."GoogleAccessToken", u."GoogleRefreshToken", u."GoogleTokenExpiry", u."Keywords", u."Name", u."PairingCode", u."ShoppingTrackerIntervalHours", u."TelegramBotToken", u."TelegramChatId", u."Timezone", u."UserEmail", u."WhatsAppFrom", u."WhatsAppSid", u."WhatsAppTo", u."WhatsAppToken"
+FROM "UserPreferences" AS u
+WHERE u."Id" = @p
+LIMIT 1
+2026-06-10 20:30:32.233 +03:00 [INF] Initializing Playwright Engine...
+2026-06-10 20:30:32.635 +03:00 [INF] Playwright Chromium browser launched successfully.
+2026-06-10 20:30:32.635 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:30:32.797 +03:00 [INF] Navigating to URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:30:37.916 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:30:53.008 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:30:53.008 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1. Skipping update to prevent false alerts.
+2026-06-10 20:30:53.009 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:30:53.139 +03:00 [INF] Navigating to URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:30:58.163 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:31:09.885 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 20:31:09.885 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1. Skipping update to prevent false alerts.
+2026-06-10 20:31:09.886 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:31:10.014 +03:00 [INF] Navigating to URL: https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 20:31:13.629 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:31:27.054 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 20:31:27.054 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1. Skipping update to prevent false alerts.
+2026-06-10 20:31:27.054 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:31:27.182 +03:00 [INF] Navigating to URL: https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 20:31:30.751 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:31:43.830 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 20:31:43.830 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1. Skipping update to prevent false alerts.
+2026-06-10 20:31:43.830 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 20:31:43.982 +03:00 [INF] Navigating to URL: https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 20:31:47.412 +03:00 [INF] Simulating human interaction...
+2026-06-10 20:31:58.245 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 20:31:58.245 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1. Skipping update to prevent false alerts.
+2026-06-10 20:31:58.270 +03:00 [INF] Starting Category Tracker Job...
+2026-06-10 20:31:58.276 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."CategoryName", t."CategoryUrl", t."ComparisonGroupId", t."CreatedAt", t."LastCheckedAt", t."MinDiscountPercentage", t."RequiredFeatures", t."UserId"
+FROM "TrackedCategories" AS t
+2026-06-10 20:31:58.288 +03:00 [INF] Start processing HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 20:31:58.290 +03:00 [INF] Sending HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 20:31:58.648 +03:00 [INF] Received HTTP response headers after 357.0921ms - 200
+2026-06-10 20:31:58.649 +03:00 [INF] End processing HTTP request after 361.7421ms - 200
+2026-06-10 20:31:58.658 +03:00 [INF] Starting Category Comparison Job...
+2026-06-10 20:31:58.663 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."CategoryName", t."CategoryUrl", t."ComparisonGroupId", t."CreatedAt", t."LastCheckedAt", t."MinDiscountPercentage", t."RequiredFeatures", t."UserId"
+FROM "TrackedCategories" AS t
+WHERE t."ComparisonGroupId" IS NOT NULL
+2026-06-10 20:31:58.663 +03:00 [INF] Start processing HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 20:31:58.663 +03:00 [INF] Sending HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 20:31:58.835 +03:00 [INF] Received HTTP response headers after 171.2966ms - 200
+2026-06-10 20:31:58.835 +03:00 [INF] End processing HTTP request after 171.5938ms - 200
+2026-06-10 20:35:02.444 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:40:02.605 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:45:02.800 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:50:02.994 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 20:55:03.154 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 21:00:03.365 +03:00 [INF] Cleaning up old notified category deals...
+2026-06-10 21:00:03.365 +03:00 [INF] Hangfire Job: starting email analysis background pipeline...
+2026-06-10 21:00:03.366 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@thirtyDaysAgo='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM "NotifiedCategoryDeals" AS n
+WHERE n."NotifiedAt" < @thirtyDaysAgo
+2026-06-10 21:00:03.366 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 21:00:03.366 +03:00 [INF] Starting Shopping Tracker Job...
+2026-06-10 21:00:03.367 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."CreatedAt", t."Currency", t."IsActive", t."IsInStock", t."LastCheckedAt", t."LastKnownPrice", t."LastNotifiedPrice", t."TargetPrice", t."Title", t."Url", t."UserId"
+FROM "TrackedProducts" AS t
+WHERE t."IsActive"
+2026-06-10 21:00:03.370 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AiProvider", u."ApiKey", u."AssistantPersona", u."City", u."EnableCalendarFeature", u."EnableDocumentAnalysisFeature", u."EnableEmailFeature", u."EnableFinanceFeature", u."EnableRemindersFeature", u."EnableShoppingFeature", u."EnableWebSearchFeature", u."FocusCompanies", u."GoogleAccessToken", u."GoogleRefreshToken", u."GoogleTokenExpiry", u."Keywords", u."Name", u."PairingCode", u."ShoppingTrackerIntervalHours", u."TelegramBotToken", u."TelegramChatId", u."Timezone", u."UserEmail", u."WhatsAppFrom", u."WhatsAppSid", u."WhatsAppTo", u."WhatsAppToken"
+FROM "UserPreferences" AS u
+WHERE u."Id" = @p
+LIMIT 1
+2026-06-10 21:00:03.370 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 21:00:03.373 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AiProvider", u."ApiKey", u."AssistantPersona", u."City", u."EnableCalendarFeature", u."EnableDocumentAnalysisFeature", u."EnableEmailFeature", u."EnableFinanceFeature", u."EnableRemindersFeature", u."EnableShoppingFeature", u."EnableWebSearchFeature", u."FocusCompanies", u."GoogleAccessToken", u."GoogleRefreshToken", u."GoogleTokenExpiry", u."Keywords", u."Name", u."PairingCode", u."ShoppingTrackerIntervalHours", u."TelegramBotToken", u."TelegramChatId", u."Timezone", u."UserEmail", u."WhatsAppFrom", u."WhatsAppSid", u."WhatsAppTo", u."WhatsAppToken"
+FROM "UserPreferences" AS u
+2026-06-10 21:00:03.376 +03:00 [INF] Processing emails for User "e500f7ec-ef2d-4aae-a807-f169edfbef17"...
+2026-06-10 21:00:03.379 +03:00 [ERR] Failed to initialize Gmail API service with User Token.
+System.InvalidOperationException: User has not linked their Google account. Missing GoogleAccessToken.
+   at EmailAgent.Infrastructure.Gmail.GmailService.GetGmailService(UserPreferences user) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Gmail\GmailService.cs:line 50
+2026-06-10 21:00:03.379 +03:00 [ERR] Failed to fetch emails from Gmail API.
+System.InvalidOperationException: User has not linked their Google account. Missing GoogleAccessToken.
+   at EmailAgent.Infrastructure.Gmail.GmailService.GetGmailService(UserPreferences user) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Gmail\GmailService.cs:line 50
+   at EmailAgent.Infrastructure.Gmail.GmailService.FetchUnreadEmailsLast24HoursAsync(UserPreferences user, CancellationToken cancellationToken) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Gmail\GmailService.cs:line 99
+2026-06-10 21:00:03.379 +03:00 [INF] No new emails retrieved from Gmail for User "e500f7ec-ef2d-4aae-a807-f169edfbef17".
+2026-06-10 21:00:03.379 +03:00 [INF] Daily Email analysis job finished successfully.
+2026-06-10 21:00:03.517 +03:00 [INF] Navigating to URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 21:00:10.004 +03:00 [INF] Simulating human interaction...
+2026-06-10 21:00:21.933 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 21:00:21.933 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1. Skipping update to prevent false alerts.
+2026-06-10 21:00:21.934 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 21:00:22.085 +03:00 [INF] Navigating to URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 21:01:07.097 +03:00 [WRN] Attempt 1 failed for URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+System.TimeoutException: Timeout 45000ms exceeded.
+Call log:
+  - navigating to "https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1", waiting until "networkidle"
+   at Microsoft.Playwright.Transport.Connection.InnerSendMessageToServerAsync[T](ChannelOwner object, String method, Dictionary`2 dictionary, Boolean keepNulls) in /_/src/Playwright/Transport/Connection.cs:line 201
+   at Microsoft.Playwright.Transport.Connection.WrapApiCallAsync[T](Func`1 action, Boolean isInternal, String title) in /_/src/Playwright/Transport/Connection.cs:line 505
+   at Microsoft.Playwright.Core.Frame.GotoAsync(String url, FrameGotoOptions options) in /_/src/Playwright/Core/Frame.cs:line 815
+   at EmailAgent.Infrastructure.Services.PlaywrightScraperService.GetHtmlInternalAsync(String url) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Services\PlaywrightScraperService.cs:line 216
+   at EmailAgent.Infrastructure.Services.PlaywrightScraperService.GetHtmlInternalAsync(String url) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Services\PlaywrightScraperService.cs:line 275
+   at EmailAgent.Infrastructure.Services.PlaywrightScraperService.GetHtmlAsync(String url) in C:\Users\hucks\.gemini\antigravity-ide\scratch\EmailAgent\EmailAgent.Infrastructure\Services\PlaywrightScraperService.cs:line 117
+2026-06-10 21:01:07.098 +03:00 [INF] Deleting poisoned session state.
+2026-06-10 21:01:10.177 +03:00 [INF] Navigating to URL: https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 21:01:15.748 +03:00 [INF] Simulating human interaction...
+2026-06-10 21:01:26.794 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1
+2026-06-10 21:01:26.794 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/dp/B0F4548TCQ/ref=lp_1197292_1_1?pf_rd_p=b7b797ed-078a-4a5b-91a4-303c74775994&pf_rd_r=T6MAS9Z9M6DPHQMH47TB&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&th=1. Skipping update to prevent false alerts.
+2026-06-10 21:01:26.795 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 21:01:26.923 +03:00 [INF] Navigating to URL: https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 21:01:30.457 +03:00 [INF] Simulating human interaction...
+2026-06-10 21:01:42.306 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 21:01:42.306 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1. Skipping update to prevent false alerts.
+2026-06-10 21:01:42.307 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 21:01:42.461 +03:00 [INF] Navigating to URL: https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 21:01:46.060 +03:00 [INF] Simulating human interaction...
+2026-06-10 21:01:56.828 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 21:01:56.828 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1. Skipping update to prevent false alerts.
+2026-06-10 21:01:56.828 +03:00 [INF] Found existing session state. Reusing session.
+2026-06-10 21:01:56.983 +03:00 [INF] Navigating to URL: https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 21:02:01.538 +03:00 [INF] Simulating human interaction...
+2026-06-10 21:02:14.847 +03:00 [WRN] Could not find Product Schema on https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1
+2026-06-10 21:02:14.847 +03:00 [WRN] Scraper returned 0 or null price for active product https://www.amazon.de/-/tr/dp/B0B3H8D49N/ref=pb_allspark_purchase_sims_desktop_d_sccl_1_4/258-5045161-0561137?pd_rd_w=H9UkM&content-id=amzn1.sym.7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_p=7e2114a0-6daf-42e3-a7fb-dbb298d922be&pf_rd_r=SFP5SQ7X28KMCRW9CYPC&pd_rd_wg=Q8Fzb&pd_rd_r=e3f1a3a1-5580-4d35-b6bb-8592a42be264&pd_rd_i=B0B3H8D49N&psc=1. Skipping update to prevent false alerts.
+2026-06-10 21:02:14.847 +03:00 [INF] Starting Category Tracker Job...
+2026-06-10 21:02:14.849 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."CategoryName", t."CategoryUrl", t."ComparisonGroupId", t."CreatedAt", t."LastCheckedAt", t."MinDiscountPercentage", t."RequiredFeatures", t."UserId"
+FROM "TrackedCategories" AS t
+2026-06-10 21:02:14.850 +03:00 [INF] Start processing HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 21:02:14.850 +03:00 [INF] Sending HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 21:02:15.321 +03:00 [INF] Received HTTP response headers after 470.9284ms - 200
+2026-06-10 21:02:15.321 +03:00 [INF] End processing HTTP request after 471.2686ms - 200
+2026-06-10 21:02:15.321 +03:00 [INF] Starting Category Comparison Job...
+2026-06-10 21:02:15.322 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."CategoryName", t."CategoryUrl", t."ComparisonGroupId", t."CreatedAt", t."LastCheckedAt", t."MinDiscountPercentage", t."RequiredFeatures", t."UserId"
+FROM "TrackedCategories" AS t
+WHERE t."ComparisonGroupId" IS NOT NULL
+2026-06-10 21:02:15.323 +03:00 [INF] Start processing HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 21:02:15.323 +03:00 [INF] Sending HTTP request GET https://api.frankfurter.app/latest?*
+2026-06-10 21:02:15.395 +03:00 [INF] Received HTTP response headers after 72.236ms - 200
+2026-06-10 21:02:15.395 +03:00 [INF] End processing HTTP request after 72.4892ms - 200
+2026-06-10 21:05:03.572 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()
+2026-06-10 21:10:03.757 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT r."Id", r."CreatedAt", r."IsSent", r."Message", r."RemindAt", r."UserId"
+FROM "Reminders" AS r
+WHERE NOT (r."IsSent") AND r."RemindAt" <= now()

@@ -11,12 +11,14 @@ public class ShoppingPlugin
 {
     private readonly EmailAgentDbContext _dbContext;
     private readonly EmailAgent.Infrastructure.Services.ProductScraperService _scraperService;
+    private readonly EmailAgent.Infrastructure.Services.CategoryScraperService _categoryScraperService;
     private readonly Guid _userId;
 
-    public ShoppingPlugin(EmailAgentDbContext dbContext, EmailAgent.Infrastructure.Services.ProductScraperService scraperService, Guid userId)
+    public ShoppingPlugin(EmailAgentDbContext dbContext, EmailAgent.Infrastructure.Services.ProductScraperService scraperService, EmailAgent.Infrastructure.Services.CategoryScraperService categoryScraperService, Guid userId)
     {
         _dbContext = dbContext;
         _scraperService = scraperService;
+        _categoryScraperService = categoryScraperService;
         _userId = userId;
     }
 
@@ -55,6 +57,44 @@ public class ShoppingPlugin
         catch (Exception ex)
         {
             return $"Error adding product tracker: {ex.Message}";
+        }
+    }
+
+    [KernelFunction, Description("Fetches and parses a live category search page (like Sahibinden, Arabam) to find the current active listings and sort them by price. Use this when the user asks to find the cheapest item from a link.")]
+    public async Task<string> FindCheapestInListingsAsync(
+        [Description("The URL of the search category to scrape")] string url)
+    {
+        try
+        {
+            var userPrefs = await _dbContext.UserPreferences.FindAsync(_userId);
+            if (userPrefs == null) return "Error: User preferences not found.";
+            
+            var deals = await _categoryScraperService.FindDealsInCategoryAsync(userPrefs, url, minDiscount: 0);
+            
+            if (deals.Count == 0)
+            {
+                return "Could not find any active listings on this page. Either it's empty, or the bot protection blocked us.";
+            }
+
+            var sortedDeals = System.Linq.Enumerable.ToList(System.Linq.Enumerable.OrderBy(deals, d => d.CurrentPrice));
+            
+            var result = new System.Text.StringBuilder();
+            result.AppendLine($"Found {deals.Count} listings. Top cheapest:");
+            
+            int limit = Math.Min(3, sortedDeals.Count);
+            for(int i = 0; i < limit; i++)
+            {
+                var deal = sortedDeals[i];
+                result.AppendLine($"{i+1}. {deal.Title}");
+                result.AppendLine($"   Price: {deal.CurrentPrice}");
+                result.AppendLine($"   Link: {deal.ProductUrl}");
+            }
+            
+            return result.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"Error fetching category: {ex.Message}";
         }
     }
 

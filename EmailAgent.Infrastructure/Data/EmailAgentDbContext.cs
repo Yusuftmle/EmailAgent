@@ -21,6 +21,7 @@ public class EmailAgentDbContext : DbContext
     public DbSet<Reminder> Reminders => Set<Reminder>();
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
+    public DbSet<NotifiedCategoryDeal> NotifiedCategoryDeals => Set<NotifiedCategoryDeal>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

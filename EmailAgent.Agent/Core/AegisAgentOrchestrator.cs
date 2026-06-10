@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using EmailAgent.Core.Entities;
@@ -14,17 +15,20 @@ public class AegisAgentOrchestrator
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _config;
+    private readonly ILogger<AegisAgentOrchestrator> _logger;
     private readonly Func<UserPreferences, System.Collections.Generic.IEnumerable<object>> _pluginFactory;
 
     public AegisAgentOrchestrator(
         IServiceProvider serviceProvider, 
         IHttpClientFactory httpClientFactory,
         IConfiguration config,
+        ILogger<AegisAgentOrchestrator> logger,
         Func<UserPreferences, System.Collections.Generic.IEnumerable<object>> pluginFactory)
     {
         _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
         _config = config;
+        _logger = logger;
         _pluginFactory = pluginFactory;
     }
 
@@ -79,11 +83,21 @@ public class AegisAgentOrchestrator
 
         try
         {
+            var lastUserMessage = System.Linq.Enumerable.LastOrDefault(history, h => h.Role == Microsoft.SemanticKernel.ChatCompletion.AuthorRole.User)?.Content;
+            _logger.LogInformation("AI Yönlendirme Başladı. Sağlayıcı: {Provider}, Model: {Model}", activeProvider, activeModel);
+            _logger.LogDebug("Kullanıcı Son Mesajı: {Message}", lastUserMessage);
+            _logger.LogInformation("AI, gerekli Tool'ları (Plug-in) analiz ediyor ve plan yapıyor...");
+            
             var responseContent = await chatCompletion.GetChatMessageContentAsync(history, executionSettings, kernel);
+            
+            _logger.LogInformation("AI Süreci Tamamlandı. Döndürülen İçerik Uzunluğu: {Length} karakter", responseContent.Content?.Length);
+            _logger.LogDebug("AI Ham Yanıtı: {Response}", responseContent.Content);
+            
             return responseContent.Content ?? "I couldn't process that request.";
         }
         catch (Microsoft.SemanticKernel.HttpOperationException ex)
         {
+            _logger.LogError(ex, "Semantic Kernel HTTP Hatası: {Message}", ex.Message);
             return FormatHttpError(activeProvider, ex.StatusCode?.ToString(), ex.Message);
         }
         catch (HttpRequestException ex)

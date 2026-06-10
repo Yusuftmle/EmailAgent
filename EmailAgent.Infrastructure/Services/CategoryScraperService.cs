@@ -12,22 +12,13 @@ namespace EmailAgent.Infrastructure.Services;
 
 public class CategoryScraperService
 {
-    private readonly HttpClient _httpClient;
+    private readonly PlaywrightScraperService _playwrightScraper;
     private readonly EmailAgent.Agent.UniversalScraperAgent _universalScraperAgent;
     private readonly ILogger<CategoryScraperService> _logger;
 
-    public CategoryScraperService(IHttpClientFactory httpClientFactory, EmailAgent.Agent.UniversalScraperAgent universalScraperAgent, ILogger<CategoryScraperService> logger)
+    public CategoryScraperService(PlaywrightScraperService playwrightScraper, EmailAgent.Agent.UniversalScraperAgent universalScraperAgent, ILogger<CategoryScraperService> logger)
     {
-        // Using a standard client but setting a desktop user-agent to bypass basic blocks
-        _httpClient = httpClientFactory.CreateClient("AIAgentClient");
-        if (!_httpClient.DefaultRequestHeaders.Contains("User-Agent"))
-        {
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-        }
-        if (!_httpClient.DefaultRequestHeaders.Contains("Accept-Language"))
-        {
-            _httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
-        }
+        _playwrightScraper = playwrightScraper;
         _universalScraperAgent = universalScraperAgent;
         _logger = logger;
     }
@@ -37,7 +28,7 @@ public class CategoryScraperService
         var deals = new List<CategoryDeal>();
         try
         {
-            var html = await _httpClient.GetStringAsync(categoryUrl);
+            var html = await _playwrightScraper.GetHtmlAsync(categoryUrl);
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 

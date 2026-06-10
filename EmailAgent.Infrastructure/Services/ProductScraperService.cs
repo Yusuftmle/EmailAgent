@@ -9,13 +9,12 @@ namespace EmailAgent.Infrastructure.Services;
 
 public class ProductScraperService
 {
-    private readonly HttpClient _httpClient;
+    private readonly PlaywrightScraperService _playwrightScraper;
     private readonly ILogger<ProductScraperService> _logger;
 
-    public ProductScraperService(HttpClient httpClient, ILogger<ProductScraperService> logger)
+    public ProductScraperService(PlaywrightScraperService playwrightScraper, ILogger<ProductScraperService> logger)
     {
-        _httpClient = httpClient;
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        _playwrightScraper = playwrightScraper;
         _logger = logger;
     }
 
@@ -23,7 +22,7 @@ public class ProductScraperService
     {
         try
         {
-            var html = await _httpClient.GetStringAsync(url);
+            var html = await _playwrightScraper.GetHtmlAsync(url);
             
             // Extract <script type="application/ld+json"> blocks
             var matches = Regex.Matches(html, @"<script\s+type=""application/ld\+json"">(.*?)</script>", RegexOptions.Singleline | RegexOptions.IgnoreCase);

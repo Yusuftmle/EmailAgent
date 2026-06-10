@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Hangfire;
+using Serilog;
 using Hangfire.PostgreSql;
 using EmailAgent.Core.Repositories;
 using EmailAgent.Infrastructure.Data;
@@ -25,6 +26,17 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
+// Add Serilog configuration
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/system-log.txt", rollingInterval: RollingInterval.Day, shared: true)
+    .WriteTo.Sink(new EmailAgent.API.Logging.SignalRSink())
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // 0. Data Protection for encrypting sensitive fields like ApiKey
 builder.Services.AddDataProtection();
@@ -48,6 +60,7 @@ builder.Services.AddScoped<IGmailService, GmailService>();
 builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
+builder.Services.AddSingleton<EmailAgent.Infrastructure.Services.PlaywrightScraperService>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ProductScraperService>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.CategoryScraperService>();
 builder.Services.AddScoped<EmailAgent.Agent.UniversalScraperAgent>();
@@ -81,14 +94,14 @@ builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEn
 
     if (userPrefs.EnableShoppingFeature)
     {
-        plugins.Add(new ShoppingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.ProductScraperService>(), userPrefs.Id));
+        plugins.Add(new ShoppingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.ProductScraperService>(), sp.GetRequiredService<EmailAgent.Infrastructure.Services.CategoryScraperService>(), userPrefs.Id));
         plugins.Add(new EmailAgent.API.Plugins.CategoryTrackingPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id));
     }
 
     if (userPrefs.EnableWebSearchFeature)
     {
         plugins.Add(new EmailAgent.API.Plugins.WebSearchPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")));
-        plugins.Add(new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")));
+        plugins.Add(new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<EmailAgent.Infrastructure.Services.PlaywrightScraperService>()));
     }
 
     if (userPrefs.EnableFinanceFeature)
@@ -166,8 +179,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 6. Controller, CORS & OpenAPI/Swagger Setup
+// 6. Controller, SignalR, CORS & OpenAPI/Swagger Setup
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<EmailAgent.API.Logging.LogStreamerService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -223,6 +238,17 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""TrackedCategories"" ADD COLUMN IF NOT EXISTS ""RequiredFeatures"" text NULL;
             ALTER TABLE ""TrackedCategories"" ADD COLUMN IF NOT EXISTS ""ComparisonGroupId"" uuid NULL;
             ALTER TABLE ""TrackedProducts"" ADD COLUMN IF NOT EXISTS ""IsInStock"" boolean NOT NULL DEFAULT true;
+            ALTER TABLE ""TrackedProducts"" ADD COLUMN IF NOT EXISTS ""LastNotifiedPrice"" numeric NULL;
+
+            CREATE TABLE IF NOT EXISTS ""NotifiedCategoryDeals"" (
+                ""Id"" uuid NOT NULL,
+                ""TrackedCategoryId"" uuid NOT NULL,
+                ""UserId"" uuid NOT NULL,
+                ""ProductUrl"" text NOT NULL,
+                ""NotifiedPrice"" numeric NOT NULL,
+                ""NotifiedAt"" timestamp with time zone NOT NULL,
+                CONSTRAINT ""PK_NotifiedCategoryDeals"" PRIMARY KEY (""Id"")
+            );
 
             CREATE TABLE IF NOT EXISTS ""PriceHistory"" (
                 ""Id"" uuid NOT NULL,
@@ -289,7 +315,24 @@ app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// IP Restriction Middleware for /logs and /loghub
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/logs") || context.Request.Path.StartsWithSegments("/loghub"))
+    {
+        var remoteIp = context.Connection.RemoteIpAddress;
+        if (remoteIp != null && !System.Net.IPAddress.IsLoopback(remoteIp))
+        {
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsync("Forbidden: Local access only.");
+            return;
+        }
+    }
+    await next();
+});
+
 app.MapControllers();
+app.MapHub<EmailAgent.API.Hubs.LogStreamHub>("/loghub");
 
 app.MapGet("/", async context =>
 {

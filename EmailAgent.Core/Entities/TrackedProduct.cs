@@ -20,6 +20,8 @@ public class TrackedProduct
     
     public decimal LastKnownPrice { get; set; }
     
+    public decimal? LastNotifiedPrice { get; set; }
+    
     public string Currency { get; set; } = "EUR";
     
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

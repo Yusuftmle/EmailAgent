@@ -44,9 +44,26 @@ public class ShoppingTrackerJob
 
     public async Task CheckPricesAsync()
     {
+        await CleanupOldDealsAsync();
         await CheckProductsAsync();
         await CheckCategoriesAsync();
         await CheckCategoryComparisonsAsync();
+    }
+
+    private async Task CleanupOldDealsAsync()
+    {
+        _logger.LogInformation("Cleaning up old notified category deals...");
+        var thirtyDaysAgo = DateTimeOffset.UtcNow.AddDays(-30);
+        
+        // ExecuteDeleteAsync is an efficient way to delete without loading into memory (EF Core 7+)
+        var deletedCount = await _dbContext.NotifiedCategoryDeals
+            .Where(d => d.NotifiedAt < thirtyDaysAgo)
+            .ExecuteDeleteAsync();
+            
+        if (deletedCount > 0)
+        {
+            _logger.LogInformation("Cleaned up {Count} old category deals from memory to prevent database bloat.", deletedCount);
+        }
     }
 
     private async Task CheckProductsAsync()
@@ -71,7 +88,6 @@ public class ShoppingTrackerJob
             try
             {
                 var result = await _scraperService.ScrapeProductAsync(product.Url);
-                
                 if (result.Price.HasValue && result.Price.Value > 0)
                 {
                     if (string.IsNullOrEmpty(product.Title) && !string.IsNullOrEmpty(result.Title))
@@ -102,10 +118,20 @@ public class ShoppingTrackerJob
                         await NotifyStockReturnedAsync(product);
                     }
 
+                    // Price drop alert
                     if (product.LastKnownPrice <= product.TargetPrice && nowInStock)
                     {
-                        await NotifyUserAsync(product);
+                        // SPAM PREVENTION: Only notify if we haven't notified before, OR if the price dropped even further since last notification
+                        if (product.LastNotifiedPrice == null || product.LastKnownPrice < product.LastNotifiedPrice.Value)
+                        {
+                            await NotifyUserAsync(product);
+                            product.LastNotifiedPrice = product.LastKnownPrice;
+                        }
                     }
+                }
+                else
+                {
+                    _logger.LogWarning("Scraper returned 0 or null price for active product {Url}. Skipping update to prevent false alerts.", product.Url);
                 }
             }
             catch (Exception ex)
@@ -166,7 +192,34 @@ public class ShoppingTrackerJob
                         }
                     }
 
-                    await NotifyCategoryDealAsync(userPrefs, category, deal, eurToTry);
+                    // CATEGORY DEAL SPAM PREVENTION
+                    var existingNotifiedDeal = await _dbContext.NotifiedCategoryDeals
+                        .FirstOrDefaultAsync(d => d.TrackedCategoryId == category.Id && d.ProductUrl == deal.ProductUrl);
+
+                    if (existingNotifiedDeal == null)
+                    {
+                        // New deal, never notified
+                        await NotifyCategoryDealAsync(userPrefs, category, deal, eurToTry);
+                        _dbContext.NotifiedCategoryDeals.Add(new NotifiedCategoryDeal
+                        {
+                            TrackedCategoryId = category.Id,
+                            UserId = category.UserId,
+                            ProductUrl = deal.ProductUrl,
+                            NotifiedPrice = deal.CurrentPrice
+                        });
+                    }
+                    else if (deal.CurrentPrice < existingNotifiedDeal.NotifiedPrice)
+                    {
+                        // Deal got even cheaper since last notification
+                        await NotifyCategoryDealAsync(userPrefs, category, deal, eurToTry);
+                        existingNotifiedDeal.NotifiedPrice = deal.CurrentPrice;
+                        existingNotifiedDeal.NotifiedAt = DateTimeOffset.UtcNow;
+                    }
+                    else
+                    {
+                        // Already notified and price is the same or higher. Skip to prevent spam.
+                        _logger.LogInformation("Skipped category deal notification for {Url} because it was already notified at {Price}.", deal.ProductUrl, existingNotifiedDeal.NotifiedPrice);
+                    }
                 }
                 
                 category.LastCheckedAt = DateTimeOffset.UtcNow.UtcDateTime;
