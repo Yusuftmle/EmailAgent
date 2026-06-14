@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Case Studies - Aegis V3.0</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;800&amp;family=Geist+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Glassmorphic utilities */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        
+        /* Subtle fade up animation classes */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+<!-- Tailwind Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#dae2fd",
+                    "inverse-surface": "#2d3133",
+                    "on-tertiary-fixed-variant": "#2f2ebe",
+                    "on-tertiary-container": "#7073ff",
+                    "on-surface-variant": "#45464d",
+                    "tertiary": "#000000",
+                    "surface-tint": "#565e74",
+                    "on-primary": "#ffffff",
+                    "surface-dim": "#d8dadc",
+                    "surface-bright": "#f7f9fb",
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "primary": "#000000",
+                    "on-error": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "inverse-primary": "#bec6e0",
+                    "outline": "#76777d",
+                    "surface-container-low": "#f2f4f6",
+                    "on-secondary-container": "#006172",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "on-primary-fixed": "#131b2e",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-background": "#191c1e",
+                    "surface-container-highest": "#e0e3e5",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "inverse-on-surface": "#eff1f3",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-container": "#7c839b",
+                    "secondary": "#00687a",
+                    "primary-container": "#131b2e",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed": "#001f26",
+                    "background": "#f7f9fb",
+                    "secondary-fixed": "#acedff",
+                    "secondary-container": "#57dffe",
+                    "on-tertiary-fixed": "#07006c",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#eceef0",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#e1e0ff",
+                    "tertiary-container": "#07006c",
+                    "surface-container-high": "#e6e8ea",
+                    "on-surface": "#191c1e",
+                    "on-error-container": "#93000a",
+                    "outline-variant": "#c6c6cd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "8px",
+                    "margin-mobile": "20px",
+                    "gutter": "24px",
+                    "section-gap-mobile": "80px",
+                    "container-max": "1280px",
+                    "section-gap-desktop": "160px"
+            },
+            "fontFamily": {
+                    "label-bold": ["Geist"],
+                    "display-lg": ["Geist"],
+                    "display-lg-mobile": ["Geist"],
+                    "headline-xl": ["Geist"],
+                    "headline-md": ["Geist"],
+                    "mono-label": ["Geist Mono"],
+                    "body-md": ["Geist"],
+                    "body-lg": ["Geist"]
+            },
+            "fontSize": {
+                    "label-bold": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                    "display-lg": ["72px", { "lineHeight": "76px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                    "display-lg-mobile": ["44px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                    "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "headline-md": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "mono-label": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                    "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                    "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400" }]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased overflow-x-hidden selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-xl border-b border-outline-variant/20 dark:border-outline/20 shadow-sm transition-all duration-200">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter flex items-center justify-between h-20">
+<!-- Brand -->
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight flex items-center gap-2 transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[32px] text-secondary">security</span>
+                Aegis V3.0
+            </a>
+<!-- Desktop Navigation -->
+<div class="hidden md:flex items-center gap-8 font-body-md text-body-md">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary hover:text-secondary transition-colors duration-300" href="#">Platform</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary hover:text-secondary transition-colors duration-300" href="#">Solutions</a>
+<!-- Active Navigation Item (Case Studies falls under Resources) -->
+<a class="text-secondary dark:text-secondary-fixed font-bold border-b-2 border-secondary hover:text-secondary transition-colors duration-300 py-2" href="#">Resources</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary hover:text-secondary transition-colors duration-300" href="#">Integrations</a>
+</div>
+<!-- Trailing Action & Mobile Menu Toggle -->
+<div class="flex items-center gap-4">
+<a class="hidden md:inline-flex items-center justify-center px-6 py-2.5 bg-primary-container text-on-primary hover:bg-primary-container/90 rounded-full font-label-bold text-label-bold transition-all shadow-sm" href="#">
+                    Get Started
+                </a>
+<button class="md:hidden text-on-surface p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-20">
+<!-- Hero Section with Interactive Shader Background -->
+<section class="relative min-h-[716px] flex items-center overflow-hidden bg-surface-container-lowest">
+<!-- Canvas for Interactive Background -->
+<canvas class="absolute inset-0 w-full h-full z-0 opacity-40 mix-blend-multiply" id="hero-canvas"></canvas>
+<div class="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-gutter w-full py-section-gap-mobile md:py-section-gap-desktop text-center fade-up">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container border border-outline-variant/50 mb-8">
+<span class="material-symbols-outlined text-[16px] text-secondary" style="font-variation-settings: 'FILL' 1;">local_police</span>
+<span class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">Case Studies</span>
+</div>
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-6 max-w-4xl mx-auto">
+                    Proven Intelligence.
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12">
+                    Explore real-world applications of Aegis V3.0 in high-stakes environments. See how the Sentinel mindset translates to tangible security, speed, and recovery.
+                </p>
+</div>
+</section>
+<!-- Bento Grid Case Studies Section -->
+<section class="py-section-gap-mobile md:py-section-gap-desktop bg-surface relative">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter auto-rows-[minmax(400px,auto)]">
+<!-- Case Study 1: Feature (Spans 8 cols) -->
+<article class="md:col-span-8 group relative rounded-2xl overflow-hidden glass-panel shadow-[0_20px_50px_-12px_rgba(15,23,42,0.05)] transition-transform duration-500 hover:-translate-y-1 fade-up">
+<div class="absolute inset-0 z-0">
+<img alt="Abstract visualization of global data networks with glowing cyan nodes and dark sapphire blue connecting lines, representing global equity systems." class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A highly detailed abstract 3D render of a massive global data network visualization. The scene features glowing electric cyan nodes interconnected by sweeping, translucent sapphire blue lines that form a complex, futuristic web. The background is a pristine, light-mode cool gray surface that reflects soft ambient light. The overall aesthetic is modern corporate fused with glassmorphic futurism, conveying a sense of high-stakes financial technology and secure intelligence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC29fp5HGqI-5vRb4cON6O0KsScjWNuj0PysckP4l2keb_HnqiW2OyQZf7MOp_v9rVgA8MoHLCxCIQBLgGrX96om5VD1Bkyh6nRCY4OPM6BnbafIg4AhYFzmC-QDF2TlYo69vxMpscV3i2LH5syMefF2cpThQ5B7O1lRpKbqoCONwNI8UdhICrEaNkXZp3BCQ5i9S-4R3y19HzNW_BqFUJ3J6OidFAyKHRRRkxGVwdwfsVjzQxvkFm29ix7d2kZ4WsJ75PULeMPRxU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent"></div>
+</div>
+<div class="relative z-10 flex flex-col justify-end h-full p-8 md:p-12">
+<!-- Sentinel Seal -->
+<div class="absolute top-8 right-8 flex items-center gap-2 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-secondary/20 shadow-sm">
+<span class="material-symbols-outlined text-[18px] text-secondary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-mono-label text-mono-label text-primary font-bold">Sentinel Verified</span>
+</div>
+<div class="max-w-xl">
+<h2 class="font-headline-xl text-headline-xl text-primary mb-4">Global Equity Recovery</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8 line-clamp-3">
+                                    When a major quantitative fund experienced a catastrophic data desynchronization across transatlantic nodes, Aegis V3.0 isolated the anomaly and executed a state-reversal protocol without interrupting live trading feeds.
+                                </p>
+<!-- Metrics -->
+<div class="grid grid-cols-2 gap-4 border-t border-outline-variant/30 pt-6">
+<div>
+<p class="font-mono-label text-mono-label text-on-surface-variant mb-1">ROI (Year 1)</p>
+<p class="font-headline-md text-headline-md text-secondary">412%</p>
+</div>
+<div>
+<p class="font-mono-label text-mono-label text-on-surface-variant mb-1">Recovery Time</p>
+<p class="font-headline-md text-headline-md text-primary">&lt; 4ms</p>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- Case Study 2: Secondary (Spans 4 cols) -->
+<article class="md:col-span-4 group relative rounded-2xl overflow-hidden glass-panel shadow-[0_20px_50px_-12px_rgba(15,23,42,0.05)] transition-transform duration-500 hover:-translate-y-1 fade-up" style="transition-delay: 100ms;">
+<div class="absolute inset-0 z-0">
+<img alt="Close up of high-speed fiber optic cables illuminated in blue and white light, representing sub-millisecond trading infrastructure." class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A macro photography shot of densely packed, high-speed fiber optic cables illuminated from within by brilliant white and icy cyan light. The cables are set against a minimalist, bright light-gray laboratory background. The focus is incredibly sharp on the glowing tips of the cables, blurring out gently into a clean, modern aesthetic. The mood is precise, fast, and represents high-frequency sub-millisecond trading technology." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAycbk3KpH6vngPCaJSrT_Jq2A4NdRYNGqTtCAVkcjxQBY-dHiKjlmVULBL2u8GjJzxf0PjjegibLxa5U75eqQAjuA9lkJWhgh0NyjFpPXwJK0gzFXhfBptsB8J84gTQ3Z35HDrtJoG3Z60T2cEk2vW_BQOT72HDfRcuQKFluhx7I467KBAqaU0WgS0-otlBD_WR87x56KvsgPDGCwh-5QxwrmNIn6-injk2045_m-mglVThljH58IBTH2nEBP8jEApQkVqf2M7uQQ"/>
+<div class="absolute inset-0 bg-gradient-to-b from-surface-container-lowest/40 to-surface-container-lowest"></div>
+</div>
+<div class="relative z-10 flex flex-col justify-between h-full p-8">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-full bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px] text-secondary">speed</span>
+</div>
+<!-- Small Seal -->
+<span class="material-symbols-outlined text-[24px] text-secondary" style="font-variation-settings: 'FILL' 1;" title="Sentinel Verified">gpp_good</span>
+</div>
+<div class="mt-12">
+<h3 class="font-headline-md text-headline-md text-primary mb-3">Sub-millisecond Alpha</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+                                    Optimized routing layer for HFT firm 'Nexus Capital', bypassing traditional middleware.
+                                </p>
+<div class="bg-surface/50 rounded-lg p-4 border border-outline-variant/20">
+<p class="font-mono-label text-mono-label text-on-surface-variant mb-1">Latency Reduction</p>
+<p class="font-headline-md text-headline-md text-secondary-container text-secondary">-84%</p>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap-mobile md:py-section-gap-desktop bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 flat no shadows">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter grid grid-cols-2 md:grid-cols-4 gap-gutter">
+<!-- Brand / Copyright -->
+<div class="col-span-2 md:col-span-1 mb-8 md:mb-0">
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed mb-4">Aegis V3.0</div>
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant max-w-xs">
+                    © 2024 Aegis Sentinel Systems. All rights reserved. Built for high-stakes intelligence.
+                </p>
+</div>
+<!-- Links Column 1 -->
+<div class="flex flex-col gap-4">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Sitemap</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">API Documentation</a>
+</div>
+<!-- Links Column 2 -->
+<div class="flex flex-col gap-4">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Security</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Legal</a>
+</div>
+<!-- Links Column 3 -->
+<div class="flex flex-col gap-4">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Privacy Policy</a>
+</div>
+</div>
+</footer>
+<!-- Interactive Scripts -->
+<script>
+        // Intersection Observer for fade-up animations
+        document.addEventListener("DOMContentLoaded", () => {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-up').forEach((el) => {
+                observer.observe(el);
+            });
+
+            // Lightweight Interactive Canvas Background (Fluid/Network Node effect simulation)
+            const canvas = document.getElementById('hero-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            let width, height;
+            let particles = [];
+            
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = canvas.parentElement.offsetHeight;
+            }
+            
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+                    this.vy = (Math.random() - 0.5) * 0.5;
+                    this.radius = Math.random() * 2 + 1;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    
+                    if (this.x < 0 || this.x > width) this.vx *= -1;
+                    if (this.y < 0 || this.y > height) this.vy *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    // Use electric cyan color from theme roughly
+                    ctx.fillStyle = 'rgba(87, 223, 254, 0.15)'; 
+                    ctx.fill();
+                }
+            }
+
+            for(let i=0; i<50; i++) particles.push(new Particle());
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                
+                // Draw connections
+                ctx.strokeStyle = 'rgba(0, 104, 122, 0.05)'; // secondary color
+                ctx.lineWidth = 1;
+                for(let i=0; i<particles.length; i++) {
+                    for(let j=i+1; j<particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if(dist < 150) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+        });
+    </script>
+</body></html>

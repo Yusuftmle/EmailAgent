@@ -16,6 +16,8 @@ public class TrackedProduct
     
     public string Title { get; set; } = string.Empty;
     
+    public string? ImageUrl { get; set; }
+    
     public decimal TargetPrice { get; set; }
     
     public decimal LastKnownPrice { get; set; }

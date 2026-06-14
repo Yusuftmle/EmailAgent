@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService, ChatHistoryMessage } from '../services/api';
-import { MessageSquare, X, Send, Sparkles, Trash2 } from 'lucide-react';
+import { MessageSquare, X, Send, Cpu, Trash2 } from 'lucide-react';
 
 export const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatHistoryMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState('user-session-101');
+  const [sessionId] = useState(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user) return user.id || user.Id || '00000000-0000-0000-0000-000000000000';
+      }
+    } catch (e) {}
+    return '00000000-0000-0000-0000-000000000000';
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -21,7 +30,7 @@ export const ChatBot: React.FC = () => {
           {
             role: 'assistant',
             sessionId,
-            content: "Hello! I am your AI Email Assistant. I have loaded today's parsed emails. How can I help you manage your daily inbox today?"
+            content: "Hello! I am your AI assistant. How can I help you manage your operational pipeline or review logs today?"
           }
         ]);
       } else {
@@ -76,7 +85,7 @@ export const ChatBot: React.FC = () => {
         {
           role: 'assistant',
           sessionId,
-          content: "Connection to the cognitive backend server timed out."
+          content: "System timeout. Connection to the cognitive engine failed."
         }
       ]);
     } finally {
@@ -102,25 +111,25 @@ export const ChatBot: React.FC = () => {
   };
 
   const suggestionChips = [
-    "Today's important emails",
-    "Any Microsoft partnership updates?",
-    "AWS database billing alert status",
+    "Today's active items",
+    "Run full scan",
+    "List anomalies",
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="fixed bottom-6 right-6 z-50 font-sans">
       {/* Floating Action Button */}
       {!isOpen && (
         <motion.button
           onClick={() => setIsOpen(true)}
-          whileHover={{ scale: 1.08, rotate: 6 }}
+          whileHover={{ scale: 1.05, rotate: 3 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center justify-center w-14 h-14 rounded-full gradient-bg text-white shadow-2xl shadow-indigo-500/35 relative hover:shadow-indigo-500/50 glow-hover duration-300"
+          className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 border border-primary/30 text-primary shadow-2xl relative hover:bg-primary hover:text-on-primary transition-all duration-300"
         >
-          <MessageSquare size={22} />
-          <span className="absolute top-0 right-0 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-400"></span>
+          <MessageSquare size={20} />
+          <span className="absolute top-0 right-0 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
           </span>
         </motion.button>
       )}
@@ -129,24 +138,24 @@ export const ChatBot: React.FC = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.85, y: 30 }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 30 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-panel w-[350px] sm:w-[380px] h-[520px] rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden"
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="glass-panel w-[350px] sm:w-[380px] h-[500px] rounded-xl border border-outline-variant/30 shadow-2xl flex flex-col overflow-hidden"
           >
             
             {/* Header */}
-            <div className="p-4 bg-slate-900/40 border-b border-white/5 flex items-center justify-between">
+            <div className="p-4 bg-surface-container border-b border-outline-variant/20 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8.5 h-8.5 rounded-lg gradient-bg flex items-center justify-center text-white shadow-inner">
-                  <Sparkles size={14} className="animate-pulse" />
+                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                  <Cpu size={14} className="animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-100 text-xs tracking-wider uppercase">Claude Assistant</h3>
+                  <h3 className="font-semibold text-on-surface text-xs tracking-wider uppercase">Aegis Core</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Active</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                    <span className="font-data-mono text-[9px] text-on-surface-variant uppercase tracking-wider">ONLINE</span>
                   </div>
                 </div>
               </div>
@@ -154,17 +163,17 @@ export const ChatBot: React.FC = () => {
               <div className="flex items-center gap-1">
                 <button 
                   onClick={handleClearChat}
-                  className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-red-400 transition-colors"
+                  className="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-tertiary-container transition-colors"
                   title="Clear Chat"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={13} />
                 </button>
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-colors"
+                  className="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors"
                   title="Close Chat"
                 >
-                  <X size={14} />
+                  <X size={13} />
                 </button>
               </div>
             </div>
@@ -172,43 +181,40 @@ export const ChatBot: React.FC = () => {
             {/* Message Body */}
             <div 
               ref={chatContainerRef}
-              className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-950/20"
+              className="flex-1 p-4 overflow-y-auto space-y-4 bg-surface-container-lowest/30 hide-scrollbar"
             >
               {messages.map((msg, index) => (
-                <motion.div 
+                <div 
                   key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
                   className={`flex gap-2.5 max-w-[85%] ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
                 >
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${
+                  <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-[9px] font-bold ${
                     msg.role === 'user' 
-                      ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' 
-                      : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                      ? 'bg-primary/10 text-primary border border-primary/20' 
+                      : 'bg-outline-variant/20 text-on-surface-variant border border-outline-variant/30'
                   }`}>
                     {msg.role === 'user' ? 'U' : 'AI'}
                   </div>
 
-                  <div className={`p-3 rounded-2xl text-xs leading-relaxed ${
+                  <div className={`p-3 rounded-xl text-xs leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-600/10'
-                      : 'bg-slate-900/80 border border-white/5 text-slate-200 rounded-tl-none'
+                      ? 'bg-surface-container-high/70 border border-primary/20 text-on-surface rounded-tr-none'
+                      : 'bg-surface-container/20 border border-outline-variant/20 text-on-surface-variant rounded-tl-none'
                   }`}>
                     {msg.content.split('\n').map((line, lIdx) => (
-                      <p key={lIdx} className={lIdx > 0 ? 'mt-1.5' : ''}>{line}</p>
+                      <p key={lIdx} className={lIdx > 0 ? 'mt-1' : ''}>{line}</p>
                     ))}
                   </div>
-                </motion.div>
+                </div>
               ))}
 
               {/* Loader */}
               {isLoading && (
                 <div className="flex gap-2.5 max-w-[85%]">
-                  <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center text-[10px] font-bold">
+                  <div className="w-6 h-6 rounded bg-outline-variant/20 text-on-surface-variant border border-outline-variant/30 flex items-center justify-center text-[9px] font-bold">
                     AI
                   </div>
-                  <div className="p-3.5 rounded-2xl rounded-tl-none bg-slate-900/80 border border-white/5 text-slate-400 flex items-center gap-1">
+                  <div className="p-3 rounded-xl rounded-tl-none bg-surface-container/20 border border-outline-variant/20 text-on-surface-variant flex items-center gap-1">
                     <span className="typing-dot"></span>
                     <span className="typing-dot"></span>
                     <span className="typing-dot"></span>
@@ -221,19 +227,17 @@ export const ChatBot: React.FC = () => {
 
             {/* Chips */}
             {messages.length === 1 && !isLoading && (
-              <div className="px-4 py-2 border-t border-white/5 bg-slate-950/40 flex flex-col gap-1.5">
-                <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Inquire Claude</span>
+              <div className="px-4 py-2 border-t border-outline-variant/20 bg-surface-container-low/40 flex flex-col gap-1.5">
+                <span className="text-[9px] text-on-surface-variant/60 uppercase tracking-widest font-semibold font-geist">Suggestions</span>
                 <div className="flex flex-wrap gap-1.5 pb-1">
                   {suggestionChips.map(chip => (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    <button
                       key={chip}
                       onClick={() => handleSendMessage(chip)}
-                      className="text-[10px] px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/20 hover:bg-slate-800 text-slate-300 text-left transition-all truncate max-w-full"
+                      className="text-[10px] px-2.5 py-1 rounded bg-surface-container border border-outline-variant/20 hover:border-primary/40 text-on-surface-variant hover:text-on-surface text-left transition-all truncate max-w-full"
                     >
                       {chip}
-                    </motion.button>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -245,24 +249,24 @@ export const ChatBot: React.FC = () => {
                 e.preventDefault();
                 handleSendMessage(inputValue);
               }}
-              className="p-3 bg-slate-900/40 border-t border-white/5 flex gap-2"
+              className="p-3 bg-surface-container border-t border-outline-variant/20 flex gap-2"
             >
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 disabled={isLoading}
-                placeholder="Ask Claude..."
-                className="flex-1 px-4 py-2 rounded-xl bg-slate-950/60 border border-slate-900 text-xs focus:border-cyan-500/40 outline-none text-slate-200 disabled:opacity-50 transition-all"
+                placeholder="Ask Aegis..."
+                className="flex-1 px-3 py-2 rounded bg-surface-container-lowest/60 border border-outline-variant/30 text-xs focus:border-primary outline-none text-on-surface disabled:opacity-50 transition-all font-geist"
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
-                className="p-2.5 rounded-xl gradient-bg text-white font-medium flex items-center justify-center shadow-md disabled:opacity-40 transition-all"
+                className="px-3 rounded bg-primary/10 border border-primary/30 hover:bg-primary hover:text-on-primary text-primary transition-all text-xs font-semibold flex items-center justify-center disabled:opacity-50"
               >
-                <Send size={14} />
+                <Send size={12} />
               </motion.button>
             </form>
 

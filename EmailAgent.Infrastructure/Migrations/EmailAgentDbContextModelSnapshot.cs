@@ -247,6 +247,92 @@ namespace EmailAgent.Infrastructure.Migrations
                     b.ToTable("Reminders");
                 });
 
+            modelBuilder.Entity("EmailAgent.Core.Entities.SeenListing", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("FirstSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("LastSeenPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ListingIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "CategoryId", "ListingIdentifier")
+                        .IsUnique();
+
+                    b.ToTable("SeenListings", (string)null);
+                });
+
+            modelBuilder.Entity("EmailAgent.Core.Entities.SiteStrategyDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Confidence")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("FetchMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ImageSelector")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PriceSelector")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StockSelector")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TitleSelector")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Domain")
+                        .IsUnique();
+
+                    b.ToTable("SiteStrategyDefinitions", (string)null);
+                });
+
             modelBuilder.Entity("EmailAgent.Core.Entities.TrackedCategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -294,6 +380,10 @@ namespace EmailAgent.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("text");
 

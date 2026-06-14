@@ -30,10 +30,17 @@ public class AegisKernelBuilder
     {
         if (provider == "Gemini")
         {
+            var retryHandler = new RetryDelegatingHandler(new HttpClientHandler());
+            var geminiClient = new HttpClient(retryHandler);
+            if (customClient != null)
+            {
+                geminiClient.Timeout = customClient.Timeout;
+            }
+
             _builder.AddGoogleAIGeminiChatCompletion(
                 modelId: modelId, 
                 apiKey: apiKey, 
-                httpClient: customClient,
+                httpClient: geminiClient,
                 apiVersion: Microsoft.SemanticKernel.Connectors.Google.GoogleAIVersion.V1_Beta);
         }
         else if (provider == "Groq")
@@ -107,4 +114,77 @@ public class GroqEndpointHandler : DelegatingHandler
     }
 }
 
+public class RetryDelegatingHandler : DelegatingHandler
+{
+    private readonly int _maxRetries = 5;
 
+    public RetryDelegatingHandler(HttpMessageHandler innerHandler) : base(innerHandler)
+    {
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+    {
+        HttpResponseMessage? response = null;
+        for (int i = 0; i <= _maxRetries; i++)
+        {
+            try
+            {
+                HttpRequestMessage req = request;
+                if (i > 0)
+                {
+                    req = await CloneHttpRequestMessageAsync(request);
+                }
+
+                response = await base.SendAsync(req, cancellationToken);
+                if (response.StatusCode == (System.Net.HttpStatusCode)429 && i < _maxRetries)
+                {
+                    var delay = TimeSpan.FromSeconds((i + 1) * 7); // 7s, 14s, 21s, 28s, 35s backoff to clear Gemini limits
+                    await Task.Delay(delay, cancellationToken);
+                    continue;
+                }
+                return response;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == (System.Net.HttpStatusCode)429 && i < _maxRetries)
+            {
+                var delay = TimeSpan.FromSeconds((i + 1) * 7);
+                await Task.Delay(delay, cancellationToken);
+            }
+        }
+
+        if (response != null)
+        {
+            return response;
+        }
+
+        return await base.SendAsync(request, cancellationToken);
+    }
+
+    private async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage req)
+    {
+        var clone = new HttpRequestMessage(req.Method, req.RequestUri);
+
+        if (req.Content != null)
+        {
+            var contentBytes = await req.Content.ReadAsByteArrayAsync();
+            clone.Content = new ByteArrayContent(contentBytes);
+            foreach (var h in req.Content.Headers)
+            {
+                clone.Content.Headers.TryAddWithoutValidation(h.Key, h.Value);
+            }
+        }
+
+        clone.Version = req.Version;
+
+        foreach (var prop in req.Options)
+        {
+            clone.Options.Set(new HttpRequestOptionsKey<object?>(prop.Key), prop.Value);
+        }
+
+        foreach (var h in req.Headers)
+        {
+            clone.Headers.TryAddWithoutValidation(h.Key, h.Value);
+        }
+
+        return clone;
+    }
+}

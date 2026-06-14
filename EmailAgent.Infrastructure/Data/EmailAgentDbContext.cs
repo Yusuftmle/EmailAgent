@@ -22,6 +22,8 @@ public class EmailAgentDbContext : DbContext
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<NotifiedCategoryDeal> NotifiedCategoryDeals => Set<NotifiedCategoryDeal>();
+    public DbSet<SeenListing> SeenListings => Set<SeenListing>();
+    public DbSet<SiteStrategyDefinition> SiteStrategyDefinitions => Set<SiteStrategyDefinition>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,6 +72,27 @@ public class EmailAgentDbContext : DbContext
             entity.HasIndex(e => e.SessionId);
             entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Content).IsRequired();
+        });
+
+        // Configure SeenListings table
+        modelBuilder.Entity<SeenListing>(entity =>
+        {
+            entity.ToTable("SeenListings");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.CategoryId);
+            entity.Property(e => e.ListingIdentifier).IsRequired().HasMaxLength(500);
+            entity.HasIndex(e => new { e.UserId, e.CategoryId, e.ListingIdentifier }).IsUnique();
+        });
+
+        // Configure SiteStrategyDefinition table
+        modelBuilder.Entity<SiteStrategyDefinition>(entity =>
+        {
+            entity.ToTable("SiteStrategyDefinitions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Domain).IsRequired().HasMaxLength(255);
+            entity.HasIndex(e => e.Domain).IsUnique();
+            entity.Property(e => e.FetchMethod).IsRequired().HasMaxLength(50);
         });
     }
 }

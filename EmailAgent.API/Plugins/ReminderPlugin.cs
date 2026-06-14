@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
+using Hangfire;
 using EmailAgent.Infrastructure.Data;
+using EmailAgent.Infrastructure.Jobs;
 using EmailAgent.Core.Entities;
 
 namespace EmailAgent.API.Plugins;
@@ -11,11 +13,13 @@ namespace EmailAgent.API.Plugins;
 public class ReminderPlugin
 {
     private readonly EmailAgentDbContext _dbContext;
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly Guid _userId;
 
-    public ReminderPlugin(EmailAgentDbContext dbContext, Guid userId)
+    public ReminderPlugin(EmailAgentDbContext dbContext, IBackgroundJobClient backgroundJobClient, Guid userId)
     {
         _dbContext = dbContext;
+        _backgroundJobClient = backgroundJobClient;
         _userId = userId;
     }
 
@@ -38,6 +42,10 @@ public class ReminderPlugin
 
         _dbContext.Reminders.Add(reminder);
         await _dbContext.SaveChangesAsync();
+
+        _backgroundJobClient.Schedule<MorningBriefingJob>(
+            job => job.SendSingleReminderAsync(reminder.Id),
+            remindAt);
 
         var localTime = remindAt.AddHours(3); // UTC+3 for Turkey
         return $"✅ Hatırlatıcı ayarlandı! Sana {localTime:HH:mm} ({minutesFromNow} dakika sonra) şu mesajı göndereceğim: \"{message}\"";

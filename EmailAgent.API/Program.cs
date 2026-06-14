@@ -16,6 +16,10 @@ using EmailAgent.Infrastructure.Jobs;
 using EmailAgent.Infrastructure.Notifications;
 using EmailAgent.Infrastructure.Repositories;
 using EmailAgent.Infrastructure.GoogleCalendar;
+using EmailAgent.Infrastructure.Config;
+using EmailAgent.Core.Interfaces;
+using EmailAgent.Infrastructure.Scraping.Interfaces;
+using EmailAgent.Infrastructure.Scraping.Strategies;
 using EmailAgent.Agent;
 using EmailAgent.Agent.Chat;
 using EmailAgent.API.Plugins;
@@ -40,6 +44,7 @@ builder.Host.UseSerilog();
 
 // 0. Data Protection for encrypting sensitive fields like ApiKey
 builder.Services.AddDataProtection();
+builder.Services.AddMemoryCache();
 
 // 1. Database Configuration (PostgreSQL)
 var connectionString = builder.Configuration.GetConnectionString("Default");
@@ -54,13 +59,28 @@ builder.Services.AddDbContext<EmailAgentDbContext>(options =>
 builder.Services.AddScoped<IEmailAnalysisRepository, EmailAnalysisRepository>();
 builder.Services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
 builder.Services.AddScoped<IChatHistoryRepository, ChatHistoryRepository>();
+builder.Services.AddScoped<ISeenListingsRepository, SeenListingsRepository>();
+builder.Services.AddScoped<IStrategyDefinitionRepository, StrategyDefinitionRepository>();
+
+builder.Services.AddTransient<UniversalScraperAgent>();
+builder.Services.AddTransient<EmailAgent.Agent.Core.EvaluationEngine>();
 
 // 3. Infrastructure Service Dependency Injection
 builder.Services.AddScoped<IGmailService, GmailService>();
 builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
-builder.Services.AddSingleton<EmailAgent.Infrastructure.Services.PlaywrightScraperService>();
+
+// Centralized Configs
+builder.Services.AddSingleton<IScraperConfig, ScraperConfig>();
+
+// Browser & Strategies
+builder.Services.AddSingleton<IBrowserProvider, EmailAgent.Infrastructure.Services.PlaywrightScraperService>();
+builder.Services.AddScoped<ISiteStrategy, AmazonStrategy>();
+builder.Services.AddScoped<ISiteStrategy, SahibindenStrategy>();
+builder.Services.AddScoped<ISiteStrategy, DynamicDatabaseStrategy>();
+builder.Services.AddScoped<ISiteStrategy, GenericStrategy>();
+
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.ProductScraperService>();
 builder.Services.AddScoped<EmailAgent.Infrastructure.Services.CategoryScraperService>();
 builder.Services.AddScoped<EmailAgent.Agent.UniversalScraperAgent>();
@@ -101,7 +121,13 @@ builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEn
     if (userPrefs.EnableWebSearchFeature)
     {
         plugins.Add(new EmailAgent.API.Plugins.WebSearchPlugin(sp.GetRequiredService<IHttpClientFactory>().CreateClient("AIAgentClient")));
-        plugins.Add(new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<EmailAgent.Infrastructure.Services.PlaywrightScraperService>()));
+        plugins.Add(new EmailAgent.API.Plugins.DeepWebScraperPlugin(sp.GetRequiredService<IEnumerable<ISiteStrategy>>()));
+        plugins.Add(new EmailAgent.API.Plugins.SiteDiscoveryPlugin(
+            sp.GetRequiredService<IStrategyDefinitionRepository>(),
+            sp.GetRequiredService<IEnumerable<ISiteStrategy>>(),
+            sp.GetRequiredService<UniversalScraperAgent>(),
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EmailAgent.API.Plugins.SiteDiscoveryPlugin>>(),
+            userPrefs));
     }
 
     if (userPrefs.EnableFinanceFeature)
@@ -116,7 +142,10 @@ builder.Services.AddTransient<Func<EmailAgent.Core.Entities.UserPreferences, IEn
 
     if (userPrefs.EnableRemindersFeature)
     {
-        plugins.Add(new EmailAgent.API.Plugins.ReminderPlugin(sp.GetRequiredService<EmailAgentDbContext>(), userPrefs.Id));
+        plugins.Add(new EmailAgent.API.Plugins.ReminderPlugin(
+            sp.GetRequiredService<EmailAgentDbContext>(),
+            sp.GetRequiredService<IBackgroundJobClient>(),
+            userPrefs.Id));
     }
 
     return plugins;
@@ -250,6 +279,17 @@ using (var scope = app.Services.CreateScope())
                 CONSTRAINT ""PK_NotifiedCategoryDeals"" PRIMARY KEY (""Id"")
             );
 
+            CREATE TABLE IF NOT EXISTS ""SeenListings"" (
+                ""Id"" uuid NOT NULL,
+                ""UserId"" uuid NOT NULL,
+                ""CategoryId"" uuid NOT NULL,
+                ""ListingIdentifier"" text NOT NULL,
+                ""LastSeenPrice"" numeric NOT NULL,
+                ""FirstSeenAt"" timestamp with time zone NOT NULL,
+                ""LastSeenAt"" timestamp with time zone NOT NULL,
+                CONSTRAINT ""PK_SeenListings"" PRIMARY KEY (""Id"")
+            );
+
             CREATE TABLE IF NOT EXISTS ""PriceHistory"" (
                 ""Id"" uuid NOT NULL,
                 ""ProductId"" uuid NOT NULL,
@@ -293,6 +333,24 @@ using (var scope = app.Services.CreateScope())
             UPDATE ""UserPreferences"" SET ""PairingCode"" = gen_random_uuid()::text WHERE ""PairingCode"" = '';
             
             ALTER TABLE ""CalendarEvents"" ADD COLUMN IF NOT EXISTS ""GoogleEventId"" text NULL;
+
+            CREATE TABLE IF NOT EXISTS ""SiteStrategyDefinitions"" (
+                ""Id"" uuid NOT NULL,
+                ""Domain"" text NOT NULL,
+                ""FetchMethod"" text NOT NULL DEFAULT 'Playwright',
+                ""PriceSelector"" text NULL,
+                ""TitleSelector"" text NULL,
+                ""StockSelector"" text NULL,
+                ""ImageSelector"" text NULL,
+                ""Confidence"" double precision NOT NULL DEFAULT 1.0,
+                ""LastVerifiedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""UpdatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                CONSTRAINT ""PK_SiteStrategyDefinitions"" PRIMARY KEY (""Id"")
+            );
+            ALTER TABLE ""SiteStrategyDefinitions"" ADD COLUMN IF NOT EXISTS ""ImageSelector"" text NULL;
+            ALTER TABLE ""TrackedProducts"" ADD COLUMN IF NOT EXISTS ""ImageUrl"" text NULL;
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_SiteStrategyDefinitions_Domain"" ON ""SiteStrategyDefinitions"" (""Domain"");
         ");
     }
     catch (Exception ex)

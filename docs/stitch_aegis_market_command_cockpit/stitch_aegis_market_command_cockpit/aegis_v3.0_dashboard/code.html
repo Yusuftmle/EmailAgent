@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AEGIS V3.0 Command Cockpit</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#006877",
+                        "on-primary": "#00363e",
+                        "secondary-fixed-dim": "#45dfa4",
+                        "on-secondary": "#003825",
+                        "secondary-fixed": "#68fcbf",
+                        "on-surface": "#dce1fb",
+                        "surface-variant": "#2e3447",
+                        "on-primary-container": "#005763",
+                        "surface-tint": "#2fd9f4",
+                        "on-surface-variant": "#bbc9cd",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed": "#ffdadc",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#22d3ee",
+                        "tertiary-fixed-dim": "#ffb2b9",
+                        "on-secondary-fixed-variant": "#005137",
+                        "surface-container-low": "#151b2d",
+                        "outline-variant": "#3c494c",
+                        "secondary": "#45dfa4",
+                        "outline": "#859397",
+                        "on-tertiary": "#67001f",
+                        "surface": "#0c1324",
+                        "on-secondary-container": "#00452e",
+                        "on-tertiary-fixed-variant": "#891933",
+                        "primary-fixed-dim": "#2fd9f4",
+                        "surface-bright": "#33394c",
+                        "primary-fixed": "#a2eeff",
+                        "inverse-on-surface": "#2a3043",
+                        "on-error": "#690005",
+                        "on-background": "#dce1fb",
+                        "on-tertiary-container": "#94223a",
+                        "secondary-container": "#00bd85",
+                        "surface-container-lowest": "#070d1f",
+                        "on-primary-fixed-variant": "#004e5a",
+                        "on-secondary-fixed": "#002114",
+                        "surface-container": "#191f31",
+                        "background": "#0c1324",
+                        "tertiary": "#ffd2d5",
+                        "primary": "#8aebff",
+                        "on-primary-fixed": "#001f25",
+                        "surface-dim": "#0c1324",
+                        "on-tertiary-fixed": "#400010",
+                        "surface-container-high": "#23293c",
+                        "inverse-surface": "#dce1fb",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#2e3447",
+                        "tertiary-container": "#ffaab2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1920px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "unit": "4px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "body-md": ["Geist"],
+                        "label-sm": ["Geist"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Geist"],
+                        "title-md": ["Geist"],
+                        "headline-lg": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "data-mono": ["13px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "title-md": ["18px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes ticker-scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .ticker-track {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker-scroll 20s linear infinite;
+        }
+
+        .shimmer-bg {
+            background: linear-gradient(90deg, 
+                rgba(46, 52, 71, 0.4) 25%, 
+                rgba(60, 73, 76, 0.6) 50%, 
+                rgba(46, 52, 71, 0.4) 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+        
+        .card-expand-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease-out;
+        }
+        
+        .card-expanded .card-expand-content {
+            grid-template-rows: 1fr;
+        }
+        
+        .card-expand-inner {
+            overflow: hidden;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen font-body-md text-body-md antialiased selection:bg-primary/30 pb-20 md:pb-0">
+<!-- TopAppBar from JSON -->
+<header class="bg-surface/40 dark:bg-surface/40 text-primary dark:text-primary font-headline-md text-headline-md fixed top-0 w-full z-50 backdrop-blur-md border-b border-outline-variant/30 flat no shadows flex justify-between items-center h-16 px-margin-mobile w-full transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[28px]" data-icon="shield_with_heart" data-weight="fill">shield_with_heart</span>
+<span class="font-display-lg text-headline-lg-mobile tracking-tighter text-primary uppercase">AEGIS V3.0</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Single Column Layout -->
+<main class="w-full max-w-3xl mx-auto pt-16 flex flex-col h-full relative">
+<!-- Command Bar (Sticky Top) -->
+<div class="sticky top-16 z-40 bg-background/90 backdrop-blur-md border-b border-outline-variant/30 px-margin-mobile py-3 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]">
+<div class="relative flex items-center w-full">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-high border border-outline-variant rounded-lg pl-10 pr-12 py-2.5 font-data-mono text-data-mono text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all shadow-inner" id="command-input" placeholder="Find Golf 1.6 under 800k..." type="text"/>
+<!-- Pulsing Cyan Dot -->
+<div class="absolute right-4 flex items-center justify-center" id="command-status-dot">
+<span class="absolute w-2.5 h-2.5 rounded-full bg-primary animate-ping opacity-75"></span>
+<span class="relative w-2.5 h-2.5 rounded-full bg-primary"></span>
+</div>
+<!-- Loading Spinner (Hidden by default) -->
+<div class="absolute right-4 hidden" id="command-loading">
+<span class="material-symbols-outlined animate-spin text-primary text-[20px]">sync</span>
+</div>
+</div>
+</div>
+<!-- Live Ticker -->
+<div class="w-full bg-surface-container-low border-b border-outline-variant/20 py-1.5 overflow-hidden flex items-center px-margin-mobile">
+<span class="font-label-sm text-label-sm text-on-surface-variant mr-3 uppercase tracking-widest shrink-0">Live Stream</span>
+<div class="flex-1 overflow-hidden relative h-5">
+<div class="ticker-track absolute flex gap-8 font-data-mono text-[11px] items-center">
+<span class="text-on-surface">VW Golf 1.6 TDI <span class="text-secondary font-bold ml-1">-12% ▼</span> <span class="text-on-surface-variant/50 ml-2">10:42:01</span></span>
+<span class="text-on-surface">Audi A3 S-Line <span class="text-secondary font-bold ml-1">-15% ▼</span> <span class="text-on-surface-variant/50 ml-2">10:41:45</span></span>
+<span class="text-on-surface">BMW 118i M-Sport <span class="text-error font-bold ml-1">+2% ▲</span> <span class="text-on-surface-variant/50 ml-2">10:40:12</span></span>
+<span class="text-on-surface">Ford Focus ST <span class="text-secondary font-bold ml-1">-8% ▼</span> <span class="text-on-surface-variant/50 ml-2">10:39:55</span></span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-6 px-margin-mobile py-6">
+<!-- System Status -->
+<section class="flex flex-col gap-2">
+<h2 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">System Diagnostics</h2>
+<div class="flex overflow-x-auto gap-2 pb-2 hide-scrollbar">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container border border-outline-variant/40 font-data-mono text-[11px] text-on-surface whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(69,223,164,0.6)]"></span>
+                        Engine: Active
+                    </div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container border border-outline-variant/40 font-data-mono text-[11px] text-on-surface-variant whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+                        Scraper: Idle
+                    </div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-error-container/20 border border-error/30 font-data-mono text-[11px] text-error whitespace-nowrap cursor-pointer hover:bg-error-container/30 transition-colors" onclick="showErrorToast()">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse shadow-[0_0_8px_rgba(255,180,171,0.6)]"></span>
+                        Analyst: Sync Error
+                    </div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container border border-outline-variant/40 font-data-mono text-[11px] text-on-surface whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(69,223,164,0.6)]"></span>
+                        NLP: Connected
+                    </div>
+</div>
+</section>
+<!-- Finalist Deals (Stack) -->
+<section class="flex flex-col gap-4" id="deals-container">
+<h2 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+                    Finalist Deals
+                </h2>
+<!-- Deal Card 1 (Skeleton -> Content via JS) -->
+<article class="deal-card relative bg-surface-container/40 border border-outline-variant/50 rounded-xl overflow-hidden backdrop-blur-sm cursor-pointer group hover:border-primary/50 transition-all duration-300">
+<!-- Skeleton Overlay -->
+<div class="skeleton-layer absolute inset-0 z-20 bg-surface-container-high">
+<div class="w-full aspect-video shimmer-bg"></div>
+<div class="p-4 flex flex-col gap-3">
+<div class="h-6 w-3/4 shimmer-bg rounded"></div>
+<div class="h-4 w-1/2 shimmer-bg rounded"></div>
+<div class="h-10 w-full shimmer-bg rounded mt-2"></div>
+</div>
+</div>
+<!-- Real Content -->
+<div class="relative w-full aspect-video bg-surface-container-highest overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A sleek, dark grey Volkswagen Golf parked in a dimly lit, hyper-modern underground concrete parking structure. The scene is illuminated by striking, cold neon cyan overhead lighting that reflects sharply off the car's metallic paint and minimalist glass surfaces. Deep obsidian shadows dominate the background, emphasizing a high-stakes, precision-engineered aesthetic reminiscent of a futuristic command dashboard." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAo8rU3G5aVyHvI4YZYt0t-L7evM3b649bGYrithEJR8X4hBmzNjBFcmi0lV7TR7KcM27PDPpCxjI8ocPqeRC8CMea8qpdbighoNurn1OebJxkvM7CNkHiwIOYTt6_JOxX5-nmwt36xe4eMDzGnpzOHkgJay3ybL12YHvo8Lyk21AyOFWZPc8gwx8l1i8swjKoMGVuU-mwVss1ZJYAeTZh_2jUEHxTpTLku4h7BvIEu88RaKqVMz21BQs2_MuguTAUp-pj3KoO7NwM');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+<!-- Badges -->
+<div class="absolute top-3 right-3 bg-secondary-container/20 text-secondary border border-secondary/40 font-label-sm text-[10px] px-2 py-1 rounded-sm backdrop-blur-md flex items-center gap-1 shadow-[0_0_15px_rgba(69,223,164,0.15)]">
+<span class="material-symbols-outlined text-[12px]">trending_down</span>
+                            -18% MARKET
+                        </div>
+<!-- Price -->
+<div class="absolute bottom-3 left-4">
+<div class="font-display-lg text-headline-lg text-inverse-surface tracking-tight drop-shadow-lg">€ 14,200</div>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">VW Golf 1.6 TDI Comfortline</h3>
+<span class="font-data-mono text-[12px] text-on-surface-variant bg-surface px-2 py-1 rounded border border-outline-variant/30">84,000 km</span>
+</div>
+<div class="bg-primary/10 border border-primary/20 rounded-lg p-3 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-primary shadow-[0_0_10px_rgba(138,235,255,0.8)]"></div>
+<p class="font-body-md text-[13px] text-primary italic flex gap-2">
+<span class="material-symbols-outlined text-[16px]">psychiatry</span>
+                                "Strong buy signal. Price dropped 4% in last 2 hours. Mileage is 15% below cohort average."
+                            </p>
+</div>
+<!-- Expandable Details -->
+<div class="card-expand-content">
+<div class="card-expand-inner pt-3 border-t border-outline-variant/20 mt-1 flex flex-col gap-2">
+<div class="flex justify-between font-data-mono text-[11px] text-on-surface-variant">
+<span>Location: Berlin, DE</span>
+<span>Listed: 2h ago</span>
+</div>
+<div class="flex justify-between font-data-mono text-[11px] text-on-surface-variant">
+<span>Seller Risk Score:</span>
+<span class="text-secondary">Low (92/100)</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- Deal Card 2 -->
+<article class="deal-card relative bg-surface-container/40 border border-outline-variant/50 rounded-xl overflow-hidden backdrop-blur-sm cursor-pointer group hover:border-primary/50 transition-all duration-300">
+<div class="skeleton-layer absolute inset-0 z-20 bg-surface-container-high">
+<div class="w-full aspect-video shimmer-bg"></div>
+<div class="p-4 flex flex-col gap-3">
+<div class="h-6 w-3/4 shimmer-bg rounded"></div>
+<div class="h-4 w-1/2 shimmer-bg rounded"></div>
+<div class="h-10 w-full shimmer-bg rounded mt-2"></div>
+</div>
+</div>
+<div class="relative w-full aspect-video bg-surface-container-highest overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="An aggressive looking black Audi A3 S-Line sitting alone on a wet tarmac surface at night. The minimal lighting focuses purely on the sharp angles of the car, utilizing a cool cyan and deep slate color palette. The aesthetic is heavily glassmorphic and technical, resembling a high-density data monitoring dashboard visual where shadows are profound and highlights are piercing." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDS7AvP52YSDMGVngJO-ixxKOgKglkWiWh6GMwP6jL5WWOYxl13aX65bZiKuock8MWyUxkS9OGqmSW33Yjp1qibvu8FKFZ2lYTqvyk6xoU1rAKlTSs3DGIaM5YXFCOd1TaVAkbLDHyAKDH-nXIbsJDpfgA52emg7Q_lYbhr3laXSp6z9_LhI7pER-MV8afR0GHUXzgobBAQbPBDdSjerMLDEQkQL4aUmTkKnArgqLJYanjBTKqouYH3My2uiMXO3a9YfaCntoEvxSI');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+<div class="absolute top-3 right-3 bg-secondary-container/20 text-secondary border border-secondary/40 font-label-sm text-[10px] px-2 py-1 rounded-sm backdrop-blur-md flex items-center gap-1 shadow-[0_0_15px_rgba(69,223,164,0.15)]">
+<span class="material-symbols-outlined text-[12px]">trending_down</span>
+                            -12% MARKET
+                        </div>
+<div class="absolute bottom-3 left-4">
+<div class="font-display-lg text-headline-lg text-inverse-surface tracking-tight drop-shadow-lg">€ 18,900</div>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">Audi A3 2.0 TDI S-Line</h3>
+<span class="font-data-mono text-[12px] text-on-surface-variant bg-surface px-2 py-1 rounded border border-outline-variant/30">112,500 km</span>
+</div>
+<div class="bg-primary/10 border border-primary/20 rounded-lg p-3 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-primary shadow-[0_0_10px_rgba(138,235,255,0.8)]"></div>
+<p class="font-body-md text-[13px] text-primary italic flex gap-2">
+<span class="material-symbols-outlined text-[16px]">psychiatry</span>
+                                "Solid value. S-Line trim package adds significant resale margin. Minor cosmetic flags detected."
+                            </p>
+</div>
+<div class="card-expand-content">
+<div class="card-expand-inner pt-3 border-t border-outline-variant/20 mt-1 flex flex-col gap-2">
+<div class="flex justify-between font-data-mono text-[11px] text-on-surface-variant">
+<span>Location: Munich, DE</span>
+<span>Listed: 5h ago</span>
+</div>
+<div class="flex justify-between font-data-mono text-[11px] text-on-surface-variant">
+<span>Seller Risk Score:</span>
+<span class="text-secondary">Medium (78/100)</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+</section>
+<!-- Tracked Items -->
+<section class="flex flex-col gap-3 mt-4">
+<div class="flex justify-between items-center">
+<h2 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">radar</span>
+                        Active Trackers
+                    </h2>
+<span class="font-data-mono text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/30">14 Active</span>
+</div>
+<div class="flex flex-col border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-low/50">
+<div class="flex justify-between items-center p-3 border-b border-outline-variant/30 hover:bg-surface/60 transition-colors cursor-pointer">
+<div class="flex flex-col gap-1">
+<span class="font-title-md text-[14px] text-on-surface">"Golf 1.6 TDI &lt; 100k km"</span>
+<span class="font-data-mono text-[10px] text-on-surface-variant">Param: Max €15k, DE/AT/CH</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+<div class="flex justify-between items-center p-3 border-b border-outline-variant/30 hover:bg-surface/60 transition-colors cursor-pointer">
+<div class="flex flex-col gap-1">
+<span class="font-title-md text-[14px] text-on-surface">"BMW 320d Touring M-Sport"</span>
+<span class="font-data-mono text-[10px] text-on-surface-variant">Param: 2018+, Auto, Radar cruise</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+<div class="flex justify-between items-center p-3 hover:bg-surface/60 transition-colors cursor-pointer">
+<div class="flex flex-col gap-1">
+<span class="font-title-md text-[14px] text-on-surface-variant">"Tesla Model 3 LR Fire Sale"</span>
+<span class="font-data-mono text-[10px] text-error flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                API Limit Reached
+                            </span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Error Toast -->
+<div class="fixed bottom-safe left-1/2 -translate-x-1/2 translate-y-full opacity-0 z-50 transition-all duration-300 ease-out flex items-center gap-3 bg-error-container/90 border border-error/50 backdrop-blur-md px-4 py-3 rounded-lg shadow-2xl w-[90%] max-w-sm mb-4" id="error-toast">
+<span class="material-symbols-outlined text-error">warning</span>
+<div class="flex flex-col">
+<span class="font-title-md text-[14px] text-on-error-container font-semibold">Analyst Sync Failure</span>
+<span class="font-data-mono text-[11px] text-on-error-container/80">Connection timeout to core valuation engine.</span>
+</div>
+<button class="ml-auto text-on-error-container hover:text-error transition-colors" onclick="hideErrorToast()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<script>
+        // Simulate initial load (Shimmer removal)
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const skeletons = document.querySelectorAll('.skeleton-layer');
+                skeletons.forEach(skel => {
+                    skel.style.opacity = '0';
+                    skel.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => skel.remove(), 500);
+                });
+            }, 1200);
+        });
+
+        // Command Input Interaction
+        const input = document.getElementById('command-input');
+        const dot = document.getElementById('command-status-dot');
+        const spinner = document.getElementById('command-loading');
+
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = this.value.trim();
+                if(!val) return;
+
+                // Loading State
+                this.disabled = true;
+                this.classList.add('opacity-50');
+                dot.classList.add('hidden');
+                spinner.classList.remove('hidden');
+
+                // Simulate processing delay
+                setTimeout(() => {
+                    this.disabled = false;
+                    this.classList.remove('opacity-50');
+                    this.value = '';
+                    spinner.classList.add('hidden');
+                    dot.classList.remove('hidden');
+                    
+                    // Flash primary border
+                    this.classList.add('border-primary', 'shadow-[0_0_15px_rgba(138,235,255,0.3)]');
+                    setTimeout(() => {
+                        this.classList.remove('border-primary', 'shadow-[0_0_15px_rgba(138,235,255,0.3)]');
+                    }, 500);
+
+                }, 1500);
+            }
+        });
+
+        // Card Expand Logic
+        const cards = document.querySelectorAll('.deal-card');
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const wasExpanded = card.classList.contains('card-expanded');
+                // Close others
+                cards.forEach(c => c.classList.remove('card-expanded', 'ring-1', 'ring-primary/50'));
+                
+                if (!wasExpanded) {
+                    card.classList.add('card-expanded', 'ring-1', 'ring-primary/50');
+                }
+            });
+        });
+
+        // Toast Logic
+        const toast = document.getElementById('error-toast');
+        let toastTimeout;
+
+        function showErrorToast() {
+            clearTimeout(toastTimeout);
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            toast.classList.add('-translate-y-4', 'opacity-100');
+            
+            toastTimeout = setTimeout(() => {
+                hideErrorToast();
+            }, 4000);
+        }
+
+        function hideErrorToast() {
+            toast.classList.add('translate-y-full', 'opacity-0');
+            toast.classList.remove('-translate-y-4', 'opacity-100');
+        }
+
+        // Simulate Ticker Data Updates
+        const tickerTrack = document.querySelector('.ticker-track');
+        setInterval(() => {
+            // Just a visual flash to simulate data push
+            tickerTrack.style.opacity = '0.7';
+            setTimeout(() => {
+                tickerTrack.style.opacity = '1';
+            }, 150);
+        }, 5000);
+
+    </script>
+</body></html>

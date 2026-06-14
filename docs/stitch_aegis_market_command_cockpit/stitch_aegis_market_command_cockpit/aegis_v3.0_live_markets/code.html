@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AEGIS V3.0 - Markets</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#00452e",
+                        "on-secondary-fixed-variant": "#005137",
+                        "surface": "#0c1324",
+                        "on-surface-variant": "#bbc9cd",
+                        "on-tertiary-fixed-variant": "#891933",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#2fd9f4",
+                        "surface-dim": "#0c1324",
+                        "tertiary-fixed": "#ffdadc",
+                        "secondary-fixed-dim": "#45dfa4",
+                        "primary-fixed": "#a2eeff",
+                        "primary": "#8aebff",
+                        "primary-container": "#22d3ee",
+                        "surface-container": "#191f31",
+                        "on-tertiary": "#67001f",
+                        "on-primary": "#00363e",
+                        "on-tertiary-container": "#94223a",
+                        "tertiary-container": "#ffaab2",
+                        "surface-container-low": "#151b2d",
+                        "surface-variant": "#2e3447",
+                        "inverse-primary": "#006877",
+                        "error": "#ffb4ab",
+                        "outline-variant": "#3c494c",
+                        "on-background": "#dce1fb",
+                        "on-tertiary-fixed": "#400010",
+                        "on-primary-container": "#005763",
+                        "tertiary": "#ffd2d5",
+                        "secondary": "#45dfa4",
+                        "on-secondary": "#003825",
+                        "on-error": "#690005",
+                        "surface-tint": "#2fd9f4",
+                        "outline": "#859397",
+                        "on-secondary-fixed": "#002114",
+                        "on-primary-fixed": "#001f25",
+                        "tertiary-fixed-dim": "#ffb2b9",
+                        "on-primary-fixed-variant": "#004e5a",
+                        "secondary-fixed": "#68fcbf",
+                        "surface-container-high": "#23293c",
+                        "surface-bright": "#33394c",
+                        "surface-container-lowest": "#070d1f",
+                        "error-container": "#93000a",
+                        "background": "#0c1324",
+                        "secondary-container": "#00bd85",
+                        "inverse-surface": "#dce1fb",
+                        "inverse-on-surface": "#2a3043",
+                        "surface-container-highest": "#2e3447",
+                        "on-surface": "#dce1fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "container-max": "1920px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Geist"],
+                        "title-md": ["Geist"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-sm": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "title-md": ["18px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "data-mono": ["13px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-surface'); font-family: 'Geist', sans-serif; }
+        .font-data-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(12, 19, 36, 0.4); backdrop-filter: blur(8px); border: 1px solid theme('colors.surface-variant'); }
+        .glass-card { background: theme('colors.surface-container'); border: 1px solid theme('colors.surface-variant'); }
+        
+        /* Sparkline simple css drawings for demo */
+        .spark-up { background: linear-gradient(to right, theme('colors.surface-container') 0%, theme('colors.surface-container') 50%, theme('colors.secondary-container') 100%); height: 2px; width: 40px; position: relative; }
+        .spark-down { background: linear-gradient(to right, theme('colors.surface-container') 0%, theme('colors.surface-container') 50%, theme('colors.error') 100%); height: 2px; width: 40px; position: relative; }
+        
+        /* Shimmer */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .animate-shimmer {
+            background: linear-gradient(90deg, rgba(46, 52, 71, 0) 0%, rgba(46, 52, 71, 0.5) 50%, rgba(46, 52, 71, 0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased pb-24 pt-16">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-container/40 backdrop-blur-sm border-b border-outline-variant/30 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-2xl">shield</span>
+<span class="font-headline-md text-headline-md-mobile md:text-headline-md text-primary tracking-wider font-bold">AEGIS V3.0</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="relative flex h-8 w-8 overflow-hidden rounded-full border border-surface-variant bg-surface-container-high items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">person</span>
+</span>
+</div>
+</header>
+<!-- Sticky Command Bar -->
+<div class="sticky top-16 z-40 w-full glass-panel border-b border-outline-variant/20 px-margin-mobile py-2 flex items-center justify-between gap-2 shadow-lg shadow-background/50">
+<div class="flex-1 flex items-center bg-surface-container-high rounded-lg px-3 py-1.5 border border-surface-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant/50 w-full p-0" placeholder="Search markets..." type="text"/>
+</div>
+<button class="p-1.5 rounded-lg bg-surface-container hover:bg-surface-variant border border-surface-variant text-on-surface-variant transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+<button class="p-1.5 rounded-lg bg-surface-container hover:bg-surface-variant border border-surface-variant text-on-surface-variant transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">sort</span>
+</button>
+</div>
+<!-- Main Canvas -->
+<main class="px-margin-mobile py-4 flex flex-col gap-unit">
+<!-- Header Info -->
+<div class="flex justify-between items-end mb-2">
+<div>
+<h1 class="font-title-md text-title-md text-on-surface">Live Markets</h1>
+<p class="font-data-mono text-data-mono text-on-surface-variant text-xs mt-1">SYS.OP.MODE: REALTIME</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="font-data-mono text-data-mono text-xs text-secondary">SYNCED</span>
+</div>
+</div>
+<!-- Market List -->
+<div class="flex flex-col gap-2">
+<!-- Asset 1 -->
+<div class="glass-card rounded-xl p-3 flex items-center justify-between hover:bg-surface-variant/30 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 w-1/3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-surface-variant group-hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface text-sm">currency_bitcoin</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">BTC</div>
+<div class="font-data-mono text-[10px] text-on-surface-variant uppercase">Bitcoin</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center w-1/4">
+<div class="spark-up"></div>
+</div>
+<div class="flex flex-col items-end w-1/3">
+<div class="font-data-mono text-sm text-on-surface font-bold">$64,210.50</div>
+<div class="font-data-mono text-[10px] text-secondary bg-secondary/10 px-1.5 py-0.5 rounded flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[10px]">trending_up</span>
+                        +2.4%
+                    </div>
+</div>
+<div class="pl-2 border-l border-surface-variant ml-2 flex items-center">
+<button class="bg-primary/10 text-primary hover:bg-primary hover:text-on-primary font-label-sm text-[10px] px-2 py-1 rounded transition-colors uppercase tracking-wider">
+                        Trade
+                    </button>
+</div>
+</div>
+<!-- Asset 2 -->
+<div class="glass-card rounded-xl p-3 flex items-center justify-between hover:bg-surface-variant/30 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 w-1/3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-surface-variant group-hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface text-sm">data_object</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">ETH</div>
+<div class="font-data-mono text-[10px] text-on-surface-variant uppercase">Ethereum</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center w-1/4">
+<div class="spark-down"></div>
+</div>
+<div class="flex flex-col items-end w-1/3">
+<div class="font-data-mono text-sm text-on-surface font-bold">$3,450.20</div>
+<div class="font-data-mono text-[10px] text-error bg-error/10 px-1.5 py-0.5 rounded flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[10px]">trending_down</span>
+                        -1.2%
+                    </div>
+</div>
+<div class="pl-2 border-l border-surface-variant ml-2 flex items-center">
+<button class="bg-primary/10 text-primary hover:bg-primary hover:text-on-primary font-label-sm text-[10px] px-2 py-1 rounded transition-colors uppercase tracking-wider">
+                        Trade
+                    </button>
+</div>
+</div>
+<!-- Asset 3 -->
+<div class="glass-card rounded-xl p-3 flex items-center justify-between hover:bg-surface-variant/30 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 w-1/3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-surface-variant group-hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface text-sm">link</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">SOL</div>
+<div class="font-data-mono text-[10px] text-on-surface-variant uppercase">Solana</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center w-1/4">
+<div class="spark-up"></div>
+</div>
+<div class="flex flex-col items-end w-1/3">
+<div class="font-data-mono text-sm text-on-surface font-bold">$142.80</div>
+<div class="font-data-mono text-[10px] text-secondary bg-secondary/10 px-1.5 py-0.5 rounded flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[10px]">trending_up</span>
+                        +5.7%
+                    </div>
+</div>
+<div class="pl-2 border-l border-surface-variant ml-2 flex items-center">
+<button class="bg-primary/10 text-primary hover:bg-primary hover:text-on-primary font-label-sm text-[10px] px-2 py-1 rounded transition-colors uppercase tracking-wider">
+                        Trade
+                    </button>
+</div>
+</div>
+<!-- Asset 4 -->
+<div class="glass-card rounded-xl p-3 flex items-center justify-between hover:bg-surface-variant/30 transition-colors cursor-pointer group border-error/30 bg-error/5">
+<div class="flex items-center gap-3 w-1/3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-error/50">
+<span class="material-symbols-outlined text-error text-sm">warning</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">XRP</div>
+<div class="font-data-mono text-[10px] text-error uppercase">High Vol</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center w-1/4">
+<div class="spark-down w-full" style="background: linear-gradient(to right, theme('colors.error') 0%, theme('colors.surface-container') 50%, theme('colors.error') 100%);"></div>
+</div>
+<div class="flex flex-col items-end w-1/3">
+<div class="font-data-mono text-sm text-error font-bold">$0.58</div>
+<div class="font-data-mono text-[10px] text-error bg-error/10 px-1.5 py-0.5 rounded flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[10px]">trending_down</span>
+                        -8.4%
+                    </div>
+</div>
+<div class="pl-2 border-l border-surface-variant ml-2 flex items-center">
+<button class="bg-error/10 text-error hover:bg-error hover:text-on-error font-label-sm text-[10px] px-2 py-1 rounded transition-colors uppercase tracking-wider">
+                        Halt
+                    </button>
+</div>
+</div>
+<!-- Asset 5 -->
+<div class="glass-card rounded-xl p-3 flex items-center justify-between hover:bg-surface-variant/30 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 w-1/3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-surface-variant group-hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface text-sm">diamond</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">ADA</div>
+<div class="font-data-mono text-[10px] text-on-surface-variant uppercase">Cardano</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center w-1/4">
+<div class="w-10 h-0.5 bg-surface-variant"></div>
+</div>
+<div class="flex flex-col items-end w-1/3">
+<div class="font-data-mono text-sm text-on-surface font-bold">$0.45</div>
+<div class="font-data-mono text-[10px] text-on-surface-variant bg-surface-variant/30 px-1.5 py-0.5 rounded flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[10px]">horizontal_rule</span>
+                        0.0%
+                    </div>
+</div>
+<div class="pl-2 border-l border-surface-variant ml-2 flex items-center">
+<button class="bg-primary/10 text-primary hover:bg-primary hover:text-on-primary font-label-sm text-[10px] px-2 py-1 rounded transition-colors uppercase tracking-wider">
+                        Trade
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-2 md:hidden bg-surface-container/60 backdrop-blur-md z-50 border-t border-outline-variant/20">
+<!-- Intelligence (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-variant/30 active:scale-90 transition-transform rounded-xl">
+<span class="material-symbols-outlined mb-1" data-weight="fill">analytics</span>
+<span class="font-label-sm text-label-sm">Intelligence</span>
+</button>
+<!-- Markets (Active) -->
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl p-2 hover:bg-surface-variant/30 active:scale-90 transition-transform">
+<span class="material-symbols-outlined mb-1" data-weight="fill">query_stats</span>
+<span class="font-label-sm text-label-sm">Markets</span>
+</button>
+<!-- Tracked (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-variant/30 active:scale-90 transition-transform rounded-xl">
+<span class="material-symbols-outlined mb-1" data-weight="fill">star</span>
+<span class="font-label-sm text-label-sm">Tracked</span>
+</button>
+<!-- System (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-variant/30 active:scale-90 transition-transform rounded-xl">
+<span class="material-symbols-outlined mb-1" data-weight="fill">settings</span>
+<span class="font-label-sm text-label-sm">System</span>
+</button>
+</nav>
+</body></html>

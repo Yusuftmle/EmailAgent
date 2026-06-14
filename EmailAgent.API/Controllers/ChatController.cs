@@ -148,6 +148,78 @@ public class ChatController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
+
+    [HttpPost("upload")]
+    public async Task<ActionResult<ChatResponseDto>> UploadDocument([FromForm] Microsoft.AspNetCore.Http.IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file uploaded.");
+        }
+
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Session is invalid. Please login again.");
+
+            var sessionId = userIdString;
+            _logger.LogInformation("Document upload received: {FileName} ({Size} bytes) for session: {SessionId}", file.FileName, file.Length, sessionId);
+
+            var extension = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
+            string extractedText = string.Empty;
+
+            if (extension == ".txt" || extension == ".md" || extension == ".json" || extension == ".csv")
+            {
+                using var reader = new System.IO.StreamReader(file.OpenReadStream());
+                extractedText = await reader.ReadToEndAsync();
+            }
+            else if (extension == ".pdf")
+            {
+                var stringBuilder = new System.Text.StringBuilder();
+                using (var memoryStream = new System.IO.MemoryStream())
+                {
+                    await file.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+                    using (var document = UglyToad.PdfPig.PdfDocument.Open(memoryStream))
+                    {
+                        foreach (var page in document.GetPages())
+                        {
+                            stringBuilder.AppendLine(page.Text);
+                        }
+                    }
+                }
+                extractedText = stringBuilder.ToString();
+            }
+            else
+            {
+                return BadRequest("Unsupported file format. Only PDF, TXT, MD, CSV, and JSON files are supported.");
+            }
+
+            if (extractedText.Length > 15000)
+            {
+                extractedText = extractedText.Substring(0, 15000) + "\n... [Document Truncated] ...";
+            }
+
+            // Construct prompt for the LLM
+            var userPrompt = $"[Yüklenen Belge: {file.FileName}]\n\n{extractedText}\n\nLütfen bu belgeyi analiz et ve özetle.";
+            
+            // Send to chat service
+            var reply = await _chatService.SendMessageAsync(sessionId, userPrompt);
+
+            return Ok(new ChatResponseDto
+            {
+                Reply = reply,
+                SessionId = sessionId,
+                Timestamp = DateTime.UtcNow,
+                TranscribedText = $"[Dosya Yüklendi: {file.FileName}]"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload and process document.");
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
 }
 
 public class ChatRequestDto

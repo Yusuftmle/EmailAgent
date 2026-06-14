@@ -88,33 +88,33 @@ export const DailySummary: React.FC<DailySummaryProps> = ({ onGoToPreferences })
       {/* Top dashboard controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            AI Inbox <span className="gradient-text">Orchestrator</span>
+          <h1 className="text-[24px] md:text-headline-lg font-semibold tracking-tight text-on-surface">
+            Intelligence Nexus
           </h1>
-          <p className="text-slate-400 mt-1 text-xs md:text-sm">
-            Interactive cognitive inbox agent analyzing your latest emails.
+          <p className="text-on-surface-variant mt-1 text-xs font-data-mono uppercase tracking-wider">
+            SYSTEM // INBOX COGNITIVE AGENT // ANALYZING LATEST FEEDS
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <motion.button 
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onGoToPreferences}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 hover:bg-slate-850 hover:text-white transition-all text-xs font-semibold text-slate-300"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container border border-outline-variant/30 hover:bg-surface-container-high hover:text-on-surface transition-all text-label-sm font-semibold text-on-surface-variant"
           >
-            <Settings size={15} />
+            <Settings size={14} />
             <span>Preferences</span>
           </motion.button>
           
           <motion.button 
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleSyncNow}
             disabled={isSyncing}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-bg hover:opacity-90 active:scale-[0.98] transition-all text-xs font-bold text-white shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary hover:text-on-primary transition-all text-label-sm font-semibold text-primary disabled:opacity-50"
           >
-            <RefreshCcw size={15} className={isSyncing ? 'animate-spin' : ''} />
+            <RefreshCcw size={14} className={isSyncing ? 'animate-spin' : ''} />
             <span>{isSyncing ? 'Syncing...' : 'Sync Inbox'}</span>
           </motion.button>
         </div>
@@ -127,7 +127,7 @@ export const DailySummary: React.FC<DailySummaryProps> = ({ onGoToPreferences })
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mb-6 p-3 text-center text-xs font-semibold rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-400"
+            className="mb-6 p-3 text-center text-xs font-data-mono rounded-lg bg-primary/10 border border-primary/25 text-primary"
           >
             {syncStatus}
           </motion.div>
@@ -136,51 +136,51 @@ export const DailySummary: React.FC<DailySummaryProps> = ({ onGoToPreferences })
 
       {/* Quick Statistics Panels */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="glass-panel p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+        <div className="glass-panel p-4 rounded-xl border border-outline-variant/30 flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Processed</span>
-            <h3 className="text-2xl font-black mt-1 text-slate-200">{totalCount}</h3>
+            <span className="text-[10px] text-on-surface-variant/75 uppercase tracking-widest font-semibold font-geist">Processed</span>
+            <h3 className="text-2xl font-semibold font-data-mono mt-1 text-on-surface">{totalCount}</h3>
           </div>
-          <Inbox className="text-slate-500" size={24} />
+          <Inbox className="text-on-surface-variant/40" size={20} />
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-red-500/10 bg-red-950/5 flex items-center justify-between glow-hover transition-all duration-300">
+        <div className="glass-panel p-4 rounded-xl border border-tertiary-container/30 bg-tertiary-container/5 flex items-center justify-between transition-all duration-300">
           <div>
-            <span className="text-[10px] text-red-400/80 uppercase tracking-widest font-semibold">Important</span>
-            <h3 className="text-2xl font-black mt-1 text-red-400">{importantCount}</h3>
+            <span className="text-[10px] text-tertiary uppercase tracking-widest font-semibold font-geist">Important</span>
+            <h3 className="text-2xl font-semibold font-data-mono mt-1 text-tertiary-container">{importantCount}</h3>
           </div>
-          <AlertTriangle className="text-red-400/60 animate-pulse" size={24} />
+          <AlertTriangle className="text-tertiary-container/60 animate-pulse" size={20} />
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-indigo-500/10 bg-indigo-950/5 flex items-center justify-between glow-hover transition-all duration-300">
+        <div className="glass-panel p-4 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between transition-all duration-300">
           <div>
-            <span className="text-[10px] text-indigo-400/80 uppercase tracking-widest font-semibold">Normal</span>
-            <h3 className="text-2xl font-black mt-1 text-indigo-400">{normalCount}</h3>
+            <span className="text-[10px] text-primary uppercase tracking-widest font-semibold font-geist">Normal</span>
+            <h3 className="text-2xl font-semibold font-data-mono mt-1 text-primary">{normalCount}</h3>
           </div>
-          <ShieldCheck className="text-indigo-400/60" size={24} />
+          <ShieldCheck className="text-primary/60" size={20} />
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-slate-500/10 bg-slate-900/5 flex items-center justify-between">
+        <div className="glass-panel p-4 rounded-xl border border-outline-variant/35 bg-surface-container-low/20 flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Junk/Spam</span>
-            <h3 className="text-2xl font-black mt-1 text-slate-400">{spamCount}</h3>
+            <span className="text-[10px] text-on-surface-variant/60 uppercase tracking-widest font-semibold font-geist">Junk/Spam</span>
+            <h3 className="text-2xl font-semibold font-data-mono mt-1 text-on-surface-variant/80">{spamCount}</h3>
           </div>
-          <MailWarning className="text-slate-500/50" size={24} />
+          <MailWarning className="text-on-surface-variant/40" size={20} />
         </div>
       </div>
 
       {/* Tabs list with indicator */}
-      <div className="flex border-b border-white/5 mb-6 overflow-x-auto">
+      <div className="flex border-b border-outline-variant/20 mb-6 overflow-x-auto hide-scrollbar">
         {(['all', 'important', 'normal', 'spam'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-3 border-b-2 text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+            className={`px-5 py-3 border-b-2 text-label-sm font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
               activeTab === tab 
-                ? tab === 'important' ? 'border-red-500 text-red-400' :
-                  tab === 'spam' ? 'border-slate-500 text-slate-400' :
-                  'border-cyan-500 text-cyan-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? tab === 'important' ? 'border-tertiary text-tertiary-container' :
+                  tab === 'spam' ? 'border-outline text-on-surface-variant' :
+                  'border-primary text-primary'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
             {tab === 'all' ? 'All Inbox' : tab} ({
@@ -195,15 +195,24 @@ export const DailySummary: React.FC<DailySummaryProps> = ({ onGoToPreferences })
 
       {/* Staggered lists layout */}
       {isLoading ? (
-        <div className="py-20 flex flex-col items-center justify-center">
-          <div className="w-8 h-8 border-3 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs text-slate-400 mt-4 font-semibold uppercase tracking-wider">Syncing with database core...</span>
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="glass-panel p-5 rounded-xl border border-outline-variant/20 flex flex-col gap-3">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg shimmer-bg" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/4 rounded shimmer-bg" />
+                  <div className="h-3 w-1/2 rounded shimmer-bg" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredEmails.length === 0 ? (
-        <div className="glass-panel py-20 px-6 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center">
-          <Inbox size={36} className="text-slate-600 mb-3" />
-          <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Queue Clear</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
+        <div className="glass-panel py-20 px-6 rounded-2xl border border-outline-variant/20 flex flex-col items-center justify-center text-center">
+          <Inbox size={32} className="text-on-surface-variant/40 mb-3" />
+          <h3 className="text-sm font-semibold text-on-surface uppercase tracking-wider">Queue Clear</h3>
+          <p className="text-xs text-on-surface-variant mt-1 max-w-xs leading-relaxed">
             There are no active records matching "{activeTab}" in today's mailbox list. Click "Sync Inbox" to check again.
           </p>
         </div>

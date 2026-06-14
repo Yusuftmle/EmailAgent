@@ -1,43 +1,41 @@
 using System;
-using System.Net.Http;
+using System.IO;
 using System.Threading.Tasks;
-using Npgsql;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using EmailAgent.Infrastructure.Services;
 
-var connString = "Host=localhost;Database=emailagent_v2;Username=postgres;Password=postgres;Include Error Detail=true";
+var loggerFactory = LoggerFactory.Create(builder => 
+{
+    builder.AddConsole().SetMinimumLevel(LogLevel.Information);
+});
+
+var logger = loggerFactory.CreateLogger<PlaywrightScraperService>();
+var scraper = new PlaywrightScraperService(logger);
+
 try
 {
-    using var conn = new NpgsqlConnection(connString);
-    conn.Open();
-    using var cmd = new NpgsqlCommand("SELECT \"ApiKey\" FROM \"UserPreferences\" WHERE \"AiProvider\" = 'Gemini' LIMIT 1", conn);
-    var key = cmd.ExecuteScalar() as string;
+    Console.WriteLine("Starting direct URL scraping test (GetHtmlAsync) against kleinanzeigen.de...");
     
-    if (string.IsNullOrEmpty(key))
-    {
-        Console.WriteLine("No valid Gemini API key found in DB.");
-        return;
-    }
+    // Direct category/search URL on Kleinanzeigen
+    var targetUrl = "https://www.kleinanzeigen.de/s-autos/golf/c216";
 
-    using var client = new HttpClient();
-    var response = await client.GetAsync($"https://generativelanguage.googleapis.com/v1beta/models?key={key}");
-    var content = await response.Content.ReadAsStringAsync();
+    var html = await scraper.GetHtmlAsync(targetUrl);
     
-    if (response.IsSuccessStatusCode)
-    {
-        using var doc = JsonDocument.Parse(content);
-        var models = doc.RootElement.GetProperty("models");
-        Console.WriteLine("Available Models:");
-        foreach (var model in models.EnumerateArray())
-        {
-            Console.WriteLine(model.GetProperty("name").GetString());
-        }
-    }
-    else
-    {
-        Console.WriteLine($"Error fetching models: {response.StatusCode} - {content}");
-    }
+    Console.WriteLine($"\nSUCCESS! Extracted page HTML length: {html.Length}");
+    
+    // Save output to verification file
+    await File.WriteAllTextAsync("scraped_page.html", html);
+    Console.WriteLine("Scraped page content saved to scraped_page.html");
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Exception: {ex.Message}");
+    Console.WriteLine($"\nSCRAPER TEST FAILED: {ex.Message}");
+    if (ex.InnerException != null)
+    {
+        Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+    }
+}
+finally
+{
+    await scraper.DisposeAsync();
 }

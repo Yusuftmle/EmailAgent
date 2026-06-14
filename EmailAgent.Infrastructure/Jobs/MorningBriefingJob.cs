@@ -66,6 +66,33 @@ public class MorningBriefingJob
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task SendSingleReminderAsync(Guid reminderId)
+    {
+        var reminder = await _dbContext.Reminders.FindAsync(reminderId);
+        if (reminder == null || reminder.IsSent) return;
+
+        var userPrefs = await _dbContext.UserPreferences.FindAsync(reminder.UserId);
+        if (userPrefs == null) return;
+
+        var msg = $"⏰ **HATIRLATICI** ⏰\n\n{reminder.Message}";
+
+        if (!string.IsNullOrEmpty(userPrefs.TelegramChatId))
+            await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, msg);
+
+        reminder.IsSent = true;
+        _dbContext.NotificationLogs.Add(new NotificationLog
+        {
+            UserId = reminder.UserId,
+            Message = msg,
+            Type = "Reminder",
+            SentAt = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync();
+        _logger.LogInformation("Scheduled reminder sent instantly to user {UserId}: {Message}", reminder.UserId, reminder.Message);
+    }
+
+
     private async Task SendMorningBriefingsAsync()
     {
         // Send between 05:00–05:05 UTC (08:00 Turkey time)

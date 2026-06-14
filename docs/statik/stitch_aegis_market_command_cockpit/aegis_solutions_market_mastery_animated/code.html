@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Solutions | Aegis V3.0</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#76777d",
+                        "surface": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#45464d",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#565e74",
+                        "surface-container-low": "#f2f4f6",
+                        "on-background": "#191c1e",
+                        "secondary-container": "#57dffe",
+                        "on-tertiary-fixed": "#07006c",
+                        "secondary-fixed": "#acedff",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "background": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "on-tertiary-fixed-variant": "#2f2ebe",
+                        "primary-container": "#131b2e",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eceef0",
+                        "on-tertiary-container": "#7073ff",
+                        "surface-variant": "#e0e3e5",
+                        "primary": "#0f172a", /* Sapphire Blue override */
+                        "on-secondary-fixed": "#001f26",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "outline-variant": "#c6c6cd",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary": "#000000",
+                        "tertiary-fixed": "#e1e0ff",
+                        "on-secondary-container": "#006172",
+                        "on-primary-container": "#7c839b",
+                        "secondary": "#06b6d4", /* Electric Cyan override */
+                        "inverse-surface": "#2d3133",
+                        "inverse-primary": "#bec6e0",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#dae2fd",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "tertiary-container": "#07006c",
+                        "on-surface": "#0f172a", /* Text primary */
+                        "on-primary-fixed": "#131b2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap-mobile": "80px",
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "section-gap-desktop": "160px",
+                        "gutter": "24px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "label-bold": ["Geist"],
+                        "mono-label": ["Geist Mono"],
+                        "body-md": ["Geist"],
+                        "display-lg-mobile": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "headline-xl": ["Geist"],
+                        "display-lg": ["Geist"]
+                    },
+                    "fontSize": {
+                        "label-bold": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "mono-label": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "display-lg-mobile": ["44px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "headline-md": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "display-lg": ["72px", { "lineHeight": "76px", "letterSpacing": "-0.04em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.08);
+        }
+        .ai-gradient-text {
+            background: linear-gradient(135deg, #0f172a 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Fade-in Animation Classes */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            will-change: opacity, transform;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Shimmer Animation */
+        @keyframes shimmer-sweep {
+            0% {
+                background-position: -200% center;
+            }
+            20% {
+                background-position: 200% center;
+            }
+            100% {
+                background-position: 200% center;
+            }
+        }
+        .btn-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent);
+            background-size: 200% 100%;
+            background-repeat: no-repeat;
+            background-position: -200% center;
+            animation: shimmer-sweep 5s infinite;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased selection:bg-secondary selection:text-white">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
+<div class="flex justify-between items-center max-w-container-max mx-auto px-margin-mobile md:px-gutter h-20">
+<!-- Brand -->
+<a class="text-headline-md font-headline-md text-primary dark:text-on-primary-fixed tracking-tight flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">shield</span>
+                Aegis V3.0
+            </a>
+<!-- Nav Links (Desktop) -->
+<div class="hidden md:flex items-center gap-8">
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold text-label-bold hover:text-primary transition-colors duration-200" href="#">Platform</a>
+<a class="text-primary dark:text-primary-container font-label-bold text-label-bold border-b-2 border-primary h-20 flex items-center opacity-80 transition-all" href="#">Solutions</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold text-label-bold hover:text-primary transition-colors duration-200" href="#">Resources</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold text-label-bold hover:text-primary transition-colors duration-200" href="#">Case Studies</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold text-label-bold hover:text-primary transition-colors duration-200" href="#">Integrations</a>
+</div>
+<!-- Trailing Action -->
+<div class="flex items-center gap-4">
+<button class="hidden md:flex items-center justify-center px-6 py-2.5 bg-primary text-on-primary font-label-bold text-label-bold rounded-lg hover:opacity-90 transition-opacity btn-shimmer">
+                    Get Started
+                </button>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined text-3xl">menu</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="pt-32 pb-section-gap-mobile md:pb-section-gap-desktop">
+<!-- Header Section -->
+<header class="max-w-container-max mx-auto px-margin-mobile md:px-gutter text-center mb-24 md:mb-32 relative py-12 md:py-20">
+<!-- Shader Canvas Background -->
+<canvas class="absolute inset-0 w-full h-full -z-10 opacity-10 pointer-events-none rounded-3xl" id="hero-shader"></canvas>
+<div class="relative z-10">
+<h1 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-primary tracking-tight mb-6">
+                    Tailored for Every <br class="hidden md:block"/> <span class="ai-gradient-text">Market Edge</span>
+</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">
+                    Precision-engineered intelligence modules designed for specific financial sectors. Deploy the Sentinel where you need it most.
+                </p>
+</div>
+</header>
+<!-- Solution Cards (Bento Style) -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mb-section-gap-mobile md:mb-section-gap-desktop">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Institutional Trading -->
+<div class="glass-panel rounded-xl p-8 flex flex-col h-[500px] relative overflow-hidden group fade-in-section" style="transition-delay: 100ms;">
+<div class="absolute top-0 right-0 w-64 h-64 bg-cyan-400/10 rounded-full blur-3xl -mr-20 -mt-20 transition-transform group-hover:scale-110"></div>
+<div class="mb-auto relative z-10">
+<div class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center mb-6 border border-cyan-500/20 text-secondary">
+<span class="material-symbols-outlined text-2xl">monitoring</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary mb-4">Institutional Trading</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">High-frequency data ingestion mapped to predictive models. Outpace latency with our sub-millisecond execution analysis.</p>
+</div>
+<div class="relative z-10 mt-8">
+<ul class="space-y-3 mb-6">
+<li class="flex items-center gap-2 text-mono-label font-mono-label text-primary">
+<span class="material-symbols-outlined text-sm text-secondary">check</span> Dark Pool Analytics
+                            </li>
+<li class="flex items-center gap-2 text-mono-label font-mono-label text-primary">
+<span class="material-symbols-outlined text-sm text-secondary">check</span> Order Routing Optimization
+                            </li>
+</ul>
+<button class="w-full py-3 border border-outline/30 rounded-lg text-label-bold font-label-bold text-primary hover:bg-surface-container transition-colors flex items-center justify-center gap-2 btn-shimmer">
+                            Explore Module <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Retail Intelligence -->
+<div class="glass-panel rounded-xl p-8 flex flex-col h-[500px] relative overflow-hidden group fade-in-section" style="transition-delay: 200ms;">
+<div class="absolute top-0 right-0 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl -mr-20 -mt-20 transition-transform group-hover:scale-110"></div>
+<div class="mb-auto relative z-10">
+<div class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center mb-6 border border-purple-500/20 text-purple-600">
+<span class="material-symbols-outlined text-2xl">group</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary mb-4">Retail Intelligence</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Democratized analytics for scale. Aggregate sentiment, behavior flow, and risk profiles across millions of retail accounts instantly.</p>
+</div>
+<div class="relative z-10 mt-8">
+<ul class="space-y-3 mb-6">
+<li class="flex items-center gap-2 text-mono-label font-mono-label text-primary">
+<span class="material-symbols-outlined text-sm text-purple-600">check</span> Sentiment Heatmaps
+                            </li>
+<li class="flex items-center gap-2 text-mono-label font-mono-label text-primary">
+<span class="material-symbols-outlined text-sm text-purple-600">check</span> Cohort Tracking
+                            </li>
+</ul>
+<button class="w-full py-3 border border-outline/30 rounded-lg text-label-bold font-label-bold text-primary hover:bg-surface-container transition-colors flex items-center justify-center gap-2 btn-shimmer">
+                            Explore Module <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Risk Management -->
+<div class="glass-panel rounded-xl p-8 flex flex-col h-[500px] relative overflow-hidden group fade-in-section" style="transition-delay: 300ms;">
+<div class="absolute top-0 right-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl -mr-20 -mt-20 transition-transform group-hover:scale-110"></div>
+<div class="mb-auto relative z-10">
+<div class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center mb-6 border border-emerald-500/20 text-emerald-600">
+<span class="material-symbols-outlined text-2xl">security</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary mb-4">Risk Management</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Uncompromising security protocols layered with predictive threat modeling. Identify vulnerabilities before they materialize.</p>
+</div>
+<div class="relative z-10 mt-8">
+<ul class="space-y-3 mb-6">
+<li class="flex items-center gap-2 text-mono-label font-mono-label text-primary">
+<span class="material-symbols-outlined text-sm text-emerald-600">check</span> Anomaly Detection
+                            </li>
+<li class="flex items-center gap-2 text-mono-label font-mono-label text-primary">
+<span class="material-symbols-outlined text-sm text-emerald-600">check</span> Exposure Forecasting
+                            </li>
+</ul>
+<button class="w-full py-3 border border-outline/30 rounded-lg text-label-bold font-label-bold text-primary hover:bg-surface-container transition-colors flex items-center justify-center gap-2 btn-shimmer">
+                            Explore Module <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- The Sentinel Deep Dive -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mb-section-gap-mobile md:mb-section-gap-desktop fade-in-section" style="transition-delay: 100ms;">
+<div class="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/20">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+<div class="p-12 md:p-20 flex flex-col justify-center">
+<div class="inline-block px-3 py-1 bg-surface rounded-full text-mono-label font-mono-label text-secondary mb-6 w-max border border-outline-variant/30">
+                            Core Architecture
+                        </div>
+<h2 class="text-headline-xl font-headline-xl text-primary mb-6">Meet The Sentinel</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant mb-8">
+                            More than an algorithm, The Sentinel is our proprietary AI core. It represents a synthesis of watchful security and sharp, predatory intelligence. Constantly scanning the market landscape, it filters signal from noise with unyielding precision.
+                        </p>
+<div class="grid grid-cols-2 gap-8">
+<div>
+<h4 class="text-label-bold font-label-bold text-primary mb-2">Watchful Eye</h4>
+<p class="text-body-md font-body-md text-on-surface-variant text-sm">24/7 monitoring of over 500+ data nodes.</p>
+</div>
+<div>
+<h4 class="text-label-bold font-label-bold text-primary mb-2">Adaptive Response</h4>
+<p class="text-body-md font-body-md text-on-surface-variant text-sm">Real-time recalibration to market volatility.</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container flex items-center justify-center p-12 relative min-h-[400px]">
+<!-- Decorative background for image -->
+<div class="absolute inset-0 bg-gradient-to-br from-surface to-surface-container-low opacity-50"></div>
+<img alt="Aegis AI Core" class="relative z-10 w-full max-w-md object-contain mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUfgkc4eFZ68ucZ72abZ17G1ac3TsJUMixW9NESz4KDK60qV2f4Y8aDPBTjZboIAJddROrre1RCWNg6GbFJXaCcHx7EufAhOvk1drm07VlQoQD-sezH-YVFKWiDWdHbXCcSzi2ehKFZx7-ZAA-uZ0PhcYQqcW_84pZTDe3Nfv8XFrWnefwA_VgNovDNKyZ2sVVNuxiTRUT9v8t5GfOXgy6bUtTOOSHJWM_xIGyWbiY_h-0PIaT4F0BnKlkJ-zFdAlXnfr6LR7hdHo"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Comparison Table -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mb-section-gap-mobile md:mb-section-gap-desktop fade-in-section" style="transition-delay: 100ms;">
+<div class="text-center mb-16">
+<h2 class="text-headline-xl font-headline-xl text-primary mb-4">Aegis vs Legacy</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant">The cost of outdated infrastructure.</p>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden border border-outline-variant/20">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="p-6 text-label-bold font-label-bold text-on-surface-variant border-b border-outline-variant/20">Capability</th>
+<th class="p-6 text-label-bold font-label-bold text-primary border-b border-outline-variant/20 bg-surface/50 w-1/3">Aegis V3.0</th>
+<th class="p-6 text-label-bold font-label-bold text-on-surface-variant border-b border-outline-variant/20 w-1/3">Legacy Systems</th>
+</tr>
+</thead>
+<tbody class="text-body-md font-body-md">
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-sm cursor-default">
+<td class="p-6 text-primary">Data Ingestion Rate</td>
+<td class="p-6 text-secondary font-label-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">bolt</span> Real-time (&lt;1ms)</td>
+<td class="p-6 text-on-surface-variant">Batch Processing (EOD)</td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-sm cursor-default">
+<td class="p-6 text-primary">Threat Detection</td>
+<td class="p-6 text-primary">Predictive (AI-driven)</td>
+<td class="p-6 text-on-surface-variant">Reactive (Rules-based)</td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-sm cursor-default">
+<td class="p-6 text-primary">Architecture</td>
+<td class="p-6 text-primary">Cloud-Native Distributed</td>
+<td class="p-6 text-on-surface-variant">On-Prem Monolithic</td>
+</tr>
+<tr class="hover:bg-surface-container transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-sm cursor-default">
+<td class="p-6 text-primary">Integration Time</td>
+<td class="p-6 text-primary">Days (API First)</td>
+<td class="p-6 text-on-surface-variant">Months (Custom Build)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full pt-section-gap-desktop pb-10 bg-surface-container-low dark:bg-surface-container-high border-t border-outline-variant/10">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter grid grid-cols-2 md:grid-cols-4 gap-gutter">
+<div class="col-span-2 md:col-span-1 mb-8 md:mb-0">
+<a class="text-headline-md font-headline-md text-primary flex items-center gap-2 mb-4" href="#">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">shield</span>
+                    Aegis V3.0
+                </a>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6">
+                    Securing the future of intelligence.
+                </p>
+<div class="text-body-md font-body-md text-on-surface-variant text-sm">
+                    © 2024 Aegis Sentinel Systems. All rights reserved.
+                </div>
+</div>
+<div>
+<h4 class="text-label-bold font-label-bold text-primary mb-4">Platform</h4>
+<ul class="space-y-3">
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Product</a></li>
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Security</a></li>
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">API Documentation</a></li>
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Status</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-label-bold font-label-bold text-primary mb-4">Company</h4>
+<ul class="space-y-3">
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Careers</a></li>
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Sales</a></li>
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Help Center</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-label-bold font-label-bold text-primary mb-4">Legal</h4>
+<ul class="space-y-3">
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
+<li><a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a></li>
+</ul>
+</div>
+</div>
+</footer>
+<script>
+    // Intersection Observer for fade-in animations
+    document.addEventListener("DOMContentLoaded", function() {
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in-section').forEach((section) => {
+            observer.observe(section);
+        });
+
+        // Initialize WebGL Shader
+        const canvas = document.getElementById('hero-shader');
+        if (canvas) {
+            const gl = canvas.getContext('webgl');
+            
+            if (gl) {
+                // Resize canvas to match display size
+                const resize = () => {
+                    canvas.width = canvas.clientWidth;
+                    canvas.height = canvas.clientHeight;
+                    gl.viewport(0, 0, canvas.width, canvas.height);
+                };
+                window.addEventListener('resize', resize);
+                resize();
+
+                const vsSource = `
+                    attribute vec4 aVertexPosition;
+                    void main() {
+                        gl_Position = aVertexPosition;
+                    }
+                `;
+
+                const fsSource = `
+                    precision highp float;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+
+                    // Simplex 2D noise
+                    vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+
+                    float snoise(vec2 v){
+                      const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                               -0.577350269189626, 0.024390243902439);
+                      vec2 i  = floor(v + dot(v, C.yy) );
+                      vec2 x0 = v -   i + dot(i, C.xx);
+                      vec2 i1;
+                      i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                      vec4 x12 = x0.xyxy + C.xxzz;
+                      x12.xy -= i1;
+                      i = mod(i, 289.0);
+                      vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+                      + i.x + vec3(0.0, i1.x, 1.0 ));
+                      vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
+                        dot(x12.zw,x12.zw)), 0.0);
+                      m = m*m ;
+                      m = m*m ;
+                      vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                      vec3 h = abs(x) - 0.5;
+                      vec3 a0 = x - floor(x + 0.5);
+                      vec3 m0 = 1.0 - 1.5*(a0*a0 + h*h);
+                      vec3 g;
+                      g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                      g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                      return 130.0 * dot(m, g);
+                    }
+
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        vec2 mouse = u_mouse / u_resolution;
+                        
+                        // Base color from Aegis V3.0 Precision System (Sapphire Blue #0f172a)
+                        vec3 color1 = vec3(0.0588, 0.0902, 0.1647); 
+                        // Electric Cyan accent (#22d3ee)
+                        vec3 color2 = vec3(0.1333, 0.8275, 0.9333);
+                        
+                        float noise = snoise(uv * 3.0 + u_time * 0.2);
+                        noise += snoise(uv * 6.0 - u_time * 0.1) * 0.5;
+                        
+                        // Interactive pulse based on mouse
+                        float dist = distance(uv, mouse);
+                        float pulse = exp(-dist * 10.0) * (0.5 + 0.5 * sin(u_time * 5.0));
+                        
+                        vec3 finalColor = mix(color1, color2, clamp(noise * 0.3 + pulse * 0.4, 0.0, 1.0));
+                        
+                        gl_FragColor = vec4(finalColor, 1.0);
+                    }
+                `;
+
+                const initShaderProgram = (gl, vsSource, fsSource) => {
+                    const loadShader = (gl, type, source) => {
+                        const shader = gl.createShader(type);
+                        gl.shaderSource(shader, source);
+                        gl.compileShader(shader);
+                        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                            console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+                            gl.deleteShader(shader);
+                            return null;
+                        }
+                        return shader;
+                    };
+
+                    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+                    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+                    const shaderProgram = gl.createProgram();
+                    gl.attachShader(shaderProgram, vertexShader);
+                    gl.attachShader(shaderProgram, fragmentShader);
+                    gl.linkProgram(shaderProgram);
+
+                    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                        console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+                        return null;
+                    }
+                    return shaderProgram;
+                };
+
+                const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
+                const programInfo = {
+                    program: shaderProgram,
+                    attribLocations: {
+                        vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+                    },
+                    uniformLocations: {
+                        time: gl.getUniformLocation(shaderProgram, 'u_time'),
+                        resolution: gl.getUniformLocation(shaderProgram, 'u_resolution'),
+                        mouse: gl.getUniformLocation(shaderProgram, 'u_mouse'),
+                    },
+                };
+
+                const buffers = {
+                    position: gl.createBuffer(),
+                };
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+                const positions = [
+                    -1.0,  1.0,
+                     1.0,  1.0,
+                    -1.0, -1.0,
+                     1.0, -1.0,
+                ];
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+                let mouseX = 0;
+                let mouseY = 0;
+                canvas.addEventListener('mousemove', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    mouseX = e.clientX - rect.left;
+                    mouseY = canvas.height - (e.clientY - rect.top); // Flip Y
+                });
+
+                const render = (now) => {
+                    now *= 0.001; // convert to seconds
+                    
+                    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+                    gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 2, gl.FLOAT, false, 0, 0);
+                    gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+
+                    gl.useProgram(programInfo.program);
+
+                    gl.uniform1f(programInfo.uniformLocations.time, now);
+                    gl.uniform2f(programInfo.uniformLocations.resolution, canvas.width, canvas.height);
+                    gl.uniform2f(programInfo.uniformLocations.mouse, mouseX, mouseY);
+
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+                    requestAnimationFrame(render);
+                };
+                requestAnimationFrame(render);
+            }
+        }
+    });
+</script>
+</body></html>

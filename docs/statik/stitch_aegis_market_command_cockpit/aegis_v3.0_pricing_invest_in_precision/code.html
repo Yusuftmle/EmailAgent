@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aegis V3.0 - Pricing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Glassmorphism utilities */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.08);
+        }
+        
+        .glass-card-highlight {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.1), 0 20px 50px -12px rgba(15, 23, 42, 0.12);
+            position: relative;
+        }
+        
+        .glass-card-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0f172a, #06b6d4);
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+        }
+
+        /* Custom Gradients */
+        .text-gradient {
+            background: linear-gradient(90deg, #0f172a, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .bg-gradient-ai {
+            background: linear-gradient(135deg, #0f172a 0%, #06b6d4 100%);
+        }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #06b6d4;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #0f172a;
+        }
+        .toggle-checkbox:checked + .toggle-label:after {
+            transform: translateX(100%);
+            border-color: white;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#dae2fd",
+                        "inverse-surface": "#2d3133",
+                        "on-tertiary-fixed-variant": "#2f2ebe",
+                        "on-tertiary-container": "#7073ff",
+                        "on-surface-variant": "#45464d",
+                        "tertiary": "#000000",
+                        "surface-tint": "#565e74",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#d8dadc",
+                        "surface-bright": "#f7f9fb",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "primary": "#000000",
+                        "on-error": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "inverse-primary": "#bec6e0",
+                        "outline": "#76777d",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-container": "#006172",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "on-primary-fixed": "#131b2e",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-background": "#191c1e",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "inverse-on-surface": "#eff1f3",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#7c839b",
+                        "secondary": "#00687a",
+                        "primary-container": "#131b2e",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed": "#001f26",
+                        "background": "#f8fafc", /* Adjusted to cool gray for flat depth */
+                        "secondary-fixed": "#acedff",
+                        "secondary-container": "#57dffe",
+                        "on-tertiary-fixed": "#07006c",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#e1e0ff",
+                        "tertiary-container": "#07006c",
+                        "surface-container-high": "#e6e8ea",
+                        "on-surface": "#191c1e",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c6c6cd",
+                        "sapphire": "#0f172a",
+                        "cyan-electric": "#06b6d4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "section-gap-mobile": "80px",
+                        "container-max": "1280px",
+                        "section-gap-desktop": "160px"
+                    },
+                    "fontFamily": {
+                        "label-bold": ["Geist", "sans-serif"],
+                        "display-lg": ["Geist", "sans-serif"],
+                        "display-lg-mobile": ["Geist", "sans-serif"],
+                        "headline-xl": ["Geist", "sans-serif"],
+                        "headline-md": ["Geist", "sans-serif"],
+                        "mono-label": ["Geist Mono", "monospace"],
+                        "body-md": ["Geist", "sans-serif"],
+                        "body-lg": ["Geist", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-bold": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "display-lg": ["72px", { "lineHeight": "76px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "display-lg-mobile": ["44px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "mono-label": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased selection:bg-cyan-electric selection:text-white">
+<!-- Top Navigation (Shared Component) -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-xl border-b border-outline-variant/20 dark:border-outline/20 shadow-sm transition-all duration-200">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter flex items-center justify-between h-20">
+<!-- Brand Logo -->
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sapphire" style="font-variation-settings: 'FILL' 1;">security</span>
+                Aegis V3.0
+            </a>
+<!-- Navigation Links (Desktop) -->
+<div class="hidden md:flex items-center space-x-8">
+<a class="font-label-bold text-label-bold text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Platform</a>
+<a class="font-label-bold text-label-bold text-secondary font-bold border-b-2 border-secondary pb-1" href="#">Solutions</a>
+<a class="font-label-bold text-label-bold text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Resources</a>
+<a class="font-label-bold text-label-bold text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Integrations</a>
+</div>
+<!-- Trailing Action -->
+<div class="hidden md:flex items-center">
+<a class="bg-sapphire text-white font-label-bold text-label-bold px-6 py-3 rounded-lg hover:bg-sapphire/90 transition-all duration-200 active:scale-95 shadow-sm" href="#">
+                    Get Started
+                </a>
+</div>
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden text-on-surface p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="pt-32 pb-section-gap-mobile md:pb-section-gap-desktop overflow-hidden">
+<!-- Hero Header -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter text-center mb-24 relative">
+<!-- Decorative background elements -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-electric/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-sapphire mb-6 max-w-4xl mx-auto">
+                Invest in <span class="text-gradient">Precision</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-10">
+                Enterprise-grade intelligence scaled for your operations. Select the tier that matches your deployment needs, from retail precision to global institutional architecture.
+            </p>
+<!-- Billing Toggle -->
+<div class="flex items-center justify-center gap-4 font-label-bold text-label-bold mb-16">
+<span class="text-on-surface-variant">Monthly</span>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out border-surface-variant" id="billing-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer transition-colors duration-200 ease-in-out" for="billing-toggle"></label>
+</div>
+<span class="text-sapphire font-bold flex items-center gap-2">
+                    Annually
+                    <span class="bg-cyan-electric/10 text-cyan-electric px-2 py-1 rounded-full font-mono-label text-mono-label">Save 20%</span>
+</span>
+</div>
+</section>
+<!-- Pricing Cards -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mb-section-gap-desktop">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+<!-- Sentinel Tier -->
+<div class="glass-card rounded-2xl p-8 flex flex-col h-full hover:-translate-y-1 transition-transform duration-300">
+<div class="mb-8">
+<span class="inline-block px-3 py-1 rounded-full bg-surface-container text-sapphire font-mono-label text-mono-label mb-4 border border-outline-variant/30">Retail</span>
+<h3 class="font-headline-md text-headline-md text-sapphire mb-2">Sentinel</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Essential intelligence for individual operators.</p>
+</div>
+<div class="mb-8">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-xl text-headline-xl text-sapphire">$49</span>
+<span class="font-body-md text-body-md text-on-surface-variant">/mo</span>
+</div>
+<p class="font-mono-label text-mono-label text-on-surface-variant mt-1">Billed annually at $588</p>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">10,000 API calls/mo</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Standard Neural Engine</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Email Support (48h SLA)</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline-variant text-[20px] mt-0.5">remove</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Advanced Pattern Recognition</span>
+</li>
+</ul>
+<button class="w-full py-3 rounded-lg border border-sapphire text-sapphire font-label-bold text-label-bold hover:bg-surface-container transition-colors duration-200">
+                        Start Free Trial
+                    </button>
+</div>
+<!-- Aegis Core Tier (Highlighted) -->
+<div class="glass-card-highlight rounded-2xl p-10 flex flex-col h-full transform md:scale-105 z-10">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-sapphire text-white px-4 py-1 rounded-full font-mono-label text-mono-label shadow-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">star</span>
+                        Most Popular
+                    </div>
+<div class="mb-8">
+<span class="inline-block px-3 py-1 rounded-full bg-cyan-electric/10 text-cyan-electric font-mono-label text-mono-label mb-4 border border-cyan-electric/20">Institutional</span>
+<h3 class="font-headline-md text-headline-md text-sapphire mb-2">Aegis Core</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Advanced architecture for scaling teams.</p>
+</div>
+<div class="mb-8">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-xl text-headline-xl text-sapphire">$299</span>
+<span class="font-body-md text-body-md text-on-surface-variant">/mo</span>
+</div>
+<p class="font-mono-label text-mono-label text-on-surface-variant mt-1">Billed annually at $3,588</p>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">100,000 API calls/mo</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Priority Neural Engine Access</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Advanced Pattern Recognition</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">24/7 Priority Support (4h SLA)</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-cyan-electric text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Custom Dashboards</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-lg bg-gradient-ai text-white font-label-bold text-label-bold hover:opacity-90 transition-opacity duration-200 shadow-md">
+                        Deploy Aegis Core
+                    </button>
+</div>
+<!-- Nexus Prime Tier -->
+<div class="glass-card rounded-2xl p-8 flex flex-col h-full hover:-translate-y-1 transition-transform duration-300">
+<div class="mb-8">
+<span class="inline-block px-3 py-1 rounded-full bg-surface-container text-sapphire font-mono-label text-mono-label mb-4 border border-outline-variant/30">Global / API</span>
+<h3 class="font-headline-md text-headline-md text-sapphire mb-2">Nexus Prime</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Unlimited potential for enterprise ecosystems.</p>
+</div>
+<div class="mb-8">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-sapphire">Custom</span>
+</div>
+<p class="font-mono-label text-mono-label text-on-surface-variant mt-1">Volume-based pricing</p>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-sapphire text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Unlimited API calls</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-sapphire text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Dedicated Neural Cluster</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-sapphire text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Dedicated Success Manager</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-sapphire text-[20px] mt-0.5">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">On-Premise Deployment Options</span>
+</li>
+</ul>
+<button class="w-full py-3 rounded-lg border border-sapphire text-sapphire font-label-bold text-label-bold hover:bg-surface-container transition-colors duration-200">
+                        Contact Sales
+                    </button>
+</div>
+</div>
+</section>
+<!-- Feature Comparison Table -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mb-section-gap-desktop">
+<div class="text-center mb-16">
+<h2 class="font-headline-xl text-headline-xl text-sapphire mb-4">Compare Capabilities</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">A detailed breakdown of features across all Sentinel network tiers.</p>
+</div>
+<div class="bg-white rounded-2xl border border-outline-variant/30 shadow-sm overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-outline-variant/30">
+<th class="p-6 font-label-bold text-label-bold text-on-surface w-1/4">Features</th>
+<th class="p-6 font-label-bold text-label-bold text-on-surface w-1/4">Sentinel</th>
+<th class="p-6 font-label-bold text-label-bold text-sapphire bg-cyan-electric/5 border-x border-cyan-electric/10 w-1/4 relative">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-ai"></div>
+                                Aegis Core
+                            </th>
+<th class="p-6 font-label-bold text-label-bold text-on-surface w-1/4">Nexus Prime</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface-variant divide-y divide-outline-variant/20">
+<!-- Group 1 -->
+<tr class="bg-surface-container-low/50">
+<td class="p-4 font-label-bold text-label-bold text-sapphire uppercase tracking-wider text-[12px]" colspan="4">Processing Capacity</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="p-6 font-medium text-on-surface">API Request Volume</td>
+<td class="p-6">10,000 / mo</td>
+<td class="p-6 bg-cyan-electric/5 border-x border-cyan-electric/10 font-bold text-sapphire">100,000 / mo</td>
+<td class="p-6">Custom limits</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="p-6 font-medium text-on-surface">Data Retention</td>
+<td class="p-6">30 Days</td>
+<td class="p-6 bg-cyan-electric/5 border-x border-cyan-electric/10 font-bold text-sapphire">1 Year</td>
+<td class="p-6">Unlimited</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="p-6 font-medium text-on-surface">Compute Priority</td>
+<td class="p-6">Standard</td>
+<td class="p-6 bg-cyan-electric/5 border-x border-cyan-electric/10 font-bold text-sapphire">High (Pool B)</td>
+<td class="p-6">Dedicated Cluster</td>
+</tr>
+<!-- Group 2 -->
+<tr class="bg-surface-container-low/50">
+<td class="p-4 font-label-bold text-label-bold text-sapphire uppercase tracking-wider text-[12px]" colspan="4">Intelligence Engine</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="p-6 font-medium text-on-surface">Neural Access</td>
+<td class="p-6">V2.5 Standard</td>
+<td class="p-6 bg-cyan-electric/5 border-x border-cyan-electric/10 font-bold text-sapphire">V3.0 Advanced</td>
+<td class="p-6">V3.0 + Custom Tuning</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="p-6 font-medium text-on-surface">Pattern Recognition</td>
+<td class="p-6"><span class="material-symbols-outlined text-outline-variant">remove</span></td>
+<td class="p-6 bg-cyan-electric/5 border-x border-cyan-electric/10 text-cyan-electric"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="p-6 text-sapphire"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+</tr>
+<!-- Group 3 -->
+<tr class="bg-surface-container-low/50">
+<td class="p-4 font-label-bold text-label-bold text-sapphire uppercase tracking-wider text-[12px]" colspan="4">Support &amp; Infrastructure</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="p-6 font-medium text-on-surface">SLA Guarantee</td>
+<td class="p-6">99.0%</td>
+<td class="p-6 bg-cyan-electric/5 border-x border-cyan-electric/10 font-bold text-sapphire">99.9%</td>
+<td class="p-6">99.99%</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="p-6 font-medium text-on-surface">Support Channel</td>
+<td class="p-6">Email</td>
+<td class="p-6 bg-cyan-electric/5 border-x border-cyan-electric/10 font-bold text-sapphire">Priority Email &amp; Chat</td>
+<td class="p-6">24/7 Phone + Slack</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Social Proof / Trusted By -->
+<section class="py-24 border-t border-outline-variant/20 bg-surface-container-lowest">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter text-center">
+<h4 class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest mb-12">Trusted by High-Stakes Operators</h4>
+<div class="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+<!-- Placeholders for logos -->
+<span class="font-headline-md text-headline-md font-bold text-sapphire">NEXUS</span>
+<span class="font-headline-md text-headline-md font-bold text-sapphire">Aura Financial</span>
+<span class="font-headline-md text-headline-md font-bold text-sapphire">Vanguard AI</span>
+<span class="font-headline-md text-headline-md font-bold text-sapphire">Onyx</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 py-section-gap-mobile md:py-section-gap-desktop w-full">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter grid grid-cols-2 md:grid-cols-4 gap-gutter">
+<!-- Brand / Copyright -->
+<div class="col-span-2 md:col-span-1 flex flex-col gap-4">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sapphire" style="font-variation-settings: 'FILL' 1;">security</span>
+                    Aegis
+                </a>
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant max-w-xs mt-2">
+                    © 2024 Aegis Sentinel Systems. All rights reserved. Built for high-stakes intelligence.
+                </p>
+</div>
+<!-- Empty column for spacing on desktop -->
+<div class="hidden md:block"></div>
+<!-- Links -->
+<div class="col-span-2 md:col-span-2 flex justify-between gap-8 flex-wrap">
+<div class="flex flex-col gap-4">
+<h5 class="font-label-bold text-label-bold text-primary">Platform</h5>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Sitemap</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">API Documentation</a>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label-bold text-label-bold text-primary">Company</h5>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Security</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Legal</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors transition-opacity duration-200 hover:opacity-80" href="#">Privacy Policy</a>
+</div>
+</div>
+</div>
+</footer>
+<!-- Simple JS for Billing Toggle Interaction -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggle = document.getElementById('billing-toggle');
+            const prices = {
+                sentinel: { monthly: '$59', annual: '$49' },
+                core: { monthly: '$349', annual: '$299' }
+            };
+            
+            // In a full implementation, this would update the DOM elements
+            // Keeping it minimal here as per instructions mostly focusing on UI
+            toggle.addEventListener('change', (e) => {
+               // Logic to switch displayed prices based on e.target.checked
+            });
+        });
+    </script>
+</body></html>

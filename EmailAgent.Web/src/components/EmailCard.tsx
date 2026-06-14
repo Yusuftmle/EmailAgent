@@ -17,11 +17,11 @@ export const EmailCard: React.FC<EmailCardProps> = ({ email, onUpdate }) => {
   const getBadgeColor = () => {
     switch (email.importance) {
       case 'important':
-        return 'bg-red-500/10 border-red-500/25 text-red-400';
+        return 'bg-tertiary/10 border-tertiary-container/30 text-tertiary-container';
       case 'spam':
-        return 'bg-slate-500/10 border-slate-500/20 text-slate-400';
+        return 'bg-outline-variant/10 border-outline-variant/20 text-on-surface-variant/70';
       default:
-        return 'bg-indigo-500/10 border-indigo-500/25 text-indigo-400';
+        return 'bg-primary/10 border-primary/25 text-primary';
     }
   };
 
@@ -53,25 +53,25 @@ export const EmailCard: React.FC<EmailCardProps> = ({ email, onUpdate }) => {
     <motion.div 
       layout
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className={`holo-card rounded-2xl overflow-hidden ${
-        email.importance === 'important' ? 'border-red-500/20 shadow-md shadow-red-500/5' : ''
+      className={`glass-panel glass-panel-hover rounded-xl overflow-hidden ${
+        email.importance === 'important' ? 'border-tertiary-container/30 shadow-md shadow-tertiary-container/5' : 'border-outline-variant/20'
       }`}
     >
       {/* Header clickable section */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className="p-5 flex items-center justify-between cursor-pointer select-none bg-slate-900/10"
+        className="p-5 flex items-center justify-between cursor-pointer select-none bg-surface-container-low/30 hover:bg-surface-container-low/50 transition-colors"
       >
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <motion.div 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`p-3 rounded-xl ${
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className={`p-3 rounded-lg ${
               email.importance === 'important' 
-                ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                ? 'bg-tertiary/10 text-tertiary-container border border-tertiary-container/20' 
                 : email.importance === 'spam' 
-                ? 'bg-slate-500/10 text-slate-400 border border-slate-500/15' 
-                : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                ? 'bg-outline-variant/10 text-on-surface-variant/70 border border-outline-variant/15' 
+                : 'bg-primary/10 text-primary border border-primary/20'
             }`}
           >
             <Mail size={18} />
@@ -82,15 +82,15 @@ export const EmailCard: React.FC<EmailCardProps> = ({ email, onUpdate }) => {
               <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-bold uppercase tracking-wider ${getBadgeColor()}`}>
                 {email.importance}
               </span>
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[10px] text-on-surface-variant/60 font-data-mono">
                 {new Date(email.processedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
             
-            <h3 className="font-bold text-slate-100 truncate text-sm md:text-base tracking-wide">
+            <h3 className="font-bold text-on-surface truncate text-sm md:text-base tracking-wide">
               {email.subject}
             </h3>
-            <p className="text-xs text-slate-400 truncate">
+            <p className="text-xs text-on-surface-variant truncate">
               {email.from}
             </p>
           </div>
@@ -103,13 +103,13 @@ export const EmailCard: React.FC<EmailCardProps> = ({ email, onUpdate }) => {
               whileTap={{ scale: 0.95 }}
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className="p-2 rounded-xl bg-slate-800/80 border border-white/5 text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50"
               title="Regenerate AI Draft"
             >
               <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
             </motion.button>
           )}
-          <div className="text-slate-500 p-1">
+          <div className="text-on-surface-variant p-1">
             {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
         </div>
@@ -124,14 +124,14 @@ export const EmailCard: React.FC<EmailCardProps> = ({ email, onUpdate }) => {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="px-5 pb-5 border-t border-white/5 bg-slate-950/40">
+            <div className="px-5 pb-5 border-t border-outline-variant/20 bg-surface-container-low/20">
               
               {/* Executive Summary */}
               <div className="mt-5">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2 flex items-center gap-1.5">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-1.5">
                   <BadgeInfo size={13} /> AI Executive Summary
                 </h4>
-                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-900 text-xs md:text-sm leading-relaxed text-slate-300 italic">
+                <div className="p-4 rounded-lg bg-surface-container-high/40 border border-outline-variant/20 text-xs md:text-sm leading-relaxed text-on-surface/90 italic font-geist">
                   {email.summary}
                 </div>
               </div>
@@ -140,21 +140,21 @@ export const EmailCard: React.FC<EmailCardProps> = ({ email, onUpdate }) => {
               {email.importance !== 'spam' && (
                 <div className="mt-5">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 flex items-center gap-1.5">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
                       <MessageSquare size={13} /> AI Draft Reply
                     </h4>
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] text-slate-500 italic">Editable</span>
+                      <span className="text-[9px] text-on-surface-variant/60 font-data-mono italic">Editable</span>
                       <motion.button 
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={handleCopy}
-                        className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 transition-colors"
+                        className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg bg-surface-container border border-outline-variant/30 hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors"
                       >
                         {isCopying ? (
                           <>
-                            <Check size={11} className="text-emerald-400" />
-                            <span className="text-emerald-400 font-semibold">Copied!</span>
+                            <Check size={11} className="text-secondary" />
+                            <span className="text-secondary font-semibold">Copied!</span>
                           </>
                         ) : (
                           <>
@@ -169,15 +169,15 @@ export const EmailCard: React.FC<EmailCardProps> = ({ email, onUpdate }) => {
                     value={editableDraft}
                     onChange={(e) => setEditableDraft(e.target.value)}
                     rows={6}
-                    className="w-full p-4 rounded-xl bg-slate-950/80 border border-slate-900 text-xs md:text-sm leading-relaxed text-slate-200 font-mono focus:border-indigo-500/40 outline-none resize-none transition-all"
+                    className="w-full p-4 rounded-lg bg-surface-container-high/60 border border-outline-variant/30 text-xs md:text-sm leading-relaxed text-on-surface font-mono focus:border-primary/55 outline-none resize-none transition-all"
                   />
                 </div>
               )}
 
               {/* Spam Warning */}
               {email.importance === 'spam' && (
-                <div className="mt-5 flex items-center gap-2.5 p-4 rounded-xl bg-red-950/15 border border-red-500/15 text-red-400/80 text-xs">
-                  <ShieldAlert size={16} className="text-red-400 flex-shrink-0" />
+                <div className="mt-5 flex items-center gap-2.5 p-4 rounded-lg bg-tertiary/5 border border-tertiary-container/20 text-tertiary-container text-xs">
+                  <ShieldAlert size={16} className="text-tertiary-container flex-shrink-0" />
                   <span>This email was classified as **Spam**. Custom draft replies are blocked for safety.</span>
                 </div>
               )}

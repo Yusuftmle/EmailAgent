@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
+using Microsoft.EntityFrameworkCore;
 using EmailAgent.Core.Entities;
 using EmailAgent.Infrastructure.Data;
 
@@ -22,14 +23,30 @@ public class ShoppingPlugin
         _userId = userId;
     }
 
-    [KernelFunction, Description("Adds a product URL to the tracking list to be monitored for price drops.")]
+    [KernelFunction, Description("Adds a product URL to the tracking list to be monitored for price drops. CRITICAL: Before calling this, you MUST call check_strategy_exists to see if a strategy exists for the domain. If not, you MUST call discover_site_strategy first!")]
     public async Task<string> TrackProductPriceAsync(
         [Description("The URL of the product to track")] string url,
         [Description("The target price threshold (e.g., 100.00). If the price drops below this, the user will be alerted.")] double targetPrice)
     {
         try
         {
-            var (scrapedPrice, currency, title, _) = await _scraperService.ScrapeProductAsync(url);
+            // Check if product is already being tracked
+            var existing = await _dbContext.TrackedProducts
+                .FirstOrDefaultAsync(p => p.UserId == _userId && p.Url == url);
+                
+            if (existing != null)
+            {
+                existing.TargetPrice = (decimal)targetPrice;
+                existing.IsActive = true;
+                await _dbContext.SaveChangesAsync();
+                
+                string status = existing.LastKnownPrice > 0 
+                    ? $"The last known price is {existing.LastKnownPrice} {existing.Currency}."
+                    : "I could not retrieve its price yet, but I will keep trying.";
+                return $"Success: Product at {url} is already tracked! I updated the target price to {targetPrice}. {status}";
+            }
+
+            var (scrapedPrice, currency, title, imageUrl, _) = await _scraperService.ScrapeProductAsync(url);
             decimal initialPrice = scrapedPrice ?? 0m;
 
             var trackedProduct = new TrackedProduct
@@ -40,6 +57,7 @@ public class ShoppingPlugin
                 LastKnownPrice = initialPrice,
                 Currency = currency ?? "EUR",
                 Title = title ?? "Unknown Product",
+                ImageUrl = imageUrl ?? "",
                 CreatedAt = DateTimeOffset.UtcNow,
                 LastCheckedAt = DateTimeOffset.UtcNow,
                 IsActive = true
@@ -98,13 +116,13 @@ public class ShoppingPlugin
         }
     }
 
-    [KernelFunction, Description("Fetches the real-time current price of a product from an e-commerce URL.")]
+    [KernelFunction, Description("Fetches the real-time current price of a product from an e-commerce URL. CRITICAL: Before calling this, you MUST call check_strategy_exists to see if a strategy exists for the domain. If not, you MUST call discover_site_strategy first!")]
     public async Task<string> GetCurrentProductPriceAsync(
         [Description("The URL of the product to scrape")] string url)
     {
         try
         {
-            var (price, currency, title, _) = await _scraperService.ScrapeProductAsync(url);
+            var (price, currency, title, _, _) = await _scraperService.ScrapeProductAsync(url);
             if (price.HasValue)
             {
                 return $"The current price of the product '{title ?? url}' is {price} {currency}.";

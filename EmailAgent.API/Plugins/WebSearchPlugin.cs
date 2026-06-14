@@ -28,7 +28,8 @@ public class WebSearchPlugin
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "https://google.serper.dev/search");
             request.Headers.Add("X-API-KEY", _serperApiKey);
-            request.Content = new StringContent($"{{\"q\":\"{query}\"}}", System.Text.Encoding.UTF8, "application/json");
+            var payload = System.Text.Json.JsonSerializer.Serialize(new { q = query });
+            request.Content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)

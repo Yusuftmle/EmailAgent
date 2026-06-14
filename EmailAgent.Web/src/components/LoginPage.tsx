@@ -1,68 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
-import { Shield, Mail, Lock } from 'lucide-react';
+import { Shield, Mail, Lock, Cpu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AssistantMascot, { MascotHandle } from './AssistantMascot';
-import omniImg from './omni-walk.png';
-
-const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
-  const particleCount = 18;
-  const particles = React.useMemo(() => {
-    return Array.from({ length: particleCount }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      bottom: `${Math.random() * 10}%`, // start from bottom area
-      size: Math.random() * 5 + 3, // 3px to 8px
-      delay: `${Math.random() * 10}s`,
-      duration: `${Math.random() * 12 + 10}s`,
-      color: mode === 'morning' 
-        ? '#fbbf24' // golden sunbeam
-        : mode === 'afternoon'
-        ? '#c084fc' // lavender sky
-        : '#fb923c', // warm orange firefly
-    }));
-  }, [mode]);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="absolute rounded-full"
-          style={{
-            left: p.left,
-            bottom: p.bottom,
-            width: p.size,
-            height: p.size,
-            backgroundColor: p.color,
-            filter: 'blur(1px) drop-shadow(0 0 3px currentColor)',
-            animation: `cozyFloat ${p.duration} ease-in-out ${p.delay} infinite`,
-            opacity: 0,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes cozyFloat {
-          0% {
-            transform: translateY(10%) translateX(0px);
-            opacity: 0;
-          }
-          15% {
-            opacity: 0.55;
-          }
-          85% {
-            opacity: 0.55;
-          }
-          100% {
-            transform: translateY(-800px) translateX(40px);
-            opacity: 0;
-          }
-        }
-      `}</style>
-    </div>
-  );
-};
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -71,15 +12,7 @@ const LoginPage: React.FC = () => {
   const mascotRef = useRef<MascotHandle>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // ── Determine time of day ──
-  const [timeMode] = useState<'morning' | 'afternoon' | 'night'>(() => {
-    const hr = new Date().getHours();
-    if (hr >= 6 && hr < 12) return 'morning';
-    if (hr >= 12 && hr < 18) return 'afternoon';
-    return 'night';
-  });
-
-  // ── Button hover: attract Omni to the button ──
+  // ── Button hover: attract mascot to the button ──
   const handleButtonEnter = useCallback(() => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
@@ -107,9 +40,8 @@ const LoginPage: React.FC = () => {
         localStorage.setItem('jwt', token);
         localStorage.setItem('user', JSON.stringify(user));
 
-        // 🎉 Trigger celebration animation before navigating
         mascotRef.current?.celebrate();
-        setTimeout(() => navigate('/'), 2800);
+        setTimeout(() => navigate('/app'), 2800);
 
       } catch (err: any) {
         console.error('Login Error', err);
@@ -135,7 +67,7 @@ const LoginPage: React.FC = () => {
       
       mascotRef.current?.celebrate();
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/app';
       }, 2800);
     } catch (err: any) {
       console.error('Dev Login Error', err);
@@ -144,80 +76,31 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const bgGradient = 
-    timeMode === 'morning' ? 'from-[#0a0f1d] via-[#121c32] to-[#25152a]' :
-    timeMode === 'afternoon' ? 'from-[#0b1420] via-[#0f212f] to-[#0f2a20]' :
-    'from-[#05080e] via-[#09101f] to-[#120b20]';
-
   return (
-    <div className={`relative min-h-screen bg-gradient-to-br ${bgGradient} text-slate-200 flex flex-col justify-center items-center p-4 overflow-hidden`}>
+    <div className="relative min-h-screen bg-[#020617] text-on-surface flex flex-col justify-center items-center p-4 overflow-hidden font-geist">
 
-      {/* Repeating Telegram-Style Cute Doodle Wallpaper */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.032] pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="telegram-doodles" width="120" height="120" patternUnits="userSpaceOnUse">
-            {/* Doodle 1: Mail Envelope */}
-            <path d="M10,15 L30,15 L30,30 L10,30 Z M10,15 L20,23 L30,15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            {/* Doodle 2: Cute Cloud */}
-            <path d="M55,23 C53,23 51,21 51,19 C51,16 53,14 56,14 C57,12 60,12 61,14 C63,14 65,16 65,19 C65,21 63,23 61,23 Z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            {/* Doodle 3: Tiny Star */}
-            <path d="M90,15 L92,19 L96,19 L93,22 L94,26 L90,24 L86,26 L87,22 L84,19 L88,19 Z" fill="none" stroke="currentColor" strokeWidth="1" />
-            {/* Doodle 4: Coffee Cup */}
-            <path d="M20,65 L32,65 C32,65 32,73 30,75 C28,77 24,77 22,75 C20,73 20,65 20,65 Z M32,67 C34,67 34,71 32,71" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            {/* Doodle 5: Robot Smiley (Omni!) */}
-            <rect x="52" y="62" width="16" height="12" rx="3" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            <circle cx="56" cy="67" r="0.8" fill="currentColor" />
-            <circle cx="64" cy="67" r="0.8" fill="currentColor" />
-            <path d="M57,70 Q60,72 63,70" fill="none" stroke="currentColor" strokeWidth="1" />
-            {/* Doodle 6: Chat Bubble */}
-            <path d="M85,65 C85,61 90,61 93,61 C96,61 98,63 98,66 C98,69 95,70 93,70 L90,70 L88,72 L88,70 C85,70 85,67 85,65 Z" fill="none" stroke="currentColor" strokeWidth="1" />
-            {/* Doodle 7: Sparkles & dots */}
-            <circle cx="10" cy="100" r="1" fill="currentColor" />
-            <circle cx="105" cy="100" r="0.8" fill="currentColor" />
-            <circle cx="112" cy="50" r="1" fill="currentColor" />
-            <circle cx="45" cy="45" r="0.8" fill="currentColor" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#telegram-doodles)" />
-      </svg>
-
-      {/* Dynamic Background Glow Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {timeMode === 'morning' && (
-          <>
-            <div className="absolute -top-20 -left-20 w-[45vw] h-[45vw] rounded-full bg-pink-500/10 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-            <div className="absolute -bottom-20 -right-20 w-[50vw] h-[50vw] rounded-full bg-amber-500/8 blur-[130px] animate-pulse" style={{ animationDuration: '10s' }} />
-          </>
-        )}
-        {timeMode === 'afternoon' && (
-          <>
-            <div className="absolute -top-20 -right-20 w-[45vw] h-[45vw] rounded-full bg-teal-500/8 blur-[120px] animate-pulse" style={{ animationDuration: '9s' }} />
-            <div className="absolute -bottom-20 -left-20 w-[50vw] h-[50vw] rounded-full bg-indigo-500/10 blur-[130px] animate-pulse" style={{ animationDuration: '11s' }} />
-          </>
-        )}
-        {timeMode === 'night' && (
-          <>
-            <div className="absolute -bottom-40 right-20 w-[55vw] h-[55vw] rounded-full bg-amber-500/12 blur-[140px] animate-pulse" style={{ animationDuration: '12s' }} />
-            <div className="absolute -top-20 -left-20 w-[40vw] h-[40vw] rounded-full bg-purple-900/10 blur-[120px]" />
-          </>
-        )}
+      {/* Global Background Glow Layers */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 blur-[120px] rounded-full mix-blend-screen" />
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-secondary/5 blur-[120px] rounded-full mix-blend-screen" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-40" />
       </div>
-
-      {/* Cozy Firefly/Sunbeam particles drifting up */}
-      <CozyParticles mode={timeMode} />
 
       {/* Animated Robot Mascot — walks freely behind everything */}
       <AssistantMascot ref={mascotRef} />
 
-      <div className="relative z-10 max-w-md w-full bg-slate-900/70 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden">
+      <div className="relative z-10 max-w-md w-full bg-surface-container-low/60 backdrop-blur-md rounded-xl border border-outline-variant/30 shadow-2xl overflow-hidden">
 
         {/* Header */}
-        <div className="p-8 text-center border-b border-slate-700/50 flex flex-col items-center">
-          <div className="w-20 h-20 rounded-full bg-slate-800/50 overflow-hidden flex items-center justify-center border-4 border-slate-700/50 mb-4 shadow-xl">
-            <img src={omniImg} alt="Omni Mascot" className="w-full h-full object-cover scale-150" />
+        <div className="p-8 text-center border-b border-outline-variant/20 flex flex-col items-center">
+          <div className="w-16 h-16 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline-variant/30 relative mb-4">
+            <Cpu size={32} className="text-primary" />
+            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-secondary rounded-full">
+              <div className="w-full h-full rounded-full bg-secondary signal-pulse" />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">OmniAgent</h1>
-          <p className="text-slate-400">Your intelligent autonomous agent.</p>
+          <h1 className="text-2xl font-semibold text-on-surface mb-1">Aegis V3.0</h1>
+          <p className="text-on-surface-variant text-xs font-data-mono uppercase tracking-wider">Cognitive Automation Terminal</p>
         </div>
 
         {/* Content */}
@@ -225,38 +108,38 @@ const LoginPage: React.FC = () => {
 
           <div className="space-y-4">
             <div className="flex items-start gap-4">
-              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400 shrink-0">
-                <Mail size={20} />
+              <div className="p-2 bg-primary/10 rounded border border-primary/20 text-primary shrink-0">
+                <Mail size={16} />
               </div>
               <div>
-                <h3 className="font-medium text-slate-200">Gmail Integration</h3>
-                <p className="text-sm text-slate-400">OmniAgent reads and drafts replies on your behalf using the power of AI.</p>
+                <h3 className="text-xs md:text-sm font-semibold text-on-surface">Gmail Operations Pipeline</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">Reads, analyzes, and drafts smart context-aware replies on your behalf using AI.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400 shrink-0">
-                <Shield size={20} />
+              <div className="p-2 bg-secondary/10 rounded border border-secondary/20 text-secondary shrink-0">
+                <Shield size={16} />
               </div>
               <div>
-                <h3 className="font-medium text-slate-200">Privacy First</h3>
-                <p className="text-sm text-slate-400">We do not store your emails. They are only fetched on-the-fly when OmniAgent processes them.</p>
+                <h3 className="text-xs md:text-sm font-semibold text-on-surface">Privacy First Architecture</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">Your email summaries are decrypted only on demand and never logged long-term.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400 shrink-0">
-                <Lock size={20} />
+              <div className="p-2 bg-primary/10 rounded border border-primary/20 text-primary shrink-0">
+                <Lock size={16} />
               </div>
               <div>
-                <h3 className="font-medium text-slate-200">Secure Access</h3>
-                <p className="text-sm text-slate-400">Connect securely via Google OAuth. You can revoke access at any time.</p>
+                <h3 className="text-xs md:text-sm font-semibold text-on-surface">Secure OAuth Access</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">Connect securely via Google OAuth. Session revocation can be triggered instantly.</p>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+            <div className="p-3 bg-tertiary/10 border border-tertiary-container/20 rounded text-tertiary-container text-xs text-center font-data-mono">
               {error}
             </div>
           )}
@@ -268,8 +151,8 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             onMouseEnter={handleButtonEnter}
             onMouseLeave={handleButtonLeave}
-            className={`w-full py-3 px-4 flex items-center justify-center gap-3 bg-white text-slate-900 rounded-xl font-medium transition-all ${
-              loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-slate-100 hover:scale-[1.02] active:scale-[0.98]'
+            className={`w-full py-3 px-4 flex items-center justify-center gap-3 bg-white text-slate-900 rounded-lg font-semibold transition-all ${
+              loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-slate-100 hover:scale-[1.01] active:scale-[0.99]'
             }`}
           >
             {loading ? (
@@ -292,7 +175,7 @@ const LoginPage: React.FC = () => {
           <button
             onClick={handleDeveloperLogin}
             disabled={loading}
-            className="w-full py-2.5 px-4 flex items-center justify-center gap-2 bg-slate-800/40 hover:bg-slate-800/70 border border-slate-700/50 hover:border-amber-500/40 rounded-xl text-slate-400 hover:text-slate-200 text-[10px] font-bold uppercase tracking-wider transition-all mt-4 hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-2.5 px-4 flex items-center justify-center gap-2 bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all mt-4 hover:scale-[1.01] active:scale-[0.99]"
           >
             Dev Admin Login (Local Test)
           </button>

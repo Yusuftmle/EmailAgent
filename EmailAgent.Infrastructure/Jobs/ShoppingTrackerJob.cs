@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using EmailAgent.Infrastructure.Data;
@@ -8,6 +9,7 @@ using EmailAgent.Infrastructure.Services;
 using EmailAgent.Infrastructure.Notifications;
 using EmailAgent.Core.Entities;
 using System.Net.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EmailAgent.Infrastructure.Jobs;
 
@@ -21,6 +23,7 @@ public class ShoppingTrackerJob
     private readonly IWhatsAppNotificationService _whatsAppService;
     private readonly ILogger<ShoppingTrackerJob> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IServiceProvider _serviceProvider;
 
     public ShoppingTrackerJob(
         EmailAgentDbContext dbContext,
@@ -30,7 +33,8 @@ public class ShoppingTrackerJob
         ITelegramNotificationService telegramService,
         IWhatsAppNotificationService whatsAppService,
         ILogger<ShoppingTrackerJob> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        IServiceProvider serviceProvider)
     {
         _dbContext = dbContext;
         _scraperService = scraperService;
@@ -40,8 +44,11 @@ public class ShoppingTrackerJob
         _whatsAppService = whatsAppService;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _serviceProvider = serviceProvider;
     }
 
+    [DisableConcurrentExecution(timeoutInSeconds: 300)]
+    [AutomaticRetry(Attempts = 0)]
     public async Task CheckPricesAsync()
     {
         await CleanupOldDealsAsync();
@@ -74,69 +81,108 @@ public class ShoppingTrackerJob
             .Where(p => p.IsActive)
             .ToListAsync();
 
-        foreach (var product in trackedProducts)
+        var groupedProducts = trackedProducts.GroupBy(p => 
         {
-            var userPrefs = await _dbContext.UserPreferences.FindAsync(product.UserId);
-            if (userPrefs == null) continue;
+            try { return new Uri(p.Url).GetLeftPart(UriPartial.Path); }
+            catch { return p.Url; }
+        }).ToList();
 
-            // Interval Check
-            if ((DateTimeOffset.UtcNow - product.LastCheckedAt).TotalHours < userPrefs.ShoppingTrackerIntervalHours)
+        foreach (var group in groupedProducts)
+        {
+            var urlToScrape = group.First().Url; // Use the first full URL to scrape
+            
+            // Check if ANY product in this group needs scraping
+            bool needsScraping = false;
+            foreach (var product in group)
             {
-                continue;
+                var userPrefs = await _dbContext.UserPreferences.FindAsync(product.UserId);
+                if (userPrefs == null) continue;
+
+                bool isFailedScrape = string.IsNullOrEmpty(product.Title) || 
+                                      product.Title == "Unknown Product" || 
+                                      product.Title.Contains("Giriş") || 
+                                      product.Title.Contains("giriş") || 
+                                      product.Title.ToLower().Contains("login") ||
+                                      product.LastKnownPrice == 0;
+                                      
+                if (isFailedScrape || (DateTimeOffset.UtcNow - product.LastCheckedAt).TotalHours >= userPrefs.ShoppingTrackerIntervalHours)
+                {
+                    needsScraping = true;
+                    break;
+                }
             }
+
+            if (!needsScraping) continue;
 
             try
             {
-                var result = await _scraperService.ScrapeProductAsync(product.Url);
+                var result = await _scraperService.ScrapeProductAsync(urlToScrape);
                 if (result.Price.HasValue && result.Price.Value > 0)
                 {
-                    if (string.IsNullOrEmpty(product.Title) && !string.IsNullOrEmpty(result.Title))
-                        product.Title = result.Title;
-
-                    bool wasInStock = product.IsInStock;
-                    bool nowInStock = result.IsInStock;
-
-                    product.LastKnownPrice = result.Price.Value;
-                    product.Currency = result.Currency ?? product.Currency;
-                    product.LastCheckedAt = DateTimeOffset.UtcNow;
-                    product.IsInStock = nowInStock;
-
-                    // Save price history snapshot
-                    _dbContext.PriceHistories.Add(new PriceHistory
+                    foreach (var product in group)
                     {
-                        ProductId = product.Id,
-                        Price = result.Price.Value,
-                        IsInStock = nowInStock,
-                        CheckedAt = DateTime.UtcNow
-                    });
+                        var userPrefs = await _dbContext.UserPreferences.FindAsync(product.UserId);
+                        if (userPrefs == null) continue;
 
-                    _logger.LogInformation("Scraped {Title}: {Price} {Currency} InStock={InStock}", product.Title, product.LastKnownPrice, product.Currency, nowInStock);
-
-                    // Stock alert: was out of stock, now back in!
-                    if (!wasInStock && nowInStock)
-                    {
-                        await NotifyStockReturnedAsync(product);
-                    }
-
-                    // Price drop alert
-                    if (product.LastKnownPrice <= product.TargetPrice && nowInStock)
-                    {
-                        // SPAM PREVENTION: Only notify if we haven't notified before, OR if the price dropped even further since last notification
-                        if (product.LastNotifiedPrice == null || product.LastKnownPrice < product.LastNotifiedPrice.Value)
+                        if ((string.IsNullOrEmpty(product.Title) || 
+                             product.Title == "Unknown Product" || 
+                             product.Title.Contains("Giriş") || 
+                             product.Title.Contains("giriş") || 
+                             product.Title.ToLower().Contains("login")) && 
+                            !string.IsNullOrEmpty(result.Title))
                         {
-                            await NotifyUserAsync(product);
-                            product.LastNotifiedPrice = product.LastKnownPrice;
+                            product.Title = result.Title;
+                        }
+
+                        bool wasInStock = product.IsInStock;
+                        bool nowInStock = result.IsInStock;
+                        decimal previousPrice = product.LastKnownPrice;
+
+                        product.LastKnownPrice = result.Price.Value;
+                        product.Currency = result.Currency ?? product.Currency;
+                        product.LastCheckedAt = DateTimeOffset.UtcNow;
+                        product.IsInStock = nowInStock;
+
+                        // Save price history only if something changed
+                        if (previousPrice != result.Price.Value || wasInStock != nowInStock)
+                        {
+                            _dbContext.PriceHistories.Add(new PriceHistory
+                            {
+                                ProductId = product.Id,
+                                Price = result.Price.Value,
+                                IsInStock = nowInStock,
+                                CheckedAt = DateTime.UtcNow
+                            });
+                        }
+
+                        _logger.LogInformation("Scraped {Title}: {Price} {Currency} InStock={InStock} for UserId {UserId}", product.Title, product.LastKnownPrice, product.Currency, nowInStock, product.UserId);
+
+                        // Stock alert: was out of stock, now back in!
+                        if (!wasInStock && nowInStock)
+                        {
+                            await NotifyStockReturnedAsync(product);
+                        }
+
+                        // Price drop alert
+                        // CURRENCY MATCH CHECK:
+                        if (result.Currency == product.Currency && product.LastKnownPrice <= product.TargetPrice && nowInStock)
+                        {
+                            if (product.LastNotifiedPrice == null || product.LastKnownPrice < product.LastNotifiedPrice.Value)
+                            {
+                                await NotifyUserAsync(product);
+                                product.LastNotifiedPrice = product.LastKnownPrice;
+                            }
                         }
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("Scraper returned 0 or null price for active product {Url}. Skipping update to prevent false alerts.", product.Url);
+                    _logger.LogWarning("Scraper returned 0 or null price for active product {Url}. Skipping update to prevent false alerts.", urlToScrape);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to track product {Url}", product.Url);
+                _logger.LogError(ex, "Failed to track product {Url}", urlToScrape);
             }
         }
 
@@ -406,5 +452,48 @@ public class ShoppingTrackerJob
             Type = "PriceDrop",
             SentAt = DateTime.UtcNow
         });
+    }
+
+    [DisableConcurrentExecution(timeoutInSeconds: 300)]
+    [AutomaticRetry(Attempts = 0)]
+    public async Task RunAegisPipelineForCategoryAsync(Guid categoryId)
+    {
+        var category = await _dbContext.TrackedCategories.FindAsync(categoryId);
+        if (category == null) return;
+
+        var userPrefs = await _dbContext.UserPreferences.FindAsync(category.UserId);
+        if (userPrefs == null) return;
+
+        _logger.LogInformation("Hangfire: {CategoryName} için Aegis Pipeline tetikleniyor...", category.CategoryName);
+
+        try
+        {
+            // 1. Get HTML via scraper
+            string html = await _categoryScraperService.GetHtmlAsync(category.CategoryUrl);
+
+            // 2. Pass to AegisAgentOrchestrator
+            using var scope = _serviceProvider.CreateScope();
+            var orchestrator = scope.ServiceProvider.GetRequiredService<EmailAgent.Agent.Core.AegisAgentOrchestrator>();
+
+            var report = await orchestrator.ExecutePipelineAsync(
+                userPrefs, 
+                category.Id, 
+                category.CategoryName, 
+                category.CategoryUrl, 
+                html, 
+                category.RequiredFeatures ?? ""
+            );
+
+            // 3. Notify user
+            if (!string.IsNullOrEmpty(userPrefs.TelegramChatId) && report != "Yeni veya fiyatı düşen bir fırsat bulunamadı." && report != "Matematiksel filtreyi (Hard-Filter) geçen bir fırsat bulunamadı.")
+            {
+                string message = $"🚨 **AEGIS V3.0 PIPELINE RAPORU ({category.CategoryName})** 🚨\n\n{report}";
+                await _telegramService.SendMessageAsync(userPrefs, userPrefs.TelegramChatId, message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RunAegisPipelineForCategoryAsync failed for {CategoryName}", category.CategoryName);
+        }
     }
 }

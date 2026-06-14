@@ -20,6 +20,7 @@ public class TelegramBotHostedService : BackgroundService
     private readonly ILogger<TelegramBotHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly string _botToken;
+    private DateTimeOffset _startTime;
 
     public TelegramBotHostedService(
         ILogger<TelegramBotHostedService> logger,
@@ -62,8 +63,17 @@ public class TelegramBotHostedService : BackgroundService
             cancellationToken: stoppingToken
         );
 
-        var me = await botClient.GetMe(stoppingToken);
-        _logger.LogInformation($"Start listening for @{me.Username}");
+        try
+        {
+            var me = await botClient.GetMe(stoppingToken);
+            _startTime = DateTimeOffset.UtcNow;
+            _logger.LogInformation($"Start listening for @{me.Username}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to connect to Telegram API. Bot will not be active.");
+            return;
+        }
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
@@ -75,6 +85,16 @@ public class TelegramBotHostedService : BackgroundService
 
         if (message.Type != MessageType.Text && message.Type != MessageType.Voice && message.Type != MessageType.Document)
             return;
+
+        // Skip stale messages that were sent before this bot instance started.
+        // This prevents the infinite loop where Telegram re-delivers old messages on every restart.
+        var messageTime = new DateTimeOffset(message.Date, TimeSpan.Zero);
+        if (messageTime < _startTime.AddSeconds(-5))
+        {
+            _logger.LogWarning("Skipping stale message (sent {MessageTime}, bot started {StartTime}): {Text}",
+                messageTime, _startTime, message.Text ?? "[non-text]");
+            return;
+        }
 
         var chatId = message.Chat.Id;
         string messageText = message.Text ?? string.Empty;

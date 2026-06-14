@@ -1,0 +1,662 @@
+<html lang="en"><head></head><body class="bg-surface text-on-surface font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">```html
+
+
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aegis V3.0 - The Intelligence Layer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline": "#76777d",
+                      "surface": "#f7f9fb",
+                      "on-primary": "#ffffff",
+                      "on-surface-variant": "#45464d",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "primary-fixed-dim": "#bec6e0",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "surface-tint": "#565e74",
+                      "surface-container-low": "#f2f4f6",
+                      "on-background": "#191c1e",
+                      "secondary-container": "#57dffe",
+                      "on-tertiary-fixed": "#07006c",
+                      "secondary-fixed": "#acedff",
+                      "secondary-fixed-dim": "#4cd7f6",
+                      "background": "#f7f9fb",
+                      "surface-container-high": "#e6e8ea",
+                      "on-error-container": "#93000a",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-bright": "#f7f9fb",
+                      "surface-dim": "#d8dadc",
+                      "on-tertiary-fixed-variant": "#2f2ebe",
+                      "primary-container": "#131b2e",
+                      "error": "#ba1a1a",
+                      "surface-container": "#eceef0",
+                      "on-tertiary-container": "#7073ff",
+                      "surface-variant": "#e0e3e5",
+                      "primary": "#000000",
+                      "on-secondary-fixed": "#001f26",
+                      "tertiary-fixed-dim": "#c0c1ff",
+                      "outline-variant": "#c6c6cd",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#eff1f3",
+                      "tertiary": "#000000",
+                      "tertiary-fixed": "#e1e0ff",
+                      "on-secondary-container": "#006172",
+                      "on-primary-container": "#7c839b",
+                      "secondary": "#00687a",
+                      "inverse-surface": "#2d3133",
+                      "inverse-primary": "#bec6e0",
+                      "error-container": "#ffdad6",
+                      "primary-fixed": "#dae2fd",
+                      "on-secondary-fixed-variant": "#004e5c",
+                      "tertiary-container": "#07006c",
+                      "on-surface": "#191c1e",
+                      "on-primary-fixed": "#131b2e"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-gap-mobile": "80px",
+                      "unit": "8px",
+                      "margin-mobile": "20px",
+                      "section-gap-desktop": "160px",
+                      "gutter": "24px",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "label-bold": [
+                              "Geist"
+                      ],
+                      "mono-label": [
+                              "Geist Mono"
+                      ],
+                      "body-md": [
+                              "Geist"
+                      ],
+                      "display-lg-mobile": [
+                              "Geist"
+                      ],
+                      "headline-md": [
+                              "Geist"
+                      ],
+                      "body-lg": [
+                              "Geist"
+                      ],
+                      "headline-xl": [
+                              "Geist"
+                      ],
+                      "display-lg": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {
+                      "label-bold": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "mono-label": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "44px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "0em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "72px",
+                              {
+                                      "lineHeight": "76px",
+                                      "letterSpacing": "-0.04em",
+                                      "fontWeight": "800"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.08);
+        }
+        
+        @keyframes glow-pulse {
+            0% { text-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+            50% { text-shadow: 0 0 20px rgba(6, 182, 212, 0.6); }
+            100% { text-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+        }
+
+        .ai-gradient-text {
+            background: linear-gradient(90deg, #0f172a, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        .btn-primary {
+            background-color: #0f172a;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+        }
+
+        .bento-block {
+            background-color: #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        .bento-block:hover {
+            background-color: #ffffff;
+            box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+            transform: translateY(-2px);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .float-anim {
+            animation: float 6s ease-in-out infinite;
+        }
+        .float-anim:hover {
+            animation-duration: 3s;
+        }
+
+        .fade-up-enter {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fade-up-enter.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+      </style>
+<!-- Top Navigation -->
+<nav class="bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm fixed top-0 w-full z-50">
+<div class="flex justify-between items-center max-w-container-max mx-auto px-margin-mobile md:px-gutter h-20">
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md text-primary dark:text-on-primary-fixed tracking-tight">Aegis V3.0</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold hover:text-primary dark:hover:text-primary transition-colors duration-200" href="#">Platform</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold hover:text-primary dark:hover:text-primary transition-colors duration-200" href="#">Solutions</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold hover:text-primary dark:hover:text-primary transition-colors duration-200" href="#">Resources</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold hover:text-primary dark:hover:text-primary transition-colors duration-200" href="#">Case Studies</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label-bold hover:text-primary dark:hover:text-primary transition-colors duration-200" href="#">Integrations</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:block text-label-bold font-label-bold text-on-surface-variant hover:text-primary transition-colors">Log In</button>
+<button class="btn-primary px-6 py-2.5 rounded-full text-label-bold font-label-bold">Get Started</button>
+</div>
+</div>
+</nav>
+<main class="pt-24 pb-section-gap-mobile md:pb-section-gap-desktop">
+<!-- Hero Section -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mt-16 md:mt-32">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="space-y-8">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-outline-variant/30 bg-surface-container-low text-mono-label font-mono-label text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed-dim animate-pulse"></span>
+                        Introducing Aegis V3.0
+                    </div>
+<h1 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-primary tracking-tight leading-tight">
+                        The Intelligence Layer for <br class="hidden md:block"/>
+<span class="ai-gradient-text">Autonomous Markets</span>
+</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl">
+                        Empowered by 'The Sentinel' AI engine, Aegis V3.0 anticipates market anomalies, executes with millisecond precision, and secures your strategic edge in high-stakes environments.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<button class="btn-primary px-8 py-4 rounded-lg text-body-md font-label-bold flex items-center justify-center gap-2">
+                            Get Started
+                            <span aria-hidden="true" class="material-symbols-outlined text-xl" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="px-8 py-4 rounded-lg border border-outline-variant/50 text-primary font-label-bold hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+<span aria-hidden="true" class="material-symbols-outlined text-xl" data-icon="play_circle">play_circle</span>
+                            Watch Demo
+                        </button>
+</div>
+</div>
+<div class="relative w-full h-[400px] md:h-[600px] flex items-center justify-center">
+<!-- Shader Canvas Background -->
+<canvas class="absolute inset-0 w-full h-full" id="shader-canvas" style="mask-image: radial-gradient(circle, black 30%, transparent 70%); -webkit-mask-image: radial-gradient(circle, black 30%, transparent 70%); opacity: 0.8; mix-blend-mode: multiply;"></canvas>
+<!-- Subtle background glow -->
+<div class="absolute inset-0 bg-gradient-to-tr from-secondary-container/20 to-transparent blur-3xl rounded-full pointer-events-none"></div>
+<div class="relative z-10 w-full h-full flex items-center justify-center float-anim">
+<img alt="Aegis V3.0 The Sentinel 3D Asset" class="w-full h-full object-contain drop-shadow-2xl scale-110 md:scale-125 transform translate-x-4 md:-translate-y-8" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUfgkc4eFZ68ucZ72abZ17G1ac3TsJUMixW9NESz4KDK60qV2f4Y8aDPBTjZboIAJddROrre1RCWNg6GbFJXaCcHx7EufAhOvk1drm07VlQoQD-sezH-YVFKWiDWdHbXCcSzi2ehKFZx7-ZAA-uZ0PhcYQqcW_84pZTDe3Nfv8XFrWnefwA_VgNovDNKyZ2sVVNuxiTRUT9v8t5GfOXgy6bUtTOOSHJWM_xIGyWbiY_h-0PIaT4F0BnKlkJ-zFdAlXnfr6LR7hdHo"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Trusted By Section -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mt-section-gap-mobile md:mt-section-gap-desktop">
+<p class="text-center text-mono-label font-mono-label text-on-surface-variant mb-8 uppercase tracking-widest">Trusted by Industry Leaders</p>
+<div class="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+<img alt="Amazon" class="h-8 object-contain data-alt-ignore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkSxfukIjyxEVuQTVC9HHNNZbCSlE8Bdx190JJJBTB-EIEeA2fAlRa4Zz8L29CF3vxFr3gpcPz668puJBCK5_7SR_IHgbmP8ozhRYfJcGnewSdc_AL2K-ispjPQhrqNr6Zv33mj8PT-7pPvXBDDC_SedxaVsRk0pnO85PBsCYZ1HXQ1lXso44WK_XazxEY_NhZQCFMLF3ekAnZIzfzceNKxVPe-zm2e7tfSmXcgwUfZ3yqH7db1BjubcIKcEk784ne6AfxmDJtGhs"/>
+<img alt="Google" class="h-8 object-contain data-alt-ignore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6Le0TAmWLxhahT7kUfDpLdHudUOZa3k_-9RUfIyj-mia3qAOraL1qjiraq1RDBH6HIsElDWudj9mR7Mc0tq-fbPyNY-EZfLfN2dTEwJqGTPNM4yzE3BAt1zK0jiD77B_GiBtvEYs_ZuQTNuc0mYy3T6QT7lE-Amxui4HIzMJPb5EPYYTeeEKQ6dkM3zraYe4x0GPnZsA3ylCt1aOsEKD2fmFgMjgOda53ETP_bI2R9jF_ciPo3TFrzMKPtz7ZIpsLIRxUt6WBqso"/>
+<img alt="IBM" class="h-8 object-contain data-alt-ignore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdIbwbl9KnpEiVIpXB8pkpgZGIMnU9CztvvCZFPy7kUEyTh4Fj_v3Ty8v7S8AlfVM9__EH8-n3xuUF_4PihbXGhrNWW5jPJ2-hoA-VpDboEcXvvCw5HfmMP9dtuMetF-I34Zc5g2ZbaTNLOr4PNqF9Sx-6xIFHlBmJuLTBaCokQApDyfGLn-9Du7hiJrQU1jZDiKt4iyk9evQit5B0HhmPwkL3f9JIlTvKOIdx1vP9VFn-OyNv95kLzmMglQmUC8q98R_BYrM0mIw"/>
+<img alt="Microsoft" class="h-8 object-contain data-alt-ignore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3ePYtpM9EAawlNh9h-rhI1ODlvzDwka8w-MFsbYMLEO-wzeJL5qmghJZ8YT0kAfO0YHiIP_sg8AzRJTs8K2sWCJY0nKBTscBU4vPgYPDE_0zcdMLb8E4_43LteMiNgP7Fd2WwTb_5baS8oTas3vRtBS7MHrrtObrjmGrGnAuTuqwu1lm7RfySAQM8SYERnRNpw6PcAuq7GcyKzoRb95I6xnEWDsADJ4vtF28oiuwLNGV1uLFaQkBCh_TmbhzR-dkgTH7L44MutoM"/>
+<img alt="TCS" class="h-8 object-contain data-alt-ignore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyE2RCA9iApT0EO91rlaV578Pl3CQFyZArQvhrABMe_6FyGb4VytZCPXGJLp2-1iUqjwbuqQYExXQWut_7o6OJLucfSpwFuW0SkWlRvYiQ2F88RJBG3RuScA4m6z8AxqtRv0nXc2zuCWfBnt0108N3QxqtC2cA12kvHqM1jdmHH-9GiZzPZBqofUlRLUjKvLDy3TDGm78L5gm42TuRSSid54xP4Gr1yoDulm1M9ww9YsWz9GvUHA0rhKBOP16U4HMalr3q4vWqDrw"/>
+</div>
+</section>
+<!-- Bento Grid Features -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mt-section-gap-mobile md:mt-section-gap-desktop">
+<div class="text-center mb-16">
+<h2 class="text-headline-xl font-headline-xl text-primary tracking-tight mb-4">Architected for Precision</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">Modular intelligence components working in symphony to protect and optimize your operations.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 auto-rows-[280px]">
+<!-- Feature 1: Large Span -->
+<div class="fade-up-enter lg:col-span-4 bento-block rounded-2xl p-8 flex flex-col justify-between border border-outline-variant/20 relative overflow-hidden group" style="transition-delay: 0ms;">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary-fixed-dim/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="z-10">
+<div class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center mb-6 shadow-sm border border-outline-variant/10 text-primary">
+<span aria-hidden="true" class="material-symbols-outlined text-2xl" data-icon="radar">radar</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary mb-2">Real-time Anomaly Detection</h3>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-md">Continuous ingestion of multi-modal data streams instantly flags deviations with sub-millisecond latency, preventing cascading failures before they manifest.</p>
+</div>
+</div>
+<!-- Feature 2: Small Square -->
+<div class="fade-up-enter lg:col-span-2 bento-block rounded-2xl p-8 flex flex-col justify-between border border-outline-variant/20" style="transition-delay: 100ms;">
+<div>
+<div class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center mb-6 shadow-sm border border-outline-variant/10 text-secondary">
+<span aria-hidden="true" class="material-symbols-outlined text-2xl" data-icon="language">language</span>
+</div>
+<h3 class="text-body-lg font-label-bold text-primary mb-2">Global Sentiment Mapping</h3>
+<p class="text-body-md font-body-md text-on-surface-variant text-sm">Aggregate geopolitical and social signals to forecast market volatility.</p>
+</div>
+</div>
+<!-- Feature 3: Small Square -->
+<div class="fade-up-enter lg:col-span-2 bento-block rounded-2xl p-8 flex flex-col justify-between border border-outline-variant/20" style="transition-delay: 200ms;">
+<div>
+<div class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center mb-6 shadow-sm border border-outline-variant/10 text-primary">
+<span aria-hidden="true" class="material-symbols-outlined text-2xl" data-icon="memory">memory</span>
+</div>
+<h3 class="text-body-lg font-label-bold text-primary mb-2">Autonomous Execution</h3>
+<p class="text-body-md font-body-md text-on-surface-variant text-sm">Self-healing smart contracts and automated remediation protocols.</p>
+</div>
+</div>
+<!-- Feature 4: Medium Span -->
+<div class="fade-up-enter lg:col-span-4 bento-block rounded-2xl p-8 flex flex-col justify-between border border-outline-variant/20 bg-primary text-on-primary" style="transition-delay: 300ms;">
+<div class="flex justify-between items-start">
+<div>
+<div class="w-12 h-12 rounded-lg bg-surface/10 flex items-center justify-center mb-6 border border-on-primary/10">
+<span aria-hidden="true" class="material-symbols-outlined text-2xl text-secondary-fixed-dim" data-icon="psychology">psychology</span>
+</div>
+<h3 class="text-headline-md font-headline-md mb-2">Neural Diagnostics</h3>
+<p class="text-body-md font-body-md text-on-primary/70 max-w-md">Deep reinforcement learning models continuously audit system architecture, providing prescriptive optimization strategies.</p>
+</div>
+<div class="hidden sm:block">
+<!-- Abstract decorative element -->
+<div class="w-24 h-24 rounded-full border border-secondary-fixed-dim/30 flex items-center justify-center">
+<div class="w-16 h-16 rounded-full border border-secondary-fixed-dim/50 flex items-center justify-center animate-spin" style="animation-duration: 10s;">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed-dim/20 blur-sm"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Product Showcase -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mt-section-gap-mobile md:mt-section-gap-desktop relative">
+<div class="text-center mb-12">
+<h2 class="text-headline-xl font-headline-xl text-primary tracking-tight mb-4">Command Center</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">High-density telemetry framed in absolute clarity.</p>
+</div>
+<div class="rounded-xl overflow-hidden border border-outline-variant/20 shadow-2xl bg-surface-container-lowest relative group">
+<!-- Browser Header -->
+<div class="h-10 bg-surface border-b border-outline-variant/20 flex items-center px-4 gap-2">
+<div class="w-3 h-3 rounded-full bg-outline-variant/50"></div>
+<div class="w-3 h-3 rounded-full bg-outline-variant/50"></div>
+<div class="w-3 h-3 rounded-full bg-outline-variant/50"></div>
+<div class="mx-auto bg-surface-container-low px-32 py-1 rounded-md text-mono-label text-outline/50 flex items-center gap-2">
+<span aria-hidden="true" class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+                        app.aegis-systems.io
+                    </div>
+</div>
+<!-- Simulated App Interface (Slate-950 vibes inside light mode frame) -->
+<div class="bg-[#020617] text-slate-300 p-8 min-h-[400px]">
+<div class="grid grid-cols-12 gap-6">
+<!-- Sidebar Area -->
+<div class="col-span-3 space-y-6">
+<div class="text-slate-100 font-label-bold text-lg border-b border-slate-800 pb-4">Sentinel Dashboard</div>
+<div class="space-y-2 text-sm">
+<div class="flex items-center gap-3 text-cyan-400 bg-slate-900/50 p-2 rounded-lg border border-slate-800"><span class="material-symbols-outlined text-sm">bar_chart</span> Live Telemetry</div>
+<div class="flex items-center gap-3 hover:text-slate-100 p-2"><span class="material-symbols-outlined text-sm">security</span> Threat Matrix</div>
+<div class="flex items-center gap-3 hover:text-slate-100 p-2"><span class="material-symbols-outlined text-sm">hub</span> Node Status</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="col-span-9 space-y-6">
+<div class="flex justify-between items-center">
+<div class="text-xl font-headline-md text-white">System Overview</div>
+<div class="flex gap-2">
+<div class="px-3 py-1 rounded bg-slate-800 border border-slate-700 text-xs flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-400"></span> All Systems Operational</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+<div class="text-xs text-slate-500 mb-1">Total Processed Vol</div>
+<div class="text-2xl font-mono text-white">4.2B <span class="text-sm text-cyan-400">+12%</span></div>
+</div>
+<div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+<div class="text-xs text-slate-500 mb-1">Anomalies Detected</div>
+<div class="text-2xl font-mono text-white">1,204 <span class="text-sm text-red-400">-5%</span></div>
+</div>
+<div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+<div class="text-xs text-slate-500 mb-1">Latency P99</div>
+<div class="text-2xl font-mono text-white">12ms <span class="text-sm text-green-400">Optimal</span></div>
+</div>
+</div>
+<div class="h-48 bg-slate-900 rounded-xl border border-slate-800 p-4 flex items-end justify-between px-8 relative overflow-hidden">
+<!-- Fake Chart Bars -->
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-cyan-900/10"></div>
+<div class="w-8 bg-cyan-900/50 rounded-t h-12"></div>
+<div class="w-8 bg-cyan-800/50 rounded-t h-24"></div>
+<div class="w-8 bg-cyan-700/50 rounded-t h-16"></div>
+<div class="w-8 bg-cyan-600/50 rounded-t h-32"></div>
+<div class="w-8 bg-cyan-500/50 rounded-t h-20"></div>
+<div class="w-8 bg-cyan-400/80 rounded-t h-40 relative"><div class="absolute -top-2 left-1/2 w-1.5 h-1.5 bg-white rounded-full -translate-x-1/2 shadow-[0_0_10px_2px_rgba(34,211,238,0.8)]"></div></div>
+<div class="w-8 bg-cyan-600/50 rounded-t h-28"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Hover Overlay for effect -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 to-transparent flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="btn-primary px-6 py-2 rounded-full text-sm font-label-bold shadow-lg">Explore Dashboard</button>
+</div>
+</div>
+</section>
+<!-- Social Proof Section -->
+<section class="bg-surface-container-low mt-section-gap-mobile md:mt-section-gap-desktop py-24 border-y border-outline-variant/10">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter">
+<div class="text-center mb-16">
+<p class="text-mono-label font-mono-label text-secondary mb-4 uppercase tracking-widest">Endorsements</p>
+<h2 class="text-headline-md font-headline-md text-primary max-w-3xl mx-auto">"Aegis V3.0 transformed our risk profile from reactive to strictly prescriptive. It is the defining intelligence layer of our infrastructure."</h2>
+</div>
+<div class="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-full bg-outline-variant/20 overflow-hidden">
+<img alt="Portrait" class="w-full h-full object-cover data-alt-ignore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZUVuNmStW-ZSpEVCmS1SyesAn-RRUyihjgNeBV0y_n4A5pZlDwYdbrReCEAtyj8r2n5BYX-GAjcjul8sP3D5XzwHVi74jq0PAZMLUp7a7piQIUaLV0-30VyDxWJ-29pdujjQn6zuJQqXNO4RIknbAJhu6laikoXvnb_Y7tCFcEOK1w3f8PxYg6Pb6IK_OeXXxuTa8-kFhjw21F9vqONRHyZow-4C94xfhod5a13fTRUIelXm6tpya7Py9G1wAhsOPWrZF3Uj3UF8"/>
+</div>
+<div class="text-left">
+<div class="font-label-bold text-primary">Dr. Elena Rostova</div>
+<div class="text-sm text-on-surface-variant">CTO, QuantGlobal Partners</div>
+</div>
+</div>
+<div class="hidden md:block w-px h-12 bg-outline-variant/20"></div>
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-full bg-outline-variant/20 overflow-hidden">
+<img alt="Portrait" class="w-full h-full object-cover data-alt-ignore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHeKBQVi4H0Y_WvAQGKPVmY710wXN8DrgYFKeVGlv82WF6SJFLovXhNvpC0XNR69LYMIBV5rWpnPX9QNslsxqCrW7cjA-PIWvay8rU5C3wLk5grQZN-5i8TrqaGqrpo6dJiOOYOK-8VQMA65hCDL1NS3ranpqjYrDDa6LlOVkMTcJ6F1DN4OzfA8WN_2IA1_Pz1QMXSFvgO_XrlO-Tfikg5RS4h9MyuXi2OAHbD_o7fqBUB8FhqaEz7mV6KFnA_a4f2A0WrBQmI_M"/>
+</div>
+<div class="text-left">
+<div class="font-label-bold text-primary">Marcus Vance</div>
+<div class="text-sm text-on-surface-variant">Head of Security, Nexus FinTech</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-gutter mt-section-gap-mobile md:mt-section-gap-desktop mb-24">
+<div class="glass-card rounded-3xl p-12 md:p-20 text-center relative overflow-hidden bg-surface-container-lowest">
+<!-- Background decoration -->
+<div class="absolute -top-40 -right-40 w-96 h-96 bg-secondary-fixed/20 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-40 -left-40 w-96 h-96 bg-primary-fixed/20 rounded-full blur-3xl"></div>
+<div class="relative z-10">
+<h2 class="text-headline-xl font-headline-xl text-primary tracking-tight mb-6">Secure Your Alpha.</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto mb-10">Deploy the Sentinel engine within your infrastructure today. Early access to V3.0 is limited to qualified institutional partners.</p>
+<div class="flex flex-col sm:flex-row justify-center gap-4">
+<button class="btn-primary px-8 py-4 rounded-lg text-body-md font-label-bold">Request Enterprise Trial</button>
+<button class="px-8 py-4 rounded-lg text-primary font-label-bold hover:bg-surface-container transition-colors border border-outline-variant/30">View Documentation</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer from JSON -->
+<footer class="bg-surface-container-low dark:bg-surface-container-high w-full pt-section-gap-desktop pb-10 border-t border-outline-variant/10">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter grid grid-cols-2 md:grid-cols-4 gap-gutter mb-16">
+<div class="col-span-2 md:col-span-1">
+<div class="text-headline-md font-headline-md text-primary mb-6">Aegis V3.0</div>
+<p class="text-sm text-on-surface-variant max-w-xs">The intelligence layer for autonomous markets. Watchful, precise, and sophisticated.</p>
+</div>
+<div class="flex flex-col gap-3">
+<span class="font-label-bold text-primary mb-2">Platform</span>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Product</a>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Security</a>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">API Documentation</a>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Status</a>
+</div>
+<div class="flex flex-col gap-3">
+<span class="font-label-bold text-primary mb-2">Company</span>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Careers</a>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Help Center</a>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Sales</a>
+</div>
+<div class="flex flex-col gap-3">
+<span class="font-label-bold text-primary mb-2">Legal</span>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+</div>
+</div>
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-gutter border-t border-outline-variant/20 pt-8 flex justify-between items-center">
+<p class="text-body-md font-body-md text-on-surface-variant text-sm">© 2024 Aegis Sentinel Systems. All rights reserved.</p>
+<div class="flex gap-4 text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#"><span aria-hidden="true" class="material-symbols-outlined text-xl" data-icon="share">share</span></a>
+</div>
+</div>
+</footer>
+<!-- Shader Script -->
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+// Simplex 2D noise
+vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+
+float snoise(vec2 v){
+  const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+           -0.577350269189626, 0.024390243902439);
+  vec2 i  = floor(v + dot(v, C.yy) );
+  vec2 x0 = v -   i + dot(i, C.xx);
+  vec2 i1;
+  i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+  vec4 x12 = x0.xyxy + C.xxzz;
+  x12.xy -= i1;
+  i = mod(i, 289.0);
+  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+  + i.x + vec3(0.0, i1.x, 1.0 ));
+  vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
+    dot(x12.zw,x12.zw)), 0.0);
+  m = m*m ;
+  m = m*m ;
+  vec3 x = 2.0 * fract(p * C.www) - 1.0;
+  vec3 h = abs(x) - 0.5;
+  vec3 a0 = x - floor(x + 0.5);
+  vec3 m0 = 1.0 - 1.5*(a0*a0 + h*h);
+  vec3 g;
+  g.x  = a0.x  * x0.x  + h.x  * x0.y;
+  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+  return 130.0 * dot(m, g);
+}
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    vec2 mouse = u_mouse / u_resolution;
+    
+    // Base color from Aegis V3.0 Precision System (Sapphire Blue #0f172a)
+    vec3 color1 = vec3(0.0588, 0.0902, 0.1647); 
+    // Electric Cyan accent (#22d3ee)
+    vec3 color2 = vec3(0.1333, 0.8275, 0.9333);
+    
+    float noise = snoise(uv * 3.0 + u_time * 0.2);
+    noise += snoise(uv * 6.0 - u_time * 0.1) * 0.5;
+    
+    // Interactive pulse based on mouse
+    float dist = distance(uv, mouse);
+    float pulse = exp(-dist * 10.0) * (0.5 + 0.5 * sin(u_time * 5.0));
+    
+    vec3 finalColor = mix(color1, color2, clamp(noise * 0.3 + pulse * 0.4, 0.0, 1.0));
+    
+    gl_FragColor = vec4(finalColor, 1.0);
+}
+</script>
+<!-- Initialization Script -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Initialize WebGL Shader
+    const canvas = document.getElementById('shader-canvas');
+    if(canvas) {
+        const gl = canvas.getContext('webgl');
+        if (gl) {
+            const vsSource = `
+                attribute vec4 aVertexPosition;
+                void main() {
+                    gl_Position = aVertexPosition;
+                }
+            `;
+            const fsSource = document.getElementById('fs').textContent;
+
+            function createShader(gl, type, source) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                return shader;
+            }
+
+            const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
+            const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            gl.useProgram(shaderProgram);
+
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const positions = [
+                -1.0,  1.0,
+                 1.0,  1.0,
+                -1.0, -1.0,
+                 1.0, -1.0,
+            ];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            const positionAttributeLocation = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+            const timeLocation = gl.getUniformLocation(shaderProgram, "u_time");
+            const resolutionLocation = gl.getUniformLocation(shaderProgram, "u_resolution");
+            const mouseLocation = gl.getUniformLocation(shaderProgram, "u_mouse");
+
+            let mouseX = 0, mouseY = 0;
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = rect.bottom - e.clientY; // Flip Y for WebGL
+            });
+
+            function render(time) {
+                time *= 0.001; 
+                
+                const displayWidth = canvas.clientWidth;
+                const displayHeight = canvas.clientHeight;
+                if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+                    canvas.width = displayWidth;
+                    canvas.height = displayHeight;
+                    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+                }
+
+                gl.uniform1f(timeLocation, time);
+                gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+                gl.uniform2f(mouseLocation, mouseX, mouseY);
+
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
+        }
+    }
+
+    // 2. Intersection Observer for Fade-up Animations
+</script></body></html>

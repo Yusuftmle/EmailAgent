@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aegis V3.0 - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#400010",
+                      "surface": "#0c1324",
+                      "surface-dim": "#0c1324",
+                      "surface-container-highest": "#2e3447",
+                      "tertiary": "#ffd2d5",
+                      "on-surface-variant": "#bbc9cd",
+                      "on-primary": "#00363e",
+                      "surface-container-lowest": "#070d1f",
+                      "on-secondary-fixed-variant": "#005137",
+                      "primary-fixed": "#a2eeff",
+                      "on-primary-container": "#005763",
+                      "primary": "#8aebff",
+                      "on-tertiary-container": "#94223a",
+                      "tertiary-fixed-dim": "#ffb2b9",
+                      "surface-variant": "#2e3447",
+                      "surface-bright": "#33394c",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#45dfa4",
+                      "surface-container-high": "#23293c",
+                      "surface-container-low": "#151b2d",
+                      "inverse-surface": "#dce1fb",
+                      "inverse-primary": "#006877",
+                      "on-primary-fixed-variant": "#004e5a",
+                      "tertiary-fixed": "#ffdadc",
+                      "on-secondary-fixed": "#002114",
+                      "primary-fixed-dim": "#2fd9f4",
+                      "primary-container": "#22d3ee",
+                      "on-surface": "#dce1fb",
+                      "outline": "#859397",
+                      "secondary-fixed": "#68fcbf",
+                      "background": "#0c1324",
+                      "inverse-on-surface": "#2a3043",
+                      "on-tertiary": "#67001f",
+                      "surface-tint": "#2fd9f4",
+                      "outline-variant": "#3c494c",
+                      "on-tertiary-fixed-variant": "#891933",
+                      "on-background": "#dce1fb",
+                      "surface-container": "#191f31",
+                      "secondary-container": "#00bd85",
+                      "on-secondary-container": "#00452e",
+                      "on-secondary": "#003825",
+                      "error-container": "#93000a",
+                      "secondary": "#45dfa4",
+                      "on-primary-fixed": "#001f25",
+                      "tertiary-container": "#ffaab2",
+                      "error": "#ffb4ab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "32px",
+                      "gutter": "16px",
+                      "margin-mobile": "16px",
+                      "unit": "4px",
+                      "container-max": "1920px"
+              },
+              "fontFamily": {
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist"
+                      ],
+                      "display-lg": [
+                              "Geist"
+                      ],
+                      "body-md": [
+                              "Geist"
+                      ],
+                      "body-lg": [
+                              "Geist"
+                      ],
+                      "title-md": [
+                              "Geist"
+                      ],
+                      "label-sm": [
+                              "Geist"
+                      ],
+                      "headline-lg": [
+                              "Geist"
+                      ],
+                      "headline-md": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #020617; /* Custom deep slate 950 base */
+            color: #dce1fb;
+        }
+        /* Glassmorphism utility for technical OS feel */
+        .glass-panel {
+            background-color: rgba(15, 23, 42, 0.4); /* slate-900/40 approx */
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(30, 41, 59, 1); /* slate-800 approx */
+        }
+        
+        /* Shimmer effect for loading/active states */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer-bg {
+            background: linear-gradient(90deg, rgba(30,41,59,0) 0%, rgba(51,65,85,0.2) 50%, rgba(30,41,59,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite linear;
+        }
+
+        /* Pulse animation for signals */
+        @keyframes custom-ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+        .signal-pulse {
+            animation: custom-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        
+        /* Scrollbar styling for density */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3c494c;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #859397;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-body-md text-body-md selection:bg-primary/30 selection:text-primary">
+<!-- SideNavBar (from JSON) -->
+<aside class="hidden md:flex flex-col h-screen w-64 left-0 sticky bg-surface-container-low/60 backdrop-blur-sm border-r border-outline-variant/20 z-40 py-6">
+<!-- Header -->
+<div class="px-6 mb-8 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center border border-outline-variant/30 relative">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">terminal</span>
+<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-secondary rounded-full">
+<div class="w-full h-full rounded-full bg-secondary signal-pulse"></div>
+</div>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary tracking-tight">Command Center</h2>
+<p class="font-data-mono text-data-mono text-on-surface-variant">V3.0 Stable</p>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 px-4 flex flex-col gap-unit">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-secondary/70 hover:bg-white/5 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-secondary transition-colors text-lg" style="font-variation-settings: 'FILL' 0;">monitoring</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Market Live</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary/10 text-secondary border-r-2 border-secondary transition-all hover:translate-x-1 duration-200 group relative overflow-hidden" href="#">
+<div class="absolute inset-0 shimmer-bg opacity-50"></div>
+<span class="material-symbols-outlined text-secondary text-lg relative z-10" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider relative z-10">Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-secondary/70 hover:bg-white/5 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-secondary transition-colors text-lg" style="font-variation-settings: 'FILL' 0;">swap_horiz</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Trade Flow</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-secondary/70 hover:bg-white/5 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-secondary transition-colors text-lg" style="font-variation-settings: 'FILL' 0;">security</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Risk Core</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-secondary/70 hover:bg-white/5 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-secondary transition-colors text-lg" style="font-variation-settings: 'FILL' 0;">database</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Archives</span>
+</a>
+</nav>
+<!-- CTA & Footer Tabs -->
+<div class="mt-auto px-4 flex flex-col gap-4">
+<button class="w-full py-3 bg-secondary/10 border border-secondary/30 text-secondary font-label-sm text-label-sm uppercase tracking-wider rounded-lg hover:bg-secondary hover:text-on-secondary transition-colors flex items-center justify-center gap-2 group">
+<span class="material-symbols-outlined text-lg group-hover:animate-spin-slow" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                INITIATE PROTOCOL
+            </button>
+<div class="border-t border-outline-variant/20 pt-4 flex flex-col gap-unit">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-secondary/70 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100" style="font-variation-settings: 'FILL' 0;">help</span>
+<span class="font-data-mono text-data-mono opacity-80 group-hover:opacity-100">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-secondary/70 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-lg opacity-70 group-hover:opacity-100" style="font-variation-settings: 'FILL' 0;">terminal</span>
+<span class="font-data-mono text-data-mono opacity-80 group-hover:opacity-100">Logs</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 h-screen relative">
+<!-- Global Background Layer -->
+<div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+<div class="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 blur-[120px] rounded-full mix-blend-screen"></div>
+<div class="absolute bottom-0 left-0 w-1/2 h-1/2 bg-secondary/5 blur-[120px] rounded-full mix-blend-screen"></div>
+<div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50"></div>
+</div>
+<!-- TopNavBar (from JSON) -->
+<header class="w-full top-0 sticky z-30 bg-surface/40 backdrop-blur-md border-b border-outline-variant/30 flat no shadows flex justify-between items-center px-margin-desktop h-16 w-full">
+<div class="flex items-center gap-8">
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary">Aegis V3.0</h1>
+<!-- Desktop Nav Links -->
+<nav class="hidden lg:flex items-center gap-6 h-full">
+<a class="text-primary border-b-2 border-primary pb-1 h-full flex items-center font-label-sm text-label-sm uppercase tracking-wider cursor-pointer active:opacity-80" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors h-full flex items-center font-label-sm text-label-sm uppercase tracking-wider cursor-pointer active:opacity-80 px-2 rounded-t-md" href="#">Command</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors h-full flex items-center font-label-sm text-label-sm uppercase tracking-wider cursor-pointer active:opacity-80 px-2 rounded-t-md" href="#">Intelligence</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors h-full flex items-center font-label-sm text-label-sm uppercase tracking-wider cursor-pointer active:opacity-80 px-2 rounded-t-md" href="#">Nexus</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<!-- Search Bar -->
+<div class="relative hidden md:block w-64 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full bg-slate-950/50 border border-slate-800 rounded-lg py-1.5 pl-9 pr-3 font-data-mono text-data-mono text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Find Golf 1.6..." type="text"/>
+<div class="absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-surface border border-outline-variant/30 text-[10px] font-data-mono text-on-surface-variant/70">⌘K</div>
+</div>
+<!-- Trailing Icons -->
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors cursor-pointer active:opacity-80 relative">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">notifications_active</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border border-surface"></span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors cursor-pointer active:opacity-80 relative">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors cursor-pointer active:opacity-80 relative">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 overflow-y-auto p-gutter lg:p-margin-desktop z-10 relative">
+<div class="max-w-[1920px] mx-auto grid grid-cols-1 xl:grid-cols-12 gap-gutter lg:gap-6">
+<!-- Left/Center Column (Finalist Deals) -->
+<div class="xl:col-span-8 space-y-6">
+<div class="flex justify-between items-end border-b border-outline-variant/30 pb-3">
+<div>
+<h3 class="font-headline-lg text-headline-lg lg:text-headline-lg text-on-surface tracking-tight">Finalist Deals</h3>
+<p class="font-data-mono text-data-mono text-on-surface-variant mt-1 opacity-70">ALG_FILTER_V2.1 ACTIVE</p>
+</div>
+<div class="flex gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary/10 border border-secondary/20 text-secondary font-data-mono text-data-mono">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                                Live Sync
+                            </span>
+</div>
+</div>
+<!-- Responsive 2-Column Grid for Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Deal Card 1 -->
+<div class="glass-panel rounded-2xl overflow-hidden flex flex-col group transition-all hover:border-primary/50 relative">
+<!-- AI Light Beam Top Border -->
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-40 relative overflow-hidden bg-slate-950">
+<img alt="Golf GTI" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700 mix-blend-luminosity hover:mix-blend-normal" data-alt="A sleek, dark grey sports hatchback car parked in a minimalist, neon-lit underground garage. The lighting is low-key, moody, and futuristic, heavily emphasizing deep obsidian shadows with bright, high-contrast cyan and emerald glowing rim lights reflecting off the car's metallic surface. The aesthetic is highly technical, autonomous, and modern, fitting a high-stakes AI-driven command dashboard environment. The mood is precise and engineered." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQMaEPfER5LBLSesv3YSmRCHu3Ae6LvRuJDKLVy0UCTCHW1raLaTEK7sEY7Sm1KPVy2FrKMA96M0OXAmvEIZ9vZnOUhbYucBujjbqUgiVI9NWoXYqkl7RDdap7v0w7sBLRE5SBSmVISdoaGRSCk8gs9owkTHkGYLDyTXwvChoLMc0WPGnNBgYVnOvNV-gztsDw5ZpPyZd7Rlms88tNXy-rSyz_OppeZLRyiKkNpvOGwfQ5bAgLvHLrwNRQnNdl10gjHYBG8yWzROw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 right-4 flex justify-between items-end">
+<div>
+<p class="font-data-mono text-data-mono text-primary/80 uppercase tracking-widest text-[10px]">VIN_ANOMALY_DETECTED</p>
+<h4 class="font-title-md text-title-md text-white font-medium">Golf 1.6 TDI Match</h4>
+</div>
+<div class="px-2 py-1 rounded bg-error/20 border border-error/30 text-error font-data-mono text-data-mono flex items-center gap-1 backdrop-blur-md">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+                                        -18%
+                                    </div>
+</div>
+</div>
+<div class="p-4 flex-1 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="font-headline-md text-headline-md text-on-surface">£14,250</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant line-through opacity-50">£17,378</span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-auto">
+<div class="bg-surface/50 rounded p-2 border border-outline-variant/10">
+<span class="block font-data-mono text-[10px] text-on-surface-variant uppercase opacity-70">Mileage</span>
+<span class="font-data-mono text-data-mono text-on-surface">32,450</span>
+</div>
+<div class="bg-surface/50 rounded p-2 border border-outline-variant/10">
+<span class="block font-data-mono text-[10px] text-on-surface-variant uppercase opacity-70">Location</span>
+<span class="font-data-mono text-data-mono text-on-surface">Manchester</span>
+</div>
+</div>
+<!-- AI Verdict -->
+<div class="mt-2 bg-primary/5 rounded-lg p-3 border border-primary/10 flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[16px] mt-0.5">smart_toy</span>
+<p class="font-body-md text-sm text-primary/90 italic leading-snug">"High probability of rapid depreciation given market influx. Current price anomaly suggests distressed seller. Action advised."</p>
+</div>
+</div>
+</div>
+<!-- Deal Card 2 -->
+<div class="glass-panel rounded-2xl overflow-hidden flex flex-col group transition-all hover:border-primary/50 relative">
+<!-- AI Light Beam Top Border -->
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-40 relative overflow-hidden bg-slate-950">
+<img alt="Golf R" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700 mix-blend-luminosity hover:mix-blend-normal" data-alt="A close-up, dramatic shot of a high-performance vehicle's front grille and headlights in a dark, atmospheric setting. The scene is lit by stark, technical cyan and white light beams slicing through a misty, deep slate-950 background, creating an aggressive, precision-engineered look. The aesthetic is heavily minimalist-glassmorphism, evoking a high-tech AI analysis system operating in a low-light environment. The focus is sharp on the metallic and glass textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCIR4sRcCffQ4gIHU6rgPY3RhD_mpbezZ1HE10kk3eksUx6zEQEyFGj_RU5UUYXUpzuqY9VwUudz-6V6CCxsDSaiBqamfsZSJnzK_wG9Y0fOJ4mMNO17sxRjcmlR0wu2oB17D3fDqnTP7jiJbQQFGQaPdHW19LmAMP_n2T8-y1VWdf8pYM1eIQXPe8F5vQjptXqoW3tie5zuGYQvFjdPPC1x2I6tIyFKWvDgYp4Wjggfr8j40qsc3M-ErJMY3qg8nRd2ir706z9HI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 right-4 flex justify-between items-end">
+<div>
+<p class="font-data-mono text-data-mono text-primary/80 uppercase tracking-widest text-[10px]">PREDICTIVE_MODEL_ALPHA</p>
+<h4 class="font-title-md text-title-md text-white font-medium">Golf 2.0 R 4Motion</h4>
+</div>
+<div class="px-2 py-1 rounded bg-secondary/20 border border-secondary/30 text-secondary font-data-mono text-data-mono flex items-center gap-1 backdrop-blur-md">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+                                        +4%
+                                    </div>
+</div>
+</div>
+<div class="p-4 flex-1 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="font-headline-md text-headline-md text-on-surface">£28,995</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant line-through opacity-50">£27,880</span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-auto">
+<div class="bg-surface/50 rounded p-2 border border-outline-variant/10">
+<span class="block font-data-mono text-[10px] text-on-surface-variant uppercase opacity-70">Mileage</span>
+<span class="font-data-mono text-data-mono text-on-surface">18,200</span>
+</div>
+<div class="bg-surface/50 rounded p-2 border border-outline-variant/10">
+<span class="block font-data-mono text-[10px] text-on-surface-variant uppercase opacity-70">Location</span>
+<span class="font-data-mono text-data-mono text-on-surface">London, N1</span>
+</div>
+</div>
+<!-- AI Verdict -->
+<div class="mt-2 bg-primary/5 rounded-lg p-3 border border-primary/10 flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[16px] mt-0.5">smart_toy</span>
+<p class="font-body-md text-sm text-primary/90 italic leading-snug">"Premium trim retaining value above curve. Rare spec match found. Consider long-term hold strategy for maximum yield."</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar (Intelligence Panel) -->
+<div class="xl:col-span-4 flex flex-col gap-6">
+<!-- System Diagnostics -->
+<div class="glass-panel rounded-2xl p-4 flex flex-col gap-4 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-6xl" style="font-variation-settings: 'FILL' 1;">developer_board</span>
+</div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">memory</span>
+                            System Diagnostics
+                        </h3>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<span class="font-data-mono text-[10px] text-on-surface-variant uppercase">Latency</span>
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+</div>
+<span class="font-data-mono text-lg text-on-surface">12ms</span>
+</div>
+<div class="bg-slate-950/50 border border-slate-800 rounded-lg p-3 flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<span class="font-data-mono text-[10px] text-on-surface-variant uppercase">Data Node</span>
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+</div>
+<span class="font-data-mono text-lg text-on-surface">SYNC_OK</span>
+</div>
+<div class="col-span-2 bg-slate-950/50 border border-slate-800 rounded-lg p-3 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">psychology</span>
+<span class="font-data-mono text-xs text-on-surface">AI Inference Engine</span>
+</div>
+<span class="text-primary font-data-mono text-xs animate-pulse">ACTIVE</span>
+</div>
+</div>
+</div>
+<!-- Live Ticker / Feed -->
+<div class="glass-panel rounded-2xl flex flex-col h-[300px] overflow-hidden">
+<div class="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">rss_feed</span>
+                                Live Ticker
+                            </h3>
+<span class="font-data-mono text-[10px] text-secondary border border-secondary/30 px-1.5 py-0.5 rounded bg-secondary/10">REAL-TIME</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<!-- Feed Item -->
+<div class="flex gap-3 items-start group">
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div>
+<span class="font-data-mono text-[10px] text-on-surface-variant mb-0.5 block opacity-70">10:42:01 GMT</span>
+<p class="font-body-md text-sm text-on-surface leading-tight">New listing detected: Golf R-Line. Analyzing price variance against historical data...</p>
+</div>
+</div>
+<!-- Feed Item -->
+<div class="flex gap-3 items-start group">
+<div class="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div>
+<span class="font-data-mono text-[10px] text-on-surface-variant mb-0.5 block opacity-70">10:40:15 GMT</span>
+<p class="font-body-md text-sm text-on-surface leading-tight">Anomaly Alert: Seller ID #8849 reduced price by 12% in last 24hrs. Flagged for review.</p>
+</div>
+</div>
+<!-- Feed Item -->
+<div class="flex gap-3 items-start group">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary mt-1.5 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div>
+<span class="font-data-mono text-[10px] text-on-surface-variant mb-0.5 block opacity-70">10:35:44 GMT</span>
+<p class="font-body-md text-sm text-on-surface leading-tight">Market sentiment index updated. Confidence score stable at 0.82.</p>
+</div>
+</div>
+<!-- Feed Item -->
+<div class="flex gap-3 items-start group opacity-60">
+<div class="w-1.5 h-1.5 rounded-full bg-slate-500 mt-1.5"></div>
+<div>
+<span class="font-data-mono text-[10px] text-on-surface-variant mb-0.5 block">10:15:00 GMT</span>
+<p class="font-body-md text-sm text-on-surface leading-tight">Batch sync completed. 4,021 new records ingested.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Active Trackers -->
+<div class="glass-panel rounded-2xl flex flex-col overflow-hidden flex-1 min-h-[200px]">
+<div class="p-4 border-b border-slate-800 bg-slate-900/50">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">track_changes</span>
+                                Active Trackers
+                            </h3>
+</div>
+<div class="p-4 space-y-3">
+<div class="flex justify-between items-center p-2 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-slate-700">
+<span class="font-data-mono text-sm text-on-surface">Golf GTE Hybrid</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">arrow_forward_ios</span>
+</div>
+<div class="flex justify-between items-center p-2 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-slate-700">
+<span class="font-data-mono text-sm text-on-surface">Golf Clubsport S</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">arrow_forward_ios</span>
+</div>
+<button class="w-full mt-2 py-2 border border-dashed border-slate-700 rounded text-on-surface-variant font-data-mono text-xs hover:border-primary hover:text-primary transition-colors flex justify-center items-center gap-1">
+<span class="material-symbols-outlined text-sm">add</span> ADD TRACKER
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

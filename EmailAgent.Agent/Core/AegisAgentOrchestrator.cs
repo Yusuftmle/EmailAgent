@@ -45,9 +45,9 @@ public class AegisAgentOrchestrator
         }
 
         // Pre-flight Validation
-        if (activeProvider == "Gemini" && !activeKey.StartsWith("AIza"))
+        if (activeProvider == "Gemini" && !activeKey.StartsWith("AIza") && !activeKey.StartsWith("AQ."))
         {
-            return $"[Sistem Uyarısı] Girdiğiniz Gemini API anahtarı geçersiz görünüyor. Gemini anahtarları 'AIza' ile başlamalıdır.";
+            return $"[Sistem Uyarısı] Girdiğiniz Gemini API anahtarı geçersiz görünüyor. Gemini anahtarları 'AIza' veya 'AQ.' ile başlamalıdır.";
         }
         if ((activeProvider == "OpenAI" || activeProvider == "Groq") && !activeKey.StartsWith("gsk_") && !activeKey.StartsWith("sk-"))
         {
@@ -122,5 +122,52 @@ public class AegisAgentOrchestrator
             return $"[Limit Hatası] {provider} için istek limitine ulaştınız. Lütfen biraz bekleyip tekrar deneyin veya hesabınıza bakiye yükleyin.";
         }
         return $"[Bağlantı Hatası] Yapay Zeka Motoru ({provider}) ile iletişim kurulamadı. Detay: {rawMessage}";
+    }
+
+    /// <summary>
+    /// Masterclass Boru Hattı (Pipeline): Scrape -> Delta Check -> Math Filter -> Vision Filter -> Notification
+    /// </summary>
+    public async Task<string> ExecutePipelineAsync(
+        UserPreferences userPrefs, 
+        Guid categoryId, 
+        string categoryName,
+        string url, 
+        string minifiedHtml, 
+        string requiredFeatures)
+    {
+        try
+        {
+            _logger.LogInformation("AegisAgentOrchestrator: Pipeline başlatılıyor. Kategori: {Category}", categoryName);
+
+            // 1. Scrape & Delta Check (SeenListings)
+            var scraperAgent = _serviceProvider.GetRequiredService<UniversalScraperAgent>();
+            var deltaDeals = await scraperAgent.ExtractAndDeltaCheckAsync(userPrefs, minifiedHtml, url, categoryId);
+
+            if (deltaDeals == null || deltaDeals.Count == 0)
+            {
+                return "Yeni veya fiyatı düşen bir fırsat bulunamadı.";
+            }
+
+            // 2. Math Filter (EvaluationEngine)
+            var evalEngine = _serviceProvider.GetRequiredService<EvaluationEngine>();
+            var finalists = evalEngine.EvaluateMathematicalAnomalies(deltaDeals);
+
+            if (finalists == null || finalists.Count == 0)
+            {
+                return "Matematiksel filtreyi (Hard-Filter) geçen bir fırsat bulunamadı.";
+            }
+
+            // 3. Vision Filter & Watermark Guard
+            var visionAgent = _serviceProvider.GetRequiredService<VisualEvaluatorAgent>();
+            var bestDealReport = await visionAgent.EvaluateTopDealsAsync(userPrefs, finalists, categoryName, requiredFeatures);
+
+            _logger.LogInformation("AegisAgentOrchestrator: Pipeline başarıyla tamamlandı.");
+            return bestDealReport;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Pipeline çalıştırılırken kritik bir hata oluştu.");
+            return "Sistem hatası: Pipeline çalıştırılamadı.";
+        }
     }
 }

@@ -1,67 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiService, ChatHistoryMessage } from '../services/api';
-import { MessageSquare, Send, Trash2, Cpu, Mic, MicOff, Star, Copy, Volume2 } from 'lucide-react';
-import AssistantMascot, { MascotHandle } from './AssistantMascot';
-import omniImg from './omni-walk.png';
-
-const CozyParticles: React.FC<{ mode: 'morning' | 'afternoon' | 'night' }> = ({ mode }) => {
-  const particleCount = 14; // slightly fewer for chat pane to keep it clean!
-  const particles = React.useMemo(() => {
-    return Array.from({ length: particleCount }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      bottom: `${Math.random() * 10}%`,
-      size: Math.random() * 4 + 2.5, // 2.5px to 6.5px
-      delay: `${Math.random() * 8}s`,
-      duration: `${Math.random() * 12 + 10}s`,
-      color: mode === 'morning'
-        ? '#fbbf24'
-        : mode === 'afternoon'
-          ? '#c084fc'
-          : '#fb923c',
-    }));
-  }, [mode]);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="absolute rounded-full"
-          style={{
-            left: p.left,
-            bottom: p.bottom,
-            width: p.size,
-            height: p.size,
-            backgroundColor: p.color,
-            filter: 'blur(1px) drop-shadow(0 0 3px currentColor)',
-            animation: `cozyFloatChat ${p.duration} ease-in-out ${p.delay} infinite`,
-            opacity: 0,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes cozyFloatChat {
-          0% {
-            transform: translateY(10%) translateX(0px);
-            opacity: 0;
-          }
-          15% {
-            opacity: 0.45;
-          }
-          85% {
-            opacity: 0.45;
-          }
-          100% {
-            transform: translateY(-500px) translateX(30px);
-            opacity: 0;
-          }
-        }
-      `}</style>
-    </div>
-  );
-};
+import { MessageSquare, Send, Trash2, Cpu, Mic, MicOff, Star, Copy, Volume2, Check, Paperclip } from 'lucide-react';
 
 export const ChatView: React.FC = () => {
   const [messages, setMessages] = useState<ChatHistoryMessage[]>([]);
@@ -70,6 +10,8 @@ export const ChatView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   interface FavoriteMessage {
     key: string;
@@ -79,7 +21,7 @@ export const ChatView: React.FC = () => {
 
   const [favorites, setFavorites] = useState<FavoriteMessage[]>(() => {
     try {
-      const favs = localStorage.getItem('chat_favorites_v2');
+      const favs = localStorage.getItem('chat_favorites_v3');
       return favs ? JSON.parse(favs) : [];
     } catch { return []; }
   });
@@ -95,12 +37,11 @@ export const ChatView: React.FC = () => {
         newFavs = prev.filter(f => f.key !== key);
       } else {
         newFavs = [...prev, { key, content: msg.content, date: new Date().toISOString() }];
-        // Performans optimizasyonu: En fazla 50 favori tut (kasmasını engellemek için)
         if (newFavs.length > 50) {
           newFavs = newFavs.slice(newFavs.length - 50);
         }
       }
-      localStorage.setItem('chat_favorites_v2', JSON.stringify(newFavs));
+      localStorage.setItem('chat_favorites_v3', JSON.stringify(newFavs));
       return newFavs;
     });
   };
@@ -117,25 +58,24 @@ export const ChatView: React.FC = () => {
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.style.transition = 'background-color 0.5s ease';
-        el.style.backgroundColor = 'rgba(245, 158, 11, 0.15)'; // Amber highlight
+        el.style.backgroundColor = 'rgba(34, 211, 238, 0.1)';
         setTimeout(() => {
           el.style.backgroundColor = 'transparent';
         }, 2000);
-      } else {
-        alert("This message is from an older session or was cleared.");
       }
     }, 100);
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, index: number) => {
     navigator.clipboard.writeText(text);
-    // Could add a small toast here if desired
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   const speakText = (text: string) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'tr-TR'; // Default to Turkish since Omni usually speaks Turkish
+    utterance.lang = 'en-US';
     window.speechSynthesis.speak(utterance);
   };
 
@@ -151,15 +91,6 @@ export const ChatView: React.FC = () => {
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mascotRef = useRef<MascotHandle>(null);
-
-  // ── Determine time of day ──
-  const [timeMode] = useState<'morning' | 'afternoon' | 'night'>(() => {
-    const hr = new Date().getHours();
-    if (hr >= 6 && hr < 12) return 'morning';
-    if (hr >= 12 && hr < 18) return 'afternoon';
-    return 'night';
-  });
 
   const loadHistory = async () => {
     try {
@@ -169,7 +100,7 @@ export const ChatView: React.FC = () => {
           {
             role: 'assistant',
             sessionId,
-            content: "Hello! I am Aegis, your General AI Assistant. I can process your emails, summarize data, or just have a chat. How can I help you today?"
+            content: "Welcome to Aegis Command Room. I am your cognitive operations assistant. I process and scan incoming feeds, analyze anomalies, and orchestrate pipeline automation workflows.\n\nAsk me to 'run diagnostics', 'check latest emails', or 'summarize tracked products'."
           }
         ]);
       } else {
@@ -215,7 +146,6 @@ export const ChatView: React.FC = () => {
       };
 
       setMessages(prev => [...prev, assistantMsg]);
-      mascotRef.current?.celebrate();
     } catch (error) {
       console.error("Failed to post chat message", error);
       setMessages(prev => [
@@ -223,7 +153,7 @@ export const ChatView: React.FC = () => {
         {
           role: 'assistant',
           sessionId,
-          content: "Connection to the cognitive backend server timed out."
+          content: "System timeout. Connection to the cognitive engine failed."
         }
       ]);
     } finally {
@@ -233,14 +163,12 @@ export const ChatView: React.FC = () => {
 
   const handleToggleRecording = async () => {
     if (isRecording) {
-      // Stop recording
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       }
       setIsRecording(false);
     } else {
-      // Start recording
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const mediaRecorder = new MediaRecorder(stream);
@@ -260,17 +188,14 @@ export const ChatView: React.FC = () => {
           try {
             const response = await apiService.sendVoiceMessage(sessionId, audioBlob);
             
-            // Add what we heard as user message
             if (response.transcribedText) {
               setMessages(prev => [...prev, { role: 'user', sessionId, content: `🎤 ${response.transcribedText}` }]);
             }
 
-            // Add AI response
             setMessages(prev => [...prev, { role: 'assistant', sessionId, content: response.reply }]);
-            mascotRef.current?.celebrate();
           } catch (error) {
             console.error("Failed to post voice message", error);
-            setMessages(prev => [...prev, { role: 'assistant', sessionId, content: "Could not process your voice command. Please try again." }]);
+            setMessages(prev => [...prev, { role: 'assistant', sessionId, content: "Speech recognition service error. Please try again." }]);
           } finally {
             setIsLoading(false);
           }
@@ -285,6 +210,30 @@ export const ChatView: React.FC = () => {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    e.target.value = '';
+
+    setMessages(prev => [...prev, { role: 'user', sessionId, content: `📄 [Yüklenen Dosya: ${file.name}]` }]);
+
+    try {
+      const response = await apiService.uploadDocument(sessionId, file);
+      setMessages(prev => [...prev, { role: 'assistant', sessionId, content: response.reply }]);
+    } catch (error: any) {
+      console.error("Failed to upload document", error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        sessionId, 
+        content: `Belge yükleme hatası: ${error.response?.data || error.message || 'Sunucu hatası'}` 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleClearChat = async () => {
     if (window.confirm("Are you sure you want to clear this conversation history?")) {
       try {
@@ -293,7 +242,7 @@ export const ChatView: React.FC = () => {
           {
             role: 'assistant',
             sessionId,
-            content: "Conversation history cleared. How can I assist you now?"
+            content: "Conversation history cleared. System initialized."
           }
         ]);
       } catch (error) {
@@ -303,160 +252,114 @@ export const ChatView: React.FC = () => {
   };
 
   const suggestionChips = [
-    "Check my new emails",
-    "What plugins are active?",
-    "Summarize my daily tasks",
+    "Check recent emails",
+    "Show active diagnostics",
+    "List system anomalies",
   ];
 
-  const bgGradient =
-    timeMode === 'morning' ? 'from-[#0a0f1d] via-[#121c32] to-[#25152a]' :
-      timeMode === 'afternoon' ? 'from-[#0b1420] via-[#0f212f] to-[#0f2a20]' :
-        'from-[#05080e] via-[#09101f] to-[#120b20]';
-
   return (
-    <div className={`glass-panel rounded-3xl border border-white/5 flex flex-col h-[calc(100vh-160px)] overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
-
-      {/* Repeating Telegram-Style Cute Doodle Wallpaper */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.026] pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="telegram-doodles-chat" width="120" height="120" patternUnits="userSpaceOnUse">
-            {/* Doodle 1: Mail Envelope */}
-            <path d="M10,15 L30,15 L30,30 L10,30 Z M10,15 L20,23 L30,15" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            {/* Doodle 2: Cute Cloud */}
-            <path d="M55,23 C53,23 51,21 51,19 C51,16 53,14 56,14 C57,12 60,12 61,14 C63,14 65,16 65,19 C65,21 63,23 61,23 Z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            {/* Doodle 3: Tiny Star */}
-            <path d="M90,15 L92,19 L96,19 L93,22 L94,26 L90,24 L86,26 L87,22 L84,19 L88,19 Z" fill="none" stroke="currentColor" strokeWidth="1" />
-            {/* Doodle 4: Coffee Cup */}
-            <path d="M20,65 L32,65 C32,65 32,73 30,75 C28,77 24,77 22,75 C20,73 20,65 20,65 Z M32,67 C34,67 34,71 32,71" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            {/* Doodle 5: Robot Smiley (Omni!) */}
-            <rect x="52" y="62" width="16" height="12" rx="3" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            <circle cx="56" cy="67" r="0.8" fill="currentColor" />
-            <circle cx="64" cy="67" r="0.8" fill="currentColor" />
-            <path d="M57,70 Q60,72 63,70" fill="none" stroke="currentColor" strokeWidth="1" />
-            {/* Doodle 6: Chat Bubble */}
-            <path d="M85,65 C85,61 90,61 93,61 C96,61 98,63 98,66 C98,69 95,70 93,70 L90,70 L88,72 L88,70 C85,70 85,67 85,65 Z" fill="none" stroke="currentColor" strokeWidth="1" />
-            {/* Doodle 7: Sparkles & dots */}
-            <circle cx="10" cy="100" r="1" fill="currentColor" />
-            <circle cx="105" cy="100" r="0.8" fill="currentColor" />
-            <circle cx="112" cy="50" r="1" fill="currentColor" />
-            <circle cx="45" cy="45" r="0.8" fill="currentColor" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#telegram-doodles-chat)" />
-      </svg>
-
-      {/* Dynamic Background Glow Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {timeMode === 'morning' && (
-          <>
-            <div className="absolute -top-20 -left-20 w-[45vw] h-[45vw] rounded-full bg-pink-500/10 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-            <div className="absolute -bottom-20 -right-20 w-[50vw] h-[50vw] rounded-full bg-amber-500/8 blur-[130px] animate-pulse" style={{ animationDuration: '10s' }} />
-          </>
-        )}
-        {timeMode === 'afternoon' && (
-          <>
-            <div className="absolute -top-20 -right-20 w-[45vw] h-[45vw] rounded-full bg-teal-500/8 blur-[120px] animate-pulse" style={{ animationDuration: '9s' }} />
-            <div className="absolute -bottom-20 -left-20 w-[50vw] h-[50vw] rounded-full bg-indigo-500/10 blur-[130px] animate-pulse" style={{ animationDuration: '11s' }} />
-          </>
-        )}
-        {timeMode === 'night' && (
-          <>
-            <div className="absolute -bottom-40 right-20 w-[55vw] h-[55vw] rounded-full bg-amber-500/12 blur-[140px] animate-pulse" style={{ animationDuration: '12s' }} />
-            <div className="absolute -top-20 -left-20 w-[40vw] h-[40vw] rounded-full bg-purple-900/10 blur-[120px]" />
-          </>
-        )}
-      </div>
-
-      {/* Cozy Fireflies particles drifting up */}
-      <CozyParticles mode={timeMode} />
-
-      {/* Omni Mascot Walking on top of the message input bar */}
-      <div className="absolute left-0 right-0 top-0 bottom-[80px] overflow-hidden pointer-events-none z-0">
-        <AssistantMascot ref={mascotRef} />
-      </div>
-
+    <div className="flex flex-col h-[calc(100vh-130px)] overflow-hidden rounded-2xl border border-outline-variant/35 bg-surface-container-low/30 backdrop-blur-md shadow-2xl relative">
+      
       {/* Header */}
-      <div className="p-6 border-b border-white/5 flex items-center justify-between relative z-10 bg-slate-900/30">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 shadow-inner">
-            <Cpu size={24} className="animate-pulse" />
+      <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between z-10 bg-surface-container-low/40">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+            <Cpu size={18} className="animate-pulse" />
           </div>
           <div>
-            <h2 className="text-xl font-extrabold text-slate-100 uppercase tracking-widest">Aegis AI Chat</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Cognitive Engine Active</span>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-on-surface">Intelligence Console</h2>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary">
+                <span className="absolute w-1.5 h-1.5 bg-secondary rounded-full signal-pulse" />
+              </span>
+              <span className="font-data-mono text-[9px] text-on-surface-variant uppercase tracking-wider">COGNITIVE_CORE // SECURE</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFavoritesModal(true)}
-            className="px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition-all font-bold text-xs uppercase tracking-wider flex items-center gap-2"
+            className="px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-all font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1.5"
           >
-            <Star size={14} /> Saved
+            <Star size={12} />
+            <span>Saved</span>
           </button>
           <button
             onClick={handleClearChat}
-            className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all font-bold text-xs uppercase tracking-wider flex items-center gap-2"
+            className="px-3 py-1.5 rounded-lg bg-tertiary/10 border border-tertiary/20 text-tertiary-container hover:text-tertiary hover:bg-tertiary/20 transition-all font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1.5"
           >
-            <Trash2 size={14} /> Clear History
+            <Trash2 size={12} />
+            <span>Clear</span>
           </button>
         </div>
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 p-6 overflow-y-auto relative z-10 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-        <div className="max-w-4xl mx-auto w-full space-y-8 py-4">
-          {messages.map((msg, index) => (
-            <motion.div
-              key={index}
-              id={`chat-msg-${msg.id ? msg.id.toString() : `temp-${index}-${msg.content.substring(0, 10)}`}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`flex gap-6 w-full transition-colors ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              {msg.role === 'assistant' && (
-                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] mt-1">
-                  <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />
-                </div>
-              )}
+      <div className="flex-1 p-6 overflow-y-auto relative z-10 hide-scrollbar bg-[#020617]/10">
+        <div className="max-w-5xl mx-auto w-full space-y-4 py-2">
+          {messages.map((msg, index) => {
+            const isUser = msg.role === 'user';
+            const timeStr = msg.createdAt 
+              ? new Date(msg.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+              : new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
-              <div className={`relative group max-w-[85%] ${msg.role === 'user'
-                  ? 'bg-slate-800/80 px-6 py-4 rounded-3xl text-slate-200 shadow-sm border border-white/5 text-[15px] leading-relaxed'
-                  : 'text-slate-200 text-[15px] leading-relaxed pt-2 pb-8'
-                }`}>
-                {msg.content.split('\n').map((line, lIdx) => (
-                  <p key={lIdx} className={lIdx > 0 ? 'mt-4' : ''}>{line}</p>
-                ))}
-
-                {msg.role === 'assistant' && (
-                  <div className="absolute -bottom-2 left-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => speakText(msg.content)} className="p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors" title="Read Aloud">
-                      <Volume2 size={14} />
-                    </button>
-                    <button onClick={() => copyToClipboard(msg.content)} className="p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors" title="Copy text">
-                      <Copy size={14} />
-                    </button>
-                    <button onClick={() => toggleFavorite(msg, index)} className={`p-1.5 rounded-lg transition-colors ${isFavorited(msg, index) ? 'text-amber-400 bg-slate-800' : 'text-slate-500 hover:text-amber-400 hover:bg-slate-800'}`} title="Favorite">
-                      <Star size={14} fill={isFavorited(msg, index) ? 'currentColor' : 'none'} />
-                    </button>
+            return (
+              <div
+                key={index}
+                id={`chat-msg-${msg.id ? msg.id.toString() : `temp-${index}-${msg.content.substring(0, 10)}`}`}
+                className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}
+              >
+                <div 
+                  className={`relative group max-w-[70%] rounded-2xl px-5 py-3 border transition-all duration-200 shadow-md ${
+                    isUser
+                      ? 'bg-secondary/10 border-secondary/25 text-white rounded-tr-none'
+                      : 'bg-surface-container-high/40 border-outline-variant/20 text-on-surface rounded-tl-none'
+                  }`}
+                >
+                  <div className="space-y-2 text-xs md:text-sm leading-relaxed whitespace-pre-line font-geist">
+                    {msg.content}
                   </div>
-                )}
+                  
+                  <span className="block text-[9px] text-on-surface-variant/40 text-right mt-1 font-data-mono">
+                    {timeStr}
+                  </span>
+
+                  {!isUser && (
+                    <div className="absolute -bottom-3 right-3 flex items-center gap-1 bg-surface-container-low border border-outline-variant/30 rounded-lg py-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                      <button 
+                        onClick={() => speakText(msg.content)} 
+                        className="p-1 text-on-surface-variant hover:text-primary transition-colors" 
+                        title="Read Aloud"
+                      >
+                        <Volume2 size={12} />
+                      </button>
+                      <button 
+                        onClick={() => copyToClipboard(msg.content, index)} 
+                        className="p-1 text-on-surface-variant hover:text-primary transition-colors" 
+                        title="Copy"
+                      >
+                        {copiedIndex === index ? <Check size={12} className="text-secondary" /> : <Copy size={12} />}
+                      </button>
+                      <button 
+                        onClick={() => toggleFavorite(msg, index)} 
+                        className={`p-1 transition-colors ${isFavorited(msg, index) ? 'text-amber-400' : 'text-on-surface-variant hover:text-amber-400'}`} 
+                        title="Favorite"
+                      >
+                        <Star size={12} fill={isFavorited(msg, index) ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </motion.div>
-          ))}
+            );
+          })}
 
           {isLoading && (
-            <div className="flex gap-6 w-full justify-start">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] mt-1">
-                <img src={omniImg} alt="Omni" className="w-full h-full object-cover scale-150" />
-              </div>
-              <div className="pt-4 pb-8 flex items-center gap-1.5 h-[52px]">
-                <span className="typing-dot bg-emerald-400/60"></span>
-                <span className="typing-dot bg-emerald-400/60"></span>
-                <span className="typing-dot bg-emerald-400/60"></span>
+            <div className="flex w-full justify-start">
+              <div className="bg-surface-container-high/40 border border-outline-variant/25 rounded-2xl rounded-tl-none px-5 py-3.5 flex items-center gap-1 h-[44px]">
+                <span className="typing-dot bg-primary/60"></span>
+                <span className="typing-dot bg-primary/60"></span>
+                <span className="typing-dot bg-primary/60"></span>
               </div>
             </div>
           )}
@@ -466,19 +369,17 @@ export const ChatView: React.FC = () => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-slate-900/50 border-t border-white/5 relative z-10">
+      <div className="p-4 border-t border-outline-variant/20 bg-surface-container-low/40 relative z-10">
         {messages.length === 1 && !isLoading && (
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar max-w-5xl mx-auto">
             {suggestionChips.map(chip => (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 key={chip}
                 onClick={() => handleSendMessage(chip)}
-                className="whitespace-nowrap px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:border-emerald-500/40 text-slate-300 text-xs font-bold transition-all"
+                className="whitespace-nowrap px-3.5 py-1.5 rounded-lg bg-surface-container border border-outline-variant/20 hover:border-primary/45 text-on-surface-variant hover:text-on-surface text-label-sm font-semibold transition-all"
               >
                 {chip}
-              </motion.button>
+              </button>
             ))}
           </div>
         )}
@@ -488,96 +389,120 @@ export const ChatView: React.FC = () => {
             e.preventDefault();
             handleSendMessage(inputValue);
           }}
-          className="flex gap-3 relative"
+          className="flex gap-2.5 max-w-5xl mx-auto relative"
         >
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-            <MessageSquare size={18} />
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60 pointer-events-none">
+            <MessageSquare size={16} />
           </div>
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             disabled={isLoading || isRecording}
-            placeholder="Send a message to Aegis..."
-            className="flex-1 px-4 py-4 pl-12 rounded-2xl bg-slate-950/80 border border-slate-800 focus:border-emerald-500/50 outline-none text-slate-200 disabled:opacity-50 transition-all text-sm shadow-inner"
+            placeholder="Instruct Aegis core..."
+            className="flex-1 px-4 py-3 pl-11 rounded-xl bg-surface-container-lowest/40 border border-outline-variant/30 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none text-on-surface placeholder:text-on-surface-variant/40 disabled:opacity-50 transition-all text-xs md:text-sm font-geist"
           />
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+            accept=".pdf,.txt,.md,.json,.csv"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading || isRecording}
+            className="px-3.5 rounded-xl flex items-center justify-center border bg-surface-container border-outline-variant/30 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all"
+            title="Upload Document"
+          >
+            <Paperclip size={16} />
+          </button>
+          <button
             type="button"
             onClick={handleToggleRecording}
-            className={`px-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all ${
+            className={`px-3.5 rounded-xl flex items-center justify-center border transition-all ${
               isRecording 
-                ? 'bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.3)]' 
-                : 'bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700'
+                ? 'bg-tertiary/10 text-tertiary-container border-tertiary/40 animate-pulse' 
+                : 'bg-surface-container border-outline-variant/30 text-on-surface-variant hover:text-primary hover:bg-surface-container-high'
             }`}
           >
-            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
+          </button>
+          <button
             type="submit"
             disabled={!inputValue.trim() || isLoading || isRecording}
-            className="px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-extrabold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:shadow-none transition-all"
+            className="px-5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary hover:text-on-primary text-primary font-semibold text-label-sm flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:hover:bg-primary/10 disabled:hover:text-primary"
           >
-            <span>SEND</span>
-            <Send size={16} />
-          </motion.button>
+            <span>Execute</span>
+            <Send size={12} />
+          </button>
         </form>
       </div>
 
       {/* Favorites Modal */}
-      {showFavoritesModal && (
-        <div className="absolute inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
-             <div className="p-4 border-b border-white/5 flex justify-between items-center bg-slate-800/50 rounded-t-3xl">
-               <h3 className="text-amber-400 font-bold uppercase tracking-wider flex items-center gap-2"><Star size={16} fill="currentColor" /> Saved Messages</h3>
-               <button onClick={() => setShowFavoritesModal(false)} className="text-slate-400 hover:text-white font-bold text-sm">Close</button>
-             </div>
-             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700">
-                {favorites.length === 0 ? (
-                  <p className="text-center text-slate-500 py-10 font-medium">You haven't saved any messages yet.</p>
-                ) : (
-                  favorites.map(fav => (
-                    <div key={fav.key} 
-                         className="bg-slate-800/50 p-4 rounded-xl border border-white/5 text-slate-300 text-sm relative group pr-16 cursor-pointer hover:bg-slate-800 transition-colors"
-                         onClick={() => scrollToMessage(fav.key)}>
-                      {fav.content.split('\n').map((line, idx) => <p key={idx} className={idx > 0 ? 'mt-2' : ''}>{line}</p>)}
-                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(fav.content);
-                          }} 
-                          className="text-slate-500 hover:text-emerald-400 p-1"
-                          title="Copy"
-                        >
-                          <Copy size={14} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const n = favorites.filter(f => f.key !== fav.key);
-                            setFavorites(n);
-                            localStorage.setItem('chat_favorites_v2', JSON.stringify(n));
-                          }} 
-                          className="text-slate-500 hover:text-red-400 p-1"
-                          title="Remove from favorites"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+      <AnimatePresence>
+        {showFavoritesModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-surface/80 z-50 flex items-center justify-center p-6 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-surface-container border border-outline-variant/30 rounded-2xl w-full max-w-xl max-h-[70vh] flex flex-col shadow-2xl relative"
+            >
+               <div className="p-4 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low rounded-t-2xl">
+                 <h3 className="text-primary font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5"><Star size={14} fill="currentColor" /> Saved Instructions</h3>
+                 <button onClick={() => setShowFavoritesModal(false)} className="text-on-surface-variant hover:text-on-surface font-semibold text-[11px] uppercase tracking-wider">Close</button>
+               </div>
+               <div className="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar">
+                  {favorites.length === 0 ? (
+                    <p className="text-center text-on-surface-variant/60 py-10 text-xs">No saved instructions found.</p>
+                  ) : (
+                    favorites.map(fav => (
+                      <div key={fav.key} 
+                           className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/20 text-on-surface-variant text-xs relative group pr-16 cursor-pointer hover:bg-surface-container-high/45 transition-colors"
+                           onClick={() => scrollToMessage(fav.key)}>
+                        <p className="whitespace-pre-line leading-relaxed">{fav.content}</p>
+                        <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(fav.content, 9999);
+                            }} 
+                            className="text-on-surface-variant hover:text-primary p-1"
+                            title="Copy"
+                          >
+                            <Copy size={12} />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const n = favorites.filter(f => f.key !== fav.key);
+                              setFavorites(n);
+                              localStorage.setItem('chat_favorites_v3', JSON.stringify(n));
+                            }} 
+                            className="text-on-surface-variant hover:text-tertiary-container p-1"
+                            title="Remove"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                        <div className="text-[9px] text-primary mt-2 font-semibold font-data-mono tracking-wider">
+                           JUMP_TO_POSITION
+                        </div>
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-2 font-bold flex items-center gap-1">
-                         <span>CLICK TO JUMP</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-             </div>
-          </div>
-        </div>
-      )}
+                    ))
+                  )}
+               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
